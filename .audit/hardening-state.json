@@ -394,6 +394,12 @@
    "status": "passed",
    "note": "文档/矩阵/发布验证完成",
    "at": "2026-09-26T06:27:44"
+  },
+  "H28-006": {
+   "status": "passed",
+   "note": "最终 target commit db683a5 的 CI run 36197578522 全绿（3.10+3.12: 229 passed+1 skipped×2；lint/format/pip check/hardening-check 全过）",
+   "at": "2026-09-26T06:43:40",
+   "evidence": ".audit/task-evidence/H28-006.json"
   }
  },
  "log": [
@@ -876,6 +882,12 @@
    "ids": "H28-006",
    "status": "passed",
    "note": "占位，下一提交更新"
+  },
+  {
+   "at": "2026-09-26T06:43:40",
+   "ids": "H28-006",
+   "status": "passed",
+   "note": "最终 target commit db683a5 的 CI run 36197578522 全绿（3.10+3.12: 229 passed+1 skipped×2；lint/format/pip check/hardening-check 全过）"
   }
  ]
 }
