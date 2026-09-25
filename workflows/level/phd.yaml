@@ -1,0 +1,21 @@
+# level/phd.yaml — 博士追加（§21：理论主线/创新点证据/章节贡献矩阵/原创贡献审查）
+id: phd
+rules:
+  quality:
+    min_words: 80000
+    method_rigor: rigorous
+    contribution: original
+    validation_layers: 3
+    theory_thread_consistency: true
+task_rules:
+  - {id: LV-P-001, stage: S9, section: 质检, title: 理论主线一致性检查, procedure: qa.theory_thread}
+  - {id: LV-P-002, stage: S9, section: 质检, title: 创新点证据映射, procedure: qa.innovation_evidence,
+     depends_on: [LV-P-001]}
+  - {id: LV-P-003, stage: S9, section: 质检, title: 章节贡献矩阵构建, procedure: qa.chapter_contribution_matrix,
+     depends_on: [LV-P-002]}
+  - {id: LV-P-004, stage: S9, section: 质检, title: 多研究间一致性检查, procedure: qa.cross_study_consistency,
+     depends_on: [LV-P-003]}
+  - {id: LV-P-005, stage: S9, section: 质检, title: 方法充分性审查, procedure: qa.method_sufficiency,
+     depends_on: [LV-P-004]}
+  - {id: LV-P-006, stage: S9, section: 质检, title: 原创贡献审查, procedure: qa.original_contribution,
+     depends_on: [LV-P-005], validation: qa.no_errors}

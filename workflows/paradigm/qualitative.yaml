@@ -1,0 +1,54 @@
+# paradigm/qualitative.yaml — 哲社科定性实证（§16 Q1–Q18）
+id: qualitative
+stages:
+  - {id: S5, name: RESEARCH_EXECUTION, skills: [qualitative-analysis],
+     tools: [fs.read, fs.write]}
+  - {id: S2, name: LITERATURE_SEARCH, skills: [literature-search]}
+task_rules:
+  - {id: Q1,  stage: S5, section: 定性, title: 明确研究对象, procedure: qual.define_subject,
+     inputs: ["research/selected_topic.md"], expected_outputs: ["analysis/qualitative/design.md"],
+     validation: file_nonempty, depends_on: []}
+  - {id: Q2,  stage: S5, section: 定性, title: 明确材料来源, procedure: qual.define_sources,
+     depends_on: [Q1]}
+  - {id: Q3,  stage: S5, section: 定性, title: 建立材料清单, procedure: qual.material_list,
+     expected_outputs: ["analysis/qualitative/materials.md"], depends_on: [Q2]}
+  - {id: Q4,  stage: S5, section: 定性, title: 建立采集标准, procedure: qual.collection_standard,
+     depends_on: [Q3]}
+  - {id: Q5,  stage: S5, section: 定性, title: 收集材料, procedure: qual.collect,
+     expected_outputs: ["data/raw/"], depends_on: [Q4]}
+  - {id: Q6,  stage: S5, section: 定性, title: 材料去重, procedure: qual.dedupe,
+     expected_outputs: ["data/interim/"], depends_on: [Q5]}
+  - {id: Q7,  stage: S5, section: 定性, title: 材料清洗, procedure: qual.clean,
+     expected_outputs: ["data/processed/"], depends_on: [Q6]}
+  - {id: Q8,  stage: S5, section: 定性, title: 建立编码单元, procedure: qual.coding_units,
+     depends_on: [Q7]}
+  - {id: Q9,  stage: S5, section: 定性, title: 建立初始编码（codebook 骨架）,
+     procedure: qual.initial_codes, expected_outputs: ["analysis/qualitative/codebook.yaml"],
+     depends_on: [Q8]}
+  - {id: Q10, stage: S5, section: 定性, title: 执行编码, procedure: qual.code,
+     expected_outputs: ["analysis/qualitative/coding.jsonl"], depends_on: [Q9]}
+  - {id: Q11, stage: S5, section: 定性, title: 汇总编码, procedure: qual.aggregate_codes,
+     depends_on: [Q10]}
+  - {id: Q12, stage: S5, section: 定性, title: 形成主题/范畴, procedure: qual.themes,
+     expected_outputs: ["analysis/qualitative/themes.md"], depends_on: [Q11]}
+  - {id: Q13, stage: S5, section: 定性, title: 检查负例, procedure: qual.negative_cases,
+     expected_outputs: ["analysis/qualitative/negative_cases.md"], depends_on: [Q12]}
+  - {id: Q14, stage: S5, section: 定性, title: 检查饱和度/充分性, procedure: qual.saturation,
+     expected_outputs: ["analysis/qualitative/saturation.yaml"], depends_on: [Q13]}
+  - {id: Q15, stage: S5, section: 定性, title: 形成机制/命题, procedure: qual.mechanisms,
+     validation: file_nonempty, depends_on: [Q14]}
+  - {id: Q16, stage: S5, section: 定性, title: 建立证据链, procedure: qual.evidence_chain,
+     expected_outputs: ["analysis/qualitative/evidence_chain.md"], depends_on: [Q15]}
+  - {id: Q17, stage: S5, section: 定性, title: 撰写研究结果, procedure: qual.write_results,
+     expected_outputs: ["analysis/qualitative/results.md"], depends_on: [Q16]}
+  - {id: Q18, stage: S5, section: 定性, title: 撰写讨论, procedure: qual.write_discussion,
+     expected_outputs: ["analysis/qualitative/discussion.md"], depends_on: [Q17]}
+rules:
+  methods:
+    selectable: [case-study, interview, focus-group, grounded-theory,
+                 thematic-analysis, content-analysis, discourse-analysis,
+                 policy-text-analysis, archive-analysis]
+    default: thematic-analysis
+  quality:
+    saturation_required: true
+    evidence_chain_required: true

@@ -1,0 +1,56 @@
+# artifact/fund.yaml — 基金申报书专用链（§19 F1–F26）
+# 注意：基金申报是“研究设计”，不执行未来研究本身
+id: fund
+stages:
+  - {id: S1, name: WORKSPACE_AUDIT, skills: [fund-generator]}
+  - {id: S4, name: RESEARCH_DESIGN, skills: [research-design, fund-generator]}
+  - {id: S7, name: WRITING, skills: [academic-writing, fund-generator]}
+  - {id: S9, name: GLOBAL_QA, skills: [global-qa, fund-generator]}
+task_rules:
+  - {id: F1,  stage: S1, section: 模板, title: 导入并解析基金申报模板, procedure: fund.parse_template,
+     expected_outputs: ["templates/fund/template-spec.yaml"], validation: template.parsed}
+  - {id: F2,  stage: S1, section: 模板, title: 抽取申报要求, procedure: fund.extract_requirements,
+     depends_on: [F1]}
+  - {id: F3,  stage: S1, section: 模板, title: 抽取字数限制, procedure: fund.extract_word_limits,
+     depends_on: [F2]}
+  - {id: F4,  stage: S1, section: 模板, title: 抽取栏目结构, procedure: fund.extract_sections,
+     expected_outputs: ["templates/fund/sections.yaml"], depends_on: [F3]}
+  - {id: F5,  stage: S3, section: 选题, title: 基金选题（结合指南与学科方向）,
+     procedure: fund.topic, validation: topics.at_least_one}
+  - {id: F6,  stage: S4, section: 申报设计, title: 研究背景撰写设计, procedure: fund.background_design}
+  - {id: F7,  stage: S4, section: 申报设计, title: 国内外研究现状梳理, procedure: fund.status_review}
+  - {id: F8,  stage: S4, section: 申报设计, title: 问题提出, procedure: fund.problem}
+  - {id: F9,  stage: S4, section: 申报设计, title: 研究目标, procedure: fund.objectives}
+  - {id: F10, stage: S4, section: 申报设计, title: 研究内容, procedure: fund.contents}
+  - {id: F11, stage: S4, section: 申报设计, title: 重点, procedure: fund.highlights}
+  - {id: F12, stage: S4, section: 申报设计, title: 难点, procedure: fund.difficulties}
+  - {id: F13, stage: S4, section: 申报设计, title: 总体框架, procedure: fund.framework}
+  - {id: F14, stage: S4, section: 申报设计, title: 研究方法, procedure: fund.methods}
+  - {id: F15, stage: S4, section: 申报设计, title: 技术路线, procedure: fund.roadmap}
+  - {id: F16, stage: S4, section: 申报设计, title: 数据/材料获取计划（仅计划，不执行）,
+     procedure: fund.data_plan}
+  - {id: F17, stage: S4, section: 申报设计, title: 创新点, procedure: fund.innovations}
+  - {id: F18, stage: S4, section: 申报设计, title: 计划安排, procedure: fund.schedule}
+  - {id: F19, stage: S4, section: 申报设计, title: 预期成果, procedure: fund.outcomes}
+  - {id: F20, stage: S4, section: 申报设计, title: 研究基础, procedure: fund.foundation}
+  - {id: F21, stage: S4, section: 申报设计, title: 可行性分析, procedure: fund.feasibility}
+  - {id: F22, stage: S7, section: 成文, title: 参考文献整理（仅真实可验引用）,
+     procedure: fund.references, validation: literature.all_verified_or_flagged}
+  - {id: F23, stage: S7, section: 成文, title: 按栏目合成申请书初稿, procedure: fund.draft,
+     expected_outputs: ["manuscript/draft.md"], depends_on: [F6, F7, F8, F9, F10, F11,
+     F12, F13, F14, F15, F16, F17, F18, F19, F20, F21]}
+  - {id: F24, stage: S8, section: 格式, title: 形式审查（栏目齐全/字数/格式）,
+     procedure: fund.formal_check, validation: fund.formal_ok}
+  - {id: F25, stage: S9, section: 质检, title: 模拟评审（按基金会评审要点）,
+     procedure: fund.mock_review, expected_outputs: ["reviews/mock-review.md"],
+     validation: file_nonempty}
+  - {id: F26, stage: S9, section: 质检, title: 依据评审意见生成修改清单并重写,
+     procedure: fund.revise, expected_outputs: ["reviews/fund-revision-list.md"],
+     depends_on: [F25]}
+rules:
+  template:
+    default_source: default
+    default_spec: templates/fund-default/template-spec.yaml
+  quality:
+    design_only: true            # 不执行未来研究
+    word_limit_aware: true

@@ -1,0 +1,60 @@
+# paradigm/theoretical.yaml — 哲社科理论阐释（§18 TH1–TH23）
+id: theoretical
+stages:
+  - {id: S5, name: RESEARCH_EXECUTION, skills: [theoretical-analysis],
+     tools: [fs.read, fs.write, browser.open]}
+task_rules:
+  - {id: TH1,  stage: S5, section: 理论, title: 明确理论问题, procedure: th.define_problem,
+     inputs: ["research/selected_topic.md"],
+     expected_outputs: ["analysis/theoretical/problem.md"], depends_on: []}
+  - {id: TH2,  stage: S5, section: 理论, title: 界定核心概念, procedure: th.define_concepts,
+     expected_outputs: ["analysis/theoretical/concept_map.md"], depends_on: [TH1]}
+  - {id: TH3,  stage: S5, section: 理论, title: 收集概念来源, procedure: th.collect_sources,
+     depends_on: [TH2]}
+  - {id: TH4,  stage: S5, section: 理论, title: 梳理概念史, procedure: th.concept_history,
+     depends_on: [TH3]}
+  - {id: TH5,  stage: S5, section: 理论, title: 梳理学术史, procedure: th.intellectual_history,
+     depends_on: [TH4]}
+  - {id: TH6,  stage: S5, section: 理论, title: 建立文献谱系, procedure: th.genealogy,
+     expected_outputs: ["analysis/theoretical/literature_genealogy.md"], depends_on: [TH5]}
+  - {id: TH7,  stage: S5, section: 理论, title: 选择理论资源, procedure: th.select_resources,
+     depends_on: [TH6]}
+  - {id: TH8,  stage: S5, section: 理论, title: 精读核心文本, procedure: th.close_reading,
+     expected_outputs: ["analysis/theoretical/core_texts.md"], depends_on: [TH7]}
+  - {id: TH9,  stage: S5, section: 理论, title: 抽取核心命题, procedure: th.extract_claims,
+     expected_outputs: ["analysis/theoretical/core_claims.yaml"], depends_on: [TH8]}
+  - {id: TH10, stage: S5, section: 理论, title: 识别理论争议, procedure: th.controversies,
+     depends_on: [TH9]}
+  - {id: TH11, stage: S5, section: 理论, title: 建立总命题, procedure: th.main_claim,
+     depends_on: [TH10]}
+  - {id: TH12, stage: S5, section: 理论, title: 建立分命题, procedure: th.sub_claims,
+     depends_on: [TH11]}
+  - {id: TH13, stage: S5, section: 理论, title: 建立论证关系（argument map）,
+     procedure: th.argument_map,
+     expected_outputs: ["analysis/theoretical/argument_map.yaml"], depends_on: [TH12]}
+  - {id: TH14, stage: S5, section: 理论, title: 配置文献证据, procedure: th.literature_evidence,
+     expected_outputs: ["analysis/theoretical/evidence_map.md",
+     "analysis/theoretical/evidence_map.yaml"], depends_on: [TH13]}
+  - {id: TH15, stage: S5, section: 理论, title: 配置经验材料, procedure: th.empirical_evidence,
+     depends_on: [TH14]}
+  - {id: TH16, stage: S5, section: 理论, title: 构造反论证, procedure: th.counter_arguments,
+     expected_outputs: ["analysis/theoretical/counter_arguments.md"], depends_on: [TH15]}
+  - {id: TH17, stage: S5, section: 理论, title: 构造回应, procedure: th.replies,
+     depends_on: [TH16]}
+  - {id: TH18, stage: S5, section: 理论, title: 检查循环论证, procedure: th.check_circularity,
+     depends_on: [TH17]}
+  - {id: TH19, stage: S5, section: 理论, title: 检查概念偷换, procedure: th.check_concept_swap,
+     depends_on: [TH18]}
+  - {id: TH20, stage: S5, section: 理论, title: 检查论据不足, procedure: th.check_insufficient,
+     depends_on: [TH19]}
+  - {id: TH21, stage: S5, section: 理论, title: 理论推演, procedure: th.derivation,
+     expected_outputs: ["analysis/theoretical/derivation.md"], depends_on: [TH20]}
+  - {id: TH22, stage: S5, section: 理论, title: 理论贡献, procedure: th.contribution,
+     expected_outputs: ["analysis/theoretical/contribution.md"], depends_on: [TH21]}
+  - {id: TH23, stage: S5, section: 理论, title: 现实解释力, procedure: th.real_world,
+     expected_outputs: ["analysis/theoretical/relevance.md"], depends_on: [TH22]}
+rules:
+  quality:
+    argument_map_required: true
+    counter_arguments_required: true
+    circular_reasoning_check: true

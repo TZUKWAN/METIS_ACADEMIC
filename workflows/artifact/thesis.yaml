@@ -1,0 +1,48 @@
+# artifact/thesis.yaml — 毕业论文专用链（§21 T1–T17）
+id: thesis
+stages:
+  - {id: S1, name: WORKSPACE_AUDIT, skills: [workspace-audit, thesis-adapter]}
+  - {id: S4, name: RESEARCH_DESIGN, skills: [research-design, thesis-adapter]}
+  - {id: S8, name: FORMAT_ADAPTATION, skills: [word-export, thesis-adapter]}
+  - {id: S10, name: DELIVERY, skills: [delivery, thesis-adapter]}
+task_rules:
+  - {id: T1,  stage: S1, section: 模板, title: 学校模板解析, procedure: thesis.parse_template,
+     expected_outputs: ["templates/thesis/template-spec.yaml"], validation: template.parsed}
+  - {id: T2,  stage: S1, section: 模板, title: 目录结构识别, procedure: thesis.toc_rules,
+     depends_on: [T1]}
+  - {id: T3,  stage: S1, section: 模板, title: 封面字段识别, procedure: thesis.cover_fields,
+     depends_on: [T2]}
+  - {id: T4,  stage: S1, section: 模板, title: 摘要规范识别, procedure: thesis.abstract_rules,
+     depends_on: [T2]}
+  - {id: T5,  stage: S1, section: 模板, title: 关键词规范识别, procedure: thesis.keywords_rules,
+     depends_on: [T2]}
+  - {id: T6,  stage: S1, section: 模板, title: 标题层级规范识别, procedure: thesis.heading_rules,
+     depends_on: [T2]}
+  - {id: T7,  stage: S1, section: 模板, title: 图表编号规范识别, procedure: thesis.figure_rules,
+     depends_on: [T2]}
+  - {id: T8,  stage: S1, section: 模板, title: 参考文献规范识别, procedure: thesis.reference_rules,
+     depends_on: [T2]}
+  - {id: T9,  stage: S1, section: 模板, title: 页眉页脚规范识别, procedure: thesis.header_rules,
+     depends_on: [T2]}
+  - {id: T10, stage: S4, section: 开题, title: 开题材料（开题报告/文献综述框架）,
+     procedure: thesis.proposal, expected_outputs: ["reviews/proposal.md"]}
+  - {id: T11, stage: S6, section: 中期, title: 中期材料（进展对照计划）,
+     procedure: thesis.midterm, expected_outputs: ["reviews/midterm.md"]}
+  - {id: T12, stage: S7, section: 成文, title: 正文撰写（章节任务见大纲任务树）,
+     procedure: thesis.body}
+  - {id: T13, stage: S9, section: 质检, title: 章节一致性检查, procedure: thesis.consistency_check,
+     validation: qa.no_errors}
+  - {id: T14, stage: S9, section: 质检, title: 创新点检查（证据支持）,
+     procedure: thesis.innovation_check, depends_on: [T13]}
+  - {id: T15, stage: S8, section: 格式, title: 格式检查（对照学校模板规范）,
+     procedure: thesis.format_check, validation: thesis.format_ok}
+  - {id: T16, stage: S10, section: 答辩, title: 生成答辩 PPT 输入包, procedure: thesis.defense_ppt_input,
+     expected_outputs: ["slides/ppt-content.yaml"]}
+  - {id: T17, stage: S10, section: 答辩, title: 答辩问题预测, procedure: thesis.defense_questions,
+     expected_outputs: ["reviews/defense-questions.md"], depends_on: [T16]}
+rules:
+  template:
+    default_source: default
+    default_spec: templates/thesis-default/template-spec.yaml
+  quality:
+    chapter_consistency_required: true

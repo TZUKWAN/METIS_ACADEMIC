@@ -1,0 +1,41 @@
+# artifact/journal.yaml — 期刊论文专用链（§20 J1–J15）
+id: journal
+stages:
+  - {id: S4, name: RESEARCH_DESIGN, skills: [research-design, journal-adapter]}
+  - {id: S8, name: FORMAT_ADAPTATION, skills: [word-export, journal-adapter]}
+  - {id: S10, name: DELIVERY, skills: [delivery, journal-adapter]}
+task_rules:
+  - {id: J1,  stage: S4, section: 期刊, title: 确定目标期刊（或给出候选清单）,
+     procedure: journal.pick_target}
+  - {id: J2,  stage: S4, section: 期刊, title: 获取作者指南, procedure: journal.author_guide,
+     depends_on: [J1]}
+  - {id: J3,  stage: S4, section: 期刊, title: 获取字数限制, procedure: journal.word_limits,
+     depends_on: [J2]}
+  - {id: J4,  stage: S4, section: 期刊, title: 获取摘要要求, procedure: journal.abstract_rules,
+     depends_on: [J2]}
+  - {id: J5,  stage: S4, section: 期刊, title: 获取引文格式, procedure: journal.citation_style,
+     depends_on: [J2]}
+  - {id: J6,  stage: S4, section: 期刊, title: 获取图表要求, procedure: journal.figure_rules,
+     depends_on: [J2]}
+  - {id: J7,  stage: S4, section: 期刊, title: 获取匿名化要求, procedure: journal.anonymity_rules,
+     depends_on: [J2]}
+  - {id: J8,  stage: S4, section: 期刊, title: 获取补充材料要求, procedure: journal.supplementary_rules,
+     depends_on: [J2]}
+  - {id: J9,  stage: S7, section: 成文, title: 依期刊规则调整论文结构, procedure: journal.restructure}
+  - {id: J10, stage: S7, section: 成文, title: 依期刊风格调整语言, procedure: journal.language_adjust,
+     depends_on: [J9]}
+  - {id: J11, stage: S8, section: 格式, title: 期刊格式检查, procedure: journal.format_check,
+     validation: journal.format_ok}
+  - {id: J12, stage: S8, section: 格式, title: 参考文献格式检查, procedure: journal.references_check,
+     depends_on: [J11]}
+  - {id: J13, stage: S8, section: 格式, title: 图表检查, procedure: journal.figures_check,
+     depends_on: [J11]}
+  - {id: J14, stage: S8, section: 格式, title: 匿名化检查, procedure: journal.anonymize_check,
+     depends_on: [J11]}
+  - {id: J15, stage: S10, section: 交付, title: 生成投稿版本（含匿名版）,
+     procedure: journal.submission_version,
+     expected_outputs: ["deliverables/manuscript.docx"], depends_on: []}
+rules:
+  journal:
+    anonymity_default: false
+    supported_states: [has_topic, has_data, has_draft, from_scratch, mixed]

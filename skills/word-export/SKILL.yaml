@@ -1,0 +1,8 @@
+id: word-export
+path: skills/word-export
+description: Word 生成
+triggers:
+- stage:S8
+- task:word
+persistent: false
+budget_cost: 1

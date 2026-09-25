@@ -1,0 +1,11 @@
+# level/bachelor.yaml — 本科质量要求（§1.3C：完整/规范/可执行/方法基本正确）
+id: bachelor
+rules:
+  quality:
+    min_words: 8000
+    method_rigor: basic           # 方法基本正确
+    contribution: not_required
+    validation_layers: 1
+task_rules:
+  - {id: LV-B-001, stage: S9, section: 质检, title: 本科规范性与可执行性检查,
+     procedure: qa.level_bachelor, validation: qa.no_errors}

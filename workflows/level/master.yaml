@@ -1,0 +1,11 @@
+# level/master.yaml — 硕士质量要求（明确问题/方法严谨/清晰贡献/充分验证）
+id: master
+rules:
+  quality:
+    min_words: 30000
+    method_rigor: rigorous
+    contribution: clear
+    validation_layers: 2
+task_rules:
+  - {id: LV-M-001, stage: S9, section: 质检, title: 硕士方法严谨性与贡献审查,
+     procedure: qa.level_master, validation: qa.no_errors}

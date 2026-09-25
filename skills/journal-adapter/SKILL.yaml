@@ -1,0 +1,8 @@
+id: journal-adapter
+path: skills/journal-adapter
+description: 期刊适配
+triggers:
+- artifact:journal
+- stage:S8
+persistent: false
+budget_cost: 1

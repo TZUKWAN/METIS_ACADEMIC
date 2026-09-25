@@ -1,0 +1,7 @@
+id: workspace-audit
+path: skills/workspace-audit
+description: 工作区审计
+triggers:
+- stage:S1
+persistent: false
+budget_cost: 1

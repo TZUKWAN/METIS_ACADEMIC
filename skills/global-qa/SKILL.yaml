@@ -1,0 +1,7 @@
+id: global-qa
+path: skills/global-qa
+description: 全局质量检查
+triggers:
+- stage:S9
+persistent: false
+budget_cost: 1

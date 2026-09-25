@@ -1,0 +1,90 @@
+# common.yaml — 所有项目共享的骨架（§8 S0–S10）
+id: common
+stages:
+  - {id: S0, name: PROJECT_CONFIG, skills: [metis-core], tools: [fs.read, fs.list]}
+  - {id: S1, name: WORKSPACE_AUDIT, skills: [workspace-audit], tools: [fs.read, fs.list]}
+  - {id: S2, name: LITERATURE_SEARCH, skills: [literature-search], tools: [web.search, scholar.search, browser.open, browser.extract]}
+  - {id: S3, name: TOPIC_SELECTION, skills: [topic-generation], tools: [web.search, scholar.search]}
+  - {id: S4, name: RESEARCH_DESIGN, skills: [research-design], tools: [fs.read]}
+  - {id: S5, name: RESEARCH_EXECUTION, skills: [], tools: [py.exec, data.query]}
+  - {id: S6, name: STAGE_VALIDATION, skills: [], tools: [fs.read]}
+  - {id: S7, name: WRITING, skills: [academic-writing], tools: [fs.read, fs.write]}
+  - {id: S8, name: FORMAT_ADAPTATION, skills: [word-export], tools: [office.docx]}
+  - {id: S9, name: GLOBAL_QA, skills: [global-qa], tools: [scholar.verify, fs.read]}
+  - {id: S10, name: DELIVERY, skills: [delivery], tools: [fs.write, office.pptx]}
+task_rules:
+  # S1 通用审计
+  - {id: C-S1-001, stage: S1, section: 审计, title: 工作区结构审计,
+     procedure: audit.workspace, expected_outputs: [".metis/logs/workspace-audit.md"],
+     validation: file_nonempty}
+  - {id: C-S1-002, stage: S1, section: 审计, title: 已有材料盘点（文档/数据/模板/草稿）,
+     procedure: audit.materials, expected_outputs: ["research/materials_inventory.md"],
+     validation: file_nonempty}
+  # S2 通用：检索计划与索引
+  - {id: C-S2-001, stage: S2, section: 文献, title: 制定检索策略（关键词/来源/时间窗）,
+     procedure: literature.plan, expected_outputs: ["literature/search_logs/plan.md"],
+     validation: file_nonempty}
+  - {id: C-S2-002, stage: S2, section: 文献, title: 执行检索并建立文献索引,
+     procedure: literature.search, inputs: [literature/search_logs/plan.md],
+     expected_outputs: ["literature/literature_index.md", "literature/references.bib"],
+     validation: literature.index_valid}
+  - {id: C-S2-003, stage: S2, section: 文献, title: 文献去重与核验,
+     procedure: literature.dedupe_verify, inputs: [literature/literature_index.md],
+     expected_outputs: ["literature/literature_index.md"],
+     validation: literature.all_verified_or_flagged}
+  # S3 通用：候选选题产出（具体条目由选题模块生成）
+  - {id: C-S3-001, stage: S3, section: 选题, title: 生成候选选题文件 topics/topic_*.md,
+     procedure: topics.generate, expected_outputs: ["topics/"],
+     validation: topics.at_least_one}
+  - {id: C-S3-002, stage: S3, section: 选题, title: 等待用户 topic.confirm 并锁定 selected_topic,
+     procedure: topics.wait_confirm, inputs: ["topics/"],
+     expected_outputs: ["research/selected_topic.md"],
+     validation: file_nonempty, failure_action: manual}
+  # S4 通用骨架（具体研究设计任务由 Research Design 依选题生成）
+  - {id: C-S4-001, stage: S4, section: 设计, title: 生成研究问题/目标/理论框架/方法,
+     procedure: design.core, inputs: ["research/selected_topic.md"],
+     expected_outputs: ["research/research_questions.md", "research/framework.md",
+                        "research/methods.md"],
+     validation: design.core_valid}
+  - {id: C-S4-002, stage: S4, section: 设计, title: 生成论文/申报书大纲,
+     procedure: design.outline, inputs: ["research/framework.md"],
+     expected_outputs: ["research/outline.md"], validation: file_nonempty}
+  - {id: C-S4-003, stage: S4, section: 设计, title: 按大纲拆解任务树并校验依赖,
+     procedure: design.tasks, inputs: ["research/outline.md"],
+     expected_outputs: ["research/tasks.md", ".metis/task-state.json"],
+     validation: design.tasks_valid}
+  # S6 阶段验证汇总
+  - {id: C-S6-001, stage: S6, section: 验证, title: 汇总 S1–S5 各阶段验证结果,
+     procedure: validate.stage_summary, expected_outputs: ["reviews/stage-validation.md"],
+     validation: file_nonempty}
+  # S7 通用成文骨架（章节任务由大纲任务树给出）
+  - {id: C-S7-001, stage: S7, section: 成文, title: 生成全文草稿（含真实结果与引用）,
+     procedure: writing.draft, expected_outputs: ["manuscript/draft.md"],
+     validation: writing.draft_valid}
+  - {id: C-S7-002, stage: S7, section: 成文, title: 插入真实表格与图（来自 results/figures）,
+     procedure: writing.insert_evidence, inputs: ["manuscript/draft.md"],
+     depends_on: ["C-S7-001"],
+     expected_outputs: ["manuscript/draft.md"], validation: writing.evidence_linked}
+  # S8 通用格式适配
+  - {id: C-S8-001, stage: S8, section: 格式, title: 解析/选择模板并生成 template-spec,
+     procedure: format.template_spec, expected_outputs: ["templates/template-spec.yaml"],
+     validation: file_nonempty}
+  - {id: C-S8-002, stage: S8, section: 格式, title: 生成 Word 文稿并回读验证,
+     procedure: format.word, inputs: ["manuscript/draft.md", "templates/template-spec.yaml"],
+     expected_outputs: ["manuscript/manuscript.docx"], validation: word.roundtrip}
+  # S9 通用 QA（细项检查由 qa 模块规则执行）
+  - {id: C-S9-001, stage: S9, section: 质检, title: 全局质量检查（引用/一致性/复现）,
+     procedure: qa.global, expected_outputs: ["reviews/global-qa-report.md"],
+     validation: qa.no_errors}
+  # S10 交付
+  - {id: C-S10-001, stage: S10, section: 交付, title: 组装 deliverables 并生成 delivery-note,
+     procedure: delivery.pack, expected_outputs: ["deliverables/delivery-note.md"],
+     validation: delivery.complete}
+rules:
+  template:
+    default_source: default       # user > workspace > default
+    word_default: {page: A4, margin_cm: [2.5, 2.5, 3.0, 2.5]}
+  delivery:
+    note_max_lines: 40
+  quality:
+    citation_style: gb-t7714      # 中文默认；en-US 碎片可覆盖为 apa

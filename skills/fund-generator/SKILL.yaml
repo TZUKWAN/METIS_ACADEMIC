@@ -1,0 +1,8 @@
+id: fund-generator
+path: skills/fund-generator
+description: 基金申报书生成
+triggers:
+- artifact:fund
+- stage:S7
+persistent: false
+budget_cost: 1

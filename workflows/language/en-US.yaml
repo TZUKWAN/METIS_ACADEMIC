@@ -1,0 +1,13 @@
+# language/en-US.yaml — 英文成果规则（§20 英文追加）
+id: en-US
+rules:
+  language:
+    code: en-US
+    citation_style: apa
+    abstract: english_only
+  quality:
+    style_checks: [terminology-consistency, academic-english, tense-consistency,
+                   style-consistency, journal-phrasing]
+task_rules:
+  - {id: LV-EN-001, stage: S8, section: 格式, title: 英文风格五项检查,
+     procedure: format.english_style_checks, validation: format.style_ok}

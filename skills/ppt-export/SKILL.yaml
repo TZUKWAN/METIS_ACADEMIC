@@ -1,0 +1,7 @@
+id: ppt-export
+path: skills/ppt-export
+description: PPT 生成
+triggers:
+- task:ppt
+persistent: false
+budget_cost: 1

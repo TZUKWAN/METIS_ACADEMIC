@@ -1,0 +1,10 @@
+# language/zh-CN.yaml — 中文成果规则
+id: zh-CN
+rules:
+  language:
+    code: zh-CN
+    citation_style: gb-t7714
+    abstract: both            # 中文摘要+英文摘要（学位论文默认）
+    terminology_check: true
+  quality:
+    min_words: 0              # 以 level 碎片为准

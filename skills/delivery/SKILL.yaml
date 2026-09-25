@@ -1,0 +1,7 @@
+id: delivery
+path: skills/delivery
+description: 交付打包
+triggers:
+- stage:S10
+persistent: false
+budget_cost: 1

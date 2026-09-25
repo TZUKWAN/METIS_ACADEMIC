@@ -1,0 +1,7 @@
+id: topic-generation
+path: skills/topic-generation
+description: 候选选题生成与确认
+triggers:
+- stage:S3
+persistent: false
+budget_cost: 1

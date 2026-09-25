@@ -1,0 +1,74 @@
+# paradigm/quantitative.yaml — 哲社科定量实证（§17 QT1–QT28）
+id: quantitative
+stages:
+  - {id: S5, name: RESEARCH_EXECUTION, skills: [quantitative-analysis],
+     tools: [py.exec, data.query, data.download]}
+  - {id: S4, name: RESEARCH_DESIGN, skills: [research-design, quantitative-analysis]}
+task_rules:
+  - {id: QT0, stage: S5, section: 数据, title: 数据阶段：扫描已有数据/导入或检索公开数据,
+     procedure: data.acquire, expected_outputs: ["data/metadata/data_sources.md",
+                                                 "data/metadata/data_dictionary.yaml"],
+     validation: data.registered, depends_on: []}
+  - {id: QT1,  stage: S5, section: 定量, title: 定义因变量, procedure: quant.define_dv,
+     depends_on: [QT0]}
+  - {id: QT2,  stage: S5, section: 定量, title: 定义核心自变量, procedure: quant.define_iv,
+     depends_on: [QT1]}
+  - {id: QT3,  stage: S5, section: 定量, title: 定义控制变量, procedure: quant.define_controls,
+     depends_on: [QT2]}
+  - {id: QT4,  stage: S5, section: 定量, title: 定义机制变量, procedure: quant.define_mediators,
+     depends_on: [QT3]}
+  - {id: QT5,  stage: S5, section: 定量, title: 定义异质性变量, procedure: quant.define_moderators,
+     depends_on: [QT4]}
+  - {id: QT6,  stage: S5, section: 定量, title: 建立变量字典, procedure: quant.variable_dictionary,
+     expected_outputs: ["analysis/quantitative/variables.yaml"], depends_on: [QT5]}
+  - {id: QT7,  stage: S5, section: 定量, title: 检查缺失值, procedure: quant.check_missing,
+     depends_on: [QT6]}
+  - {id: QT8,  stage: S5, section: 定量, title: 检查异常值, procedure: quant.check_outliers,
+     depends_on: [QT7]}
+  - {id: QT9,  stage: S5, section: 定量, title: 检查重复值, procedure: quant.check_duplicates,
+     depends_on: [QT8]}
+  - {id: QT10, stage: S5, section: 定量, title: 数据类型检查, procedure: quant.check_types,
+     depends_on: [QT9]}
+  - {id: QT11, stage: S5, section: 定量, title: 描述统计, procedure: quant.descriptive,
+     expected_outputs: ["results/descriptives.md", "results/descriptives.json"], depends_on: [QT10]}
+  - {id: QT12, stage: S5, section: 定量, title: 相关性分析, procedure: quant.correlation,
+     expected_outputs: ["results/correlations.md"], depends_on: [QT11]}
+  - {id: QT13, stage: S5, section: 定量, title: 多重共线性检查, procedure: quant.vif,
+     depends_on: [QT12]}
+  - {id: QT14, stage: S5, section: 定量, title: 基准模型, procedure: quant.baseline_model,
+     expected_outputs: ["results/baseline.json", "results/baseline.md"], depends_on: [QT13]}
+  - {id: QT15, stage: S5, section: 定量, title: 模型诊断, procedure: quant.diagnostics,
+     expected_outputs: ["results/diagnostics.md"], depends_on: [QT14]}
+  - {id: QT16, stage: S5, section: 定量, title: 稳健性设计, procedure: quant.robustness_design,
+     depends_on: [QT15]}
+  - {id: QT17, stage: S5, section: 定量, title: 稳健性执行, procedure: quant.robustness,
+     expected_outputs: ["results/robustness.md"], depends_on: [QT16]}
+  - {id: QT18, stage: S5, section: 定量, title: 内生性风险识别, procedure: quant.endogeneity_risk,
+     depends_on: [QT17]}
+  - {id: QT19, stage: S5, section: 定量, title: 内生性处理, procedure: quant.endogeneity,
+     expected_outputs: ["results/endogeneity.md"], depends_on: [QT18]}
+  - {id: QT20, stage: S5, section: 定量, title: 异质性设计, procedure: quant.heterogeneity_design,
+     depends_on: [QT19]}
+  - {id: QT21, stage: S5, section: 定量, title: 异质性执行, procedure: quant.heterogeneity,
+     expected_outputs: ["results/heterogeneity.md"], depends_on: [QT20]}
+  - {id: QT22, stage: S5, section: 定量, title: 机制设计, procedure: quant.mechanism_design,
+     depends_on: [QT21]}
+  - {id: QT23, stage: S5, section: 定量, title: 机制执行, procedure: quant.mechanism,
+     expected_outputs: ["results/mechanism.md"], depends_on: [QT22]}
+  - {id: QT24, stage: S5, section: 定量, title: 拓展分析, procedure: quant.extensions,
+     depends_on: [QT23]}
+  - {id: QT25, stage: S5, section: 定量, title: 图表生成, procedure: quant.figures,
+     expected_outputs: ["figures/"], depends_on: [QT24]}
+  - {id: QT26, stage: S5, section: 定量, title: 结果表生成, procedure: quant.tables,
+     expected_outputs: ["tables/"], depends_on: [QT25]}
+  - {id: QT27, stage: S5, section: 定量, title: 结果解释, procedure: quant.interpret,
+     expected_outputs: ["analysis/quantitative/interpretation.md"], depends_on: [QT26]}
+  - {id: QT28, stage: S5, section: 定量, title: 理论讨论, procedure: quant.theory_discussion,
+     expected_outputs: ["analysis/quantitative/discussion.md"], depends_on: [QT27]}
+rules:
+  reproducibility:
+    run_all: true
+    fixed_seed: 20260925
+  quality:
+    no_default_did: true          # 禁止所有定量论文默认 DID（§17）
+    method_selection: data_first  # 先识别数据结构再选方法
