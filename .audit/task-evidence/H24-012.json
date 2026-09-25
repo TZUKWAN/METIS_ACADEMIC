@@ -1,0 +1,18 @@
+{
+ "id": "H24-012",
+ "status": "passed",
+ "changed_files": [
+  "docs/literature-sources.md"
+ ],
+ "verification_commands": [
+  "cat docs/literature-sources.md"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "每来源 access mode + live-test 日期 + 未验证标注",
+ "evidence_files": [
+  ".audit/task-evidence/H24-012.json"
+ ],
+ "at": "2026-09-26T06:27:44"
+}

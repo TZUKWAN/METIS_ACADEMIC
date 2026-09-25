@@ -1,0 +1,18 @@
+{
+ "id": "H24-005",
+ "status": "passed",
+ "changed_files": [
+  "README.md"
+ ],
+ "verification_commands": [
+  "head -20 README.md"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "状态横幅标注 PASS WITH DOCUMENTED LIMITATIONS（整改中）",
+ "evidence_files": [
+  ".audit/task-evidence/H24-005.json"
+ ],
+ "at": "2026-09-26T06:27:44"
+}

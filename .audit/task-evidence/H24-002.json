@@ -1,0 +1,18 @@
+{
+ "id": "H24-002",
+ "status": "passed",
+ "changed_files": [
+  "SECURITY.md"
+ ],
+ "verification_commands": [
+  "cat SECURITY.md"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "漏洞报告方式+安全边界，无 secret",
+ "evidence_files": [
+  ".audit/task-evidence/H24-002.json"
+ ],
+ "at": "2026-09-26T06:27:44"
+}

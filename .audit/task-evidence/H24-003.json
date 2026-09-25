@@ -1,0 +1,18 @@
+{
+ "id": "H24-003",
+ "status": "passed",
+ "changed_files": [
+  "CONTRIBUTING.md"
+ ],
+ "verification_commands": [
+  "cat CONTRIBUTING.md"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "第三方可按文档安装测试（命令与 CI 一致）",
+ "evidence_files": [
+  ".audit/task-evidence/H24-003.json"
+ ],
+ "at": "2026-09-26T06:27:44"
+}

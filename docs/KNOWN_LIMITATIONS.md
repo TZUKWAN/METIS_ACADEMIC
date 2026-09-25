@@ -5,9 +5,9 @@
 
 ## 1. CI / 安装
 
-- 首轮公开 CI（run 36166870763, commit c0d3e83）为 **failure**：9 failed / 208 passed / 1 skipped，
-  根因是 `to_markdown()` 依赖 `tabulate` 未声明。修复记录见 HARDENING_STATUS.md H1。
-- 首轮 README 自报"217 tests 全绿"是开发机状态，与公开 CI 事实不一致（已在文档头部标注）。
+- ~~首轮公开 CI failure（tabulate 缺失）~~ → **已修复**：run 36196114328（3.10/3.12）全绿，
+  229 passed + 1 skipped；pip check / wheel 资源包内化 / 干净 venv 验证完成（H1）。
+- 首轮 README 自报"217 tests 全绿"是开发机状态，与公开 CI 事实不一致（已标注并以 CI 为准）。
 
 ## 2. Harness / `/metis` 入口
 
@@ -16,11 +16,13 @@
   Claude Code、Kimi Code、ChatGPT Desktop 或任何 ACP Host 中注册为真实 slash command。
 - 这些宿主的支持状态一律为 UNSUPPORTED / 未验证，见 HARNESS_SUPPORT_MATRIX（后续生成）。
 
-## 3. Skill 动态加载
+## 3. Skill 动态加载 / 模型接入
 
-- Skill Router 可匹配触发、控制预算、读取技能文本并记录事件；但 CLI/Headless 的
-  `load_skill()` **只打印/记录，未把技能指令真实注入宿主模型上下文**。
-- 无宿主模型集成：语义级生成（编码、成文、解释）当前由确定性模板骨架产出，非 LLM 生成。
+- Skill Router 可匹配触发、控制预算、读取技能文本并记录事件；CLI/Headless 的
+  `load_skill()` 仍未向宿主模型上下文注入技能指令（H6 待办）。
+- **ModelBackend 已落地**（H5）：抽象接口 + host-driven 实现；语义任务（writing.section）
+  在无后端时 fail-closed（E2E 验证）。语义深度（schema contract/provenance/hallucination
+  guard，H5-004..009）仍在待办。
 
 ## 4. MCP
 
@@ -30,22 +32,21 @@
 
 ## 5. 文献来源
 
-- arXiv：真实 API 实现（`export.arxiv.org`），online 测试默认 skip（H3-011 改造中）。
-- NCPSSD / ChinaXiv / SinoXiv / Paper.edu.cn：**无可用 parser**；HTTP 尝试失败或成功
-  均返回空列表（诚实降级）。Scholar 固定返回空（无官方 API）。
-- Web fallback 仅在注入 `search_fn` 时工作。
-- `verified` 判定曾有"URL 前缀自动通过"逻辑（不等于真实性核验，H2-005 移除中）。
-- GB/T 7714 与 APA formatter 为简化实现，未覆盖全部文献类型。
+- arXiv：真实 API + canonical 核验（live 验证通过）；online 测试默认 skip（独立 live workflow 待办 H3-011）。
+- DOI/CrossRef 元数据核验：真实实现（live 验证通过：正向 verified/错误标题 conflict/未注册 unverified/断网 unreachable）。
+- NCPSSD / ChinaXiv / SinoXiv / Paper.edu.cn：**无可用 parser**（诚实降级，浏览器通道待办 H3）。
+- Scholar 标注 browser-assisted；Web fallback 需宿主注入 search_fn。
+- ~~URL 前缀自动 verified~~ 已移除（H2-005）；references.bib 仅含 verified（H2-008）。
+- GB/T 7714 与 APA 为主要类型实现，复杂类型为 documented simplification（H2-014/015）。
 
 ## 6. 统计方法（真实支持范围）
 
 - **已实现**：OLS（含常数项、正态近似 p 值）、描述统计、相关、简化 VIF、
-  缩尾/加项/子样本三种稳健性、分组 OLS、三步法中介（exploratory）、
-  简化 IV 占位（**不是正确 2SLS**）。
-- **未实现**：正确 t 推断的 df 处理、HC/cluster 稳健标准误、正式 BP/White 检验、
-  正确 2SLS + 弱工具诊断、FE/RE、DID、PSM/RDD/GMM、空间计量。
-  方法名不得在用户输出中声称未实现的方法（H10 整改中）。
-- Runtime 曾按字段名自动挑 DV/IV（`consume`/`digital` 优先）——研究设计必须显式声明。
+  缩尾/加项/子样本三种稳健性、分组 OLS、三步法中介（exploratory）。
+- **未实现（fail-closed 或文档明示）**：正确 t 推断 df、HC/cluster SE、正式 BP/White、
+  正确 2SLS（`2sls_simplified` 占位仍在）、FE/RE、DID、PSM/RDD/GMM、空间计量。
+- ~~按字段名自动挑 DV/IV~~ → **已删除**（H10-001）：变量必须来自 research/quant-design.yaml
+  （显式 outcome/exposure/controls/estimand/identification_status + 用户确认）。
 
 ## 7. Word / PPT
 

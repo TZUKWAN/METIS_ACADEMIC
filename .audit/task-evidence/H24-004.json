@@ -1,0 +1,19 @@
+{
+ "id": "H24-004",
+ "status": "passed",
+ "changed_files": [
+  "README.md",
+  "docs/CAPABILITY_MATRIX.md"
+ ],
+ "verification_commands": [
+  "cat docs/CAPABILITY_MATRIX.md"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "README 指向真实能力矩阵，每项有证据或 unsupported",
+ "evidence_files": [
+  ".audit/task-evidence/H24-004.json"
+ ],
+ "at": "2026-09-26T06:27:44"
+}

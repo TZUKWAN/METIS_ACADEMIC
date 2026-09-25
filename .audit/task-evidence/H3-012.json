@@ -1,0 +1,19 @@
+{
+ "id": "H3-012",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/literature/sources.py",
+  "docs/literature-sources.md"
+ ],
+ "verification_commands": [
+  "grep scholar docs/literature-sources.md"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "Scholar 标注 browser-assisted/人工提供，README/矩阵不写原生 API",
+ "evidence_files": [
+  ".audit/task-evidence/H3-012.json"
+ ],
+ "at": "2026-09-26T06:27:44"
+}
