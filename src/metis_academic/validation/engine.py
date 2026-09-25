@@ -112,11 +112,11 @@ class ValidationEngine:
             design_only = False
         if not tasks:
             if design_only:
-                result.add("tasks.complete", True,
-                           "design_only 策略：S5 无执行任务（预期）", target=stage)
+                result.add(
+                    "tasks.complete", True, "design_only 策略：S5 无执行任务（预期）", target=stage
+                )
             else:
-                result.add("tasks.complete", False, f"阶段 {stage} 无任何任务",
-                           target=stage)
+                result.add("tasks.complete", False, f"阶段 {stage} 无任何任务", target=stage)
         else:
             incomplete = [t.id for t in tasks if t.status.value not in ("passed", "skipped")]
             result.add(

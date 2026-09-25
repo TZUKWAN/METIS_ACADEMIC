@@ -237,11 +237,10 @@ def test_writing_fails_closed_without_backend(tmp_path):
         ex.run_stage(stage, max_tasks=100)
     report = ex.run_stage("S7", max_tasks=100)
     assert not report["complete"]
-    stuck = [t.id for t in sm.tasks.by_stage("S7")
-             if t.status.value in ("failed", "blocked")]
+    stuck = [t.id for t in sm.tasks.by_stage("S7") if t.status.value in ("failed", "blocked")]
     assert stuck, "应有 writing 任务因无后端而失败/阻塞（fail-closed）"
     blocked_task = sm.tasks.get(stuck[0])
-    assert "ModelBackend" in (blocked_task.error or "") or         blocked_task.status.value == "blocked"
+    assert "ModelBackend" in (blocked_task.error or "") or blocked_task.status.value == "blocked"
 
 
 def test_thesis_levels_distinct(tmp_path):
