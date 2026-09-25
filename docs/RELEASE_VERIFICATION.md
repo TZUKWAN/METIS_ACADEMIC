@@ -1,12 +1,15 @@
 # RELEASE VERIFICATION（H28-001）
 
-> 本文档所有结论对应 commit `3cbb1d3`（docs/HARDENING_TASKS.md 入库 + 状态脚本路径修复）之后的最新 main。
+> **最终 target commit：`a40c462`（CI run 36198134899 全绿，3.10+3.12）**。
+> 整改过程验证链：3cbb1d3（run 36196114328 ✓）→ 17be7ae（run 36196885591 ✓）→
+> db683a5（run 36197578522 ✓）→ a40c462（run 36198134899 ✓）。
+> 本文档更新提交自身的 run 亦为绿时即最终状态（不回收旧结论）。
 > 历史自报状态（首轮 456/456、217 全绿）不作为验收证据（见 H0-004 标注）。
 
 ## 1. Commit / 环境
 
 - 审计基线：main @ `c0d3e83`（首轮公开 CI failure：9 failed / 208 passed / 1 skipped，根因 tabulate 缺失）
-- 本轮整改后 HEAD：`3cbb1d3`（整改主体 commit：`a8f52d8`、`5437271`、`55504c6`）
+- 整改提交链：`a8f52d8`（主体）→ `5437271` → `55504c6` → `3cbb1d3` → `17be7ae` → `db683a5` → **`a40c462`（最终）**
 - 本地验证环境：Windows 10.0.26200, Python 3.13.2
 - CI 环境：ubuntu-latest × Python 3.10 / 3.12
 
@@ -17,7 +20,10 @@
 | 36166870763（基线） | c0d3e83 | **failure** | 9 failed / 208 passed / 1 skipped |
 | 36195223162 | a8f52d8 | failure | Format check（本地编辑后未格式化） |
 | 36195393352 | 5437271 | failure | Hardening 检查依赖本地文档路径（已入库修复） |
-| **36196114328** | 3cbb1d3 | **✅ success** | 3.10：229 passed, 1 skipped（356s）；3.12：229 passed, 1 skipped（188s）；lint/format/pip check/hardening-check 全过 |
+| 36196114328 | 3cbb1d3 | ✅ success | 3.10：229 passed, 1 skipped（356s）；3.12：229 passed, 1 skipped（188s） |
+| 36196885591 | 17be7ae | ✅ success | 同上量级 |
+| 36197578522 | db683a5 | ✅ success | 3.10 5m50s / 3.12 5m20s |
+| **36198134899** | **a40c462（最终）** | **✅ success** | lint/format/pip check/pytest/hardening-check 全过 |
 
 CI 步骤：Install → Dependency consistency（pip check）→ Lint → Format check →
 Test（pytest）→ Hardening status consistency（passed 必须有证据）。
