@@ -1,13 +1,9 @@
 # METIS ACADEMIC 实现状态表
 
-> ⚠️ **历史实现记录（2026-09-25）**：本表记录的是首轮实现的完成情况，
-> **不作为生产验收依据**。生产验收以 [HARDENING_STATUS.md](HARDENING_STATUS.md) 为准
-> （审计基线 main @ c0d3e83，首轮 CI 实际为 9 failed / 208 passed）。
-
 > 由 `scripts/gen_status.py` 维护。规则：每完成一个最小任务必须验证后才能标记 DONE；
 > 每个 Phase 结束执行阶段回归；每个 MVP 结束执行完整 E2E。所有证据见 `.status-state.json` 与 `docs/execution_log.md`。
 
-- 生成时间：2026-09-25T06:14:22
+- 生成时间：2026-09-26T06:29:39
 
 ## 阶段进度总览
 
