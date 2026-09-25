@@ -17,7 +17,11 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DOC = Path(r"C:\Users\lauze\Downloads\METIS_ACADEMIC_post_release_audit_and_hardening_tasks.md")
+DOC_CANDIDATES = [
+    ROOT / "docs" / "HARDENING_TASKS.md",  # 入库副本（CI/第三方可用）
+    Path(r"C:\Users\lauze\Downloads\METIS_ACADEMIC_post_release_audit_and_hardening_tasks.md"),
+]
+DOC = next((p for p in DOC_CANDIDATES if p.is_file()), DOC_CANDIDATES[0])
 STATUS = ROOT / "HARDENING_STATUS.md"
 STATE = ROOT / ".audit" / "hardening-state.json"
 
