@@ -67,6 +67,7 @@ class ValidationEngine:
         self.register("journal.format_ok", _rule_format_ok)
         self.register("thesis.format_ok", _rule_format_ok)
         self.register("format.style_ok", _rule_english_style)
+        self.register("manuscript.no_placeholder", _rule_no_placeholder)
 
     # ---------- 任务级（Q007 调用） ----------
     def validate_task(self, task: Task) -> ValidationResult:
@@ -102,8 +103,20 @@ class ValidationEngine:
         sm = StateManager(self.ws)
         # R009 任务完成检查
         tasks = sm.tasks.by_stage(stage)
+        # H4：fund design_only 时 S5 无执行任务是预期状态
+        design_only = False
+        try:
+            policy = self.ws.read_workflow().rules.get("artifact_policy", {})
+            design_only = bool(policy.get("fund_design_only")) and stage == "S5"
+        except Exception:  # noqa: BLE001
+            design_only = False
         if not tasks:
-            result.add("tasks.complete", False, f"阶段 {stage} 无任何任务", target=stage)
+            if design_only:
+                result.add("tasks.complete", True,
+                           "design_only 策略：S5 无执行任务（预期）", target=stage)
+            else:
+                result.add("tasks.complete", False, f"阶段 {stage} 无任何任务",
+                           target=stage)
         else:
             incomplete = [t.id for t in tasks if t.status.value not in ("passed", "skipped")]
             result.add(
@@ -294,14 +307,12 @@ def _rule_sections_consistent(ws: WorkspaceManager, task: Task | None, params: d
     if not sec_dir.is_dir():
         return False, "manuscript/sections/ 不存在"
     prefixes = set()
-    for ln in outline.read_text(encoding="utf-8").splitlines():
-        ln = ln.strip()
-        if ln.startswith(("（", "(")) or True:
-            import re as _re
+    import re as _re
 
-            m = _re.search(r"（([A-Z0-9]+)）|\(([A-Z0-9]+)\)", ln)
-            if m:
-                prefixes.add(m.group(1) or m.group(2))
+    for ln in outline.read_text(encoding="utf-8").splitlines():
+        m = _re.search(r"（([A-Z0-9]+)）|\(([A-Z0-9]+)\)", ln)
+        if m:
+            prefixes.add(m.group(1) or m.group(2))
     have = {f.stem.split("-")[0] for f in sec_dir.glob("*.md")}
     missing = prefixes - have
     return (not missing, f"缺少章节文件: {sorted(missing)}" if missing else "章节齐全")
@@ -458,3 +469,39 @@ def _rule_format_ok(ws: WorkspaceManager, task: Task | None, params: dict):
     if not any(p.is_file() for p in specs):
         return False, "无模板/规则 spec"
     return True, "格式要件齐备"
+
+
+_PLACEHOLDER_PATTERNS = (
+    "待补",
+    "待完善",
+    "依 ",
+    "依research/",
+    "依 analysis/",
+    "产出撰写",
+    "to be finalized",
+    "to be completed",
+    "TODO",
+    "FIXME",
+    "占位",
+    "示意性内容",
+    "由生成器组装",
+    "（章节内容依",
+)
+
+
+def _rule_no_placeholder(ws: WorkspaceManager, task: Task | None, params: dict):
+    """H14-006/H20-003：最终稿不得含内部骨架/占位文字。"""
+    md = ws.root / "manuscript"
+    offenders: list[str] = []
+    if md.is_dir():
+        for f in md.rglob("*.md"):
+            text = f.read_text(encoding="utf-8")
+            for pat in _PLACEHOLDER_PATTERNS:
+                if pat.lower() in text.lower():
+                    offenders.append(f"{f.name}: 含『{pat}』")
+    return (
+        not offenders,
+        "0 占位"
+        if not offenders
+        else f"发现占位文本 {len(offenders)} 处: " + "; ".join(offenders[:5]),
+    )

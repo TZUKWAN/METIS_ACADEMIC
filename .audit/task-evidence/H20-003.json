@@ -1,0 +1,18 @@
+{
+ "id": "H20-003",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/validation/engine.py"
+ ],
+ "verification_commands": [
+  "_PLACEHOLDER_PATTERNS 清单 + no_placeholder 规则"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "占位词表扫描器落地（待补/依…撰写/to be finalized/占位/示意/TODO/FIXME）",
+ "evidence_files": [
+  ".audit/task-evidence/H20-003.json"
+ ],
+ "at": "2026-09-26T06:04:04"
+}

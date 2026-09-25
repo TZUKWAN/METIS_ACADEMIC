@@ -1,0 +1,18 @@
+{
+ "id": "H12-003",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/engines/theoretical.py"
+ ],
+ "verification_commands": [
+  "所有 add_*/set_* 变更即 save_state"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "变更后立即持久化（state.yaml），中断可恢复",
+ "evidence_files": [
+  ".audit/task-evidence/H12-003.json"
+ ],
+ "at": "2026-09-26T06:04:04"
+}

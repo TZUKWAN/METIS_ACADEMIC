@@ -1,0 +1,19 @@
+{
+ "id": "H5-002",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/model_backend.py",
+  "tests/test_e2e_full_system.py"
+ ],
+ "verification_commands": [
+  "E2E HarnessModelBackend 注入后 writing.section 真实生成"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "host-driven 模式 E2E 全链验证（11/11）",
+ "evidence_files": [
+  ".audit/task-evidence/H5-002.json"
+ ],
+ "at": "2026-09-26T06:04:04"
+}

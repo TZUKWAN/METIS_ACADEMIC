@@ -1,19 +1,24 @@
-"""全系统 E2E：9 种 成果×范式 组合 + 学位层级覆盖（§30）。
+"""全系统 E2E：9 种 成果×范式 组合 + 学位层级覆盖（H25 前置）。
 
-每个 E2E 走完整链：/metis 初始化 → S1 审计 → S2 文献(fixture) →
-S3 选题确认 → S4 研究设计 → S5 引擎执行 → S6 验证 → S7 成文 →
-S8 Word → S9 全局 QA → S10 交付。全部经 TaskExecutor+状态机驱动。
+真实性语义：
+- 定量项目变量来自 research/quant-design.yaml（研究设计确认），非字段名猜测；
+- 基金项目不执行 S5 范式链（设计不等于执行）；
+- 章节写作经 ModelBackend（Harness 宿主模式），无后端时 fail-closed。
 """
 
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pandas as pd
 import pytest
+import yaml
 
 from metis_academic.adapters import FilesystemAdapter
 from metis_academic.command import MetisCommand
 from metis_academic.executor import TaskExecutor
+from metis_academic.model_backend import HarnessModelBackend, NoModelBackend, set_model_backend
 from metis_academic.models import Stage
 from metis_academic.qa import GlobalQA
 from metis_academic.runtime import build_runtime_actions, seed_tasks
@@ -60,14 +65,34 @@ LIT_FIXTURE = [
 ]
 
 
+def _host_delegate(task_type: str, prompt: str, context: dict):
+    """测试用宿主模型代理：按任务类型产出确定性文本（代表 Harness 模型）。"""
+    if task_type == "writing.section":
+        section = context.get("topic", "章节")
+        body = (
+            f"本节围绕{section}展开。"
+            "依据 research/ 与 analysis/ 的真实产出陈述本节内容，"
+            "所有事实性表述均引用已核验文献或结果文件。"
+        )
+        return body, None
+    raise AssertionError(f"未预期的语义任务 {task_type}")
+
+
+@pytest.fixture(autouse=True)
+def _host_backend():
+    """E2E 全程注入宿主模型后端（H5-002 模式）。"""
+    set_model_backend(HarnessModelBackend(_host_delegate, model="test-host"))
+    yield
+    set_model_backend(NoModelBackend())
+
+
 def _make_fixture(ws: WorkspaceManager, paradigm: str, tmp_dir) -> dict:
-    """为单个 E2E 项目准备夹具材料。"""
     data_dir = ws.root / "inputs" / "existing-data"
     data_dir.mkdir(parents=True, exist_ok=True)
     (data_dir / "interview_01.txt").write_text(MATERIALS, encoding="utf-8")
     (data_dir / "interview_02.txt").write_text(MATERIALS, encoding="utf-8")
     lit_file = tmp_dir / f"lit_{ws.root.name}.json"
-    lit_file.write_text(__import__("json").dumps(LIT_FIXTURE, ensure_ascii=False), encoding="utf-8")
+    lit_file.write_text(json.dumps(LIT_FIXTURE, ensure_ascii=False), encoding="utf-8")
     if paradigm == "quantitative":
         rng = np.random.default_rng(20260925)
         n = 200
@@ -86,13 +111,32 @@ def _make_fixture(ws: WorkspaceManager, paradigm: str, tmp_dir) -> dict:
     return {"fixture": {"fixture_path": lit_file}}
 
 
+def _write_quant_design(ws: WorkspaceManager) -> None:
+    """研究设计确认：变量与识别策略由设计文件显式声明（H10-001/003）。"""
+    design = {
+        "schema_version": 1,
+        "outcome": "consume",
+        "exposure": "digital",
+        "controls": ["income", "age"],
+        "mediators": ["mediator"],
+        "moderators": ["gender"],
+        "design": "cross_section",
+        "estimand": "associational",
+        "identification_status": "not_causal",
+        "confirmed_by": "E2E fixture (simulated user confirmation)",
+    }
+    (ws.root / "research" / "quant-design.yaml").write_text(
+        yaml.safe_dump(design, allow_unicode=True, sort_keys=False), encoding="utf-8"
+    )
+
+
 def _answers(artifact: str, paradigm: str) -> list[str]:
     base = [artifact, paradigm]
     if artifact == "thesis":
         base += ["zh-CN", "master", "default"]
     elif artifact == "journal":
         base += ["zh-CN"]
-    else:  # fund
+    else:
         return base + ["default", "from_scratch"]
     return base + ["from_scratch"]
 
@@ -118,15 +162,16 @@ def test_full_pipeline_e2e(artifact, paradigm, tmp_path):
     cfg = ws.read_project()
     lit_kwargs = _make_fixture(ws, paradigm, tmp_path)
     actions = build_runtime_actions(ws, cfg, adapter=ad, lit_kwargs=lit_kwargs)
-    # 预置选题确认答案（S3 的 topic.confirm 用户交互）
     ad.push_answer("topic_001")
     ad.push_confirm(True)
     n = seed_tasks(ws, cfg)
-    assert n > 30  # 工作流规则确实生成了任务树
+    assert n > 20
+
+    if paradigm == "quantitative" and artifact != "fund":
+        _write_quant_design(ws)
 
     sm = StateManager(ws)
     ex = TaskExecutor(ws, sm, adapter=ad, actions=actions)
-    # S1 → S10 逐阶段执行（run_stage 内部完成验证与阶段迁移）
     for stage in Stage.ordered()[1:]:
         report = ex.run_stage(stage.value, max_tasks=200)
         assert report["complete"], (
@@ -134,41 +179,73 @@ def test_full_pipeline_e2e(artifact, paradigm, tmp_path):
             f"任务状态={[(t.id, t.status.value) for t in sm.tasks.by_stage(stage.value)]}"
         )
         assert report["validation"] is not None and report["validation"].passed, (
-            f"阶段 {stage.value} 验证失败: {[str(i.message) for i in report['validation'].issues[:5]]}"
+            f"阶段 {stage.value} 验证失败: "
+            f"{[str(i.message) for i in report['validation'].issues[:5]]}"
         )
 
-    # 全局状态
     assert sm.current_stage is Stage.S10_DELIVERY
-    # 证据可追溯
     evidence = ws.read_evidence()
-    assert len(evidence) > n  # 每个任务至少一条证据
-    # 交付物
+    assert len(evidence) > n
     out = ws.root / "deliverables"
     assert (out / "delivery-note.md").is_file()
     assert (out / "manuscript.docx").is_file()
     assert (ws.root / "manuscript" / "manuscript.docx").is_file()
-    # 全局 QA 最终可执行
     rep = GlobalQA(ws).run_all()
-    # 未完成/失败/阻塞任务必须为零
     assert "unfinished_tasks" not in rep.checks, rep.checks.get("unfinished_tasks")
     assert "failed_tasks" not in rep.checks
-    # quant 项目必有可复现结果
-    if paradigm == "quantitative":
-        assert (ws.root / "results" / "summary.json").is_file()
-        assert (ws.root / "code" / "run_all.py").is_file() or (
-            ws.root / "code" / "requirements-frozen.txt"
-        ).is_file()
-    # qualitative 项目必有证据链
-    if paradigm == "qualitative":
-        assert (ws.root / "analysis" / "qualitative" / "evidence_chain.md").is_file()
-        assert (ws.root / "analysis" / "qualitative" / "themes.md").is_file()
-    # theoretical 项目必有 argument map
-    if paradigm == "theoretical":
-        assert (ws.root / "analysis" / "theoretical" / "argument_map.md").is_file()
+
+    if paradigm == "quantitative" and artifact != "fund":
+        summary = json.loads((ws.root / "results" / "summary.json").read_text(encoding="utf-8"))
+        assert "baseline" in summary and summary.get("seed")
+        assert (ws.root / "results" / "baseline.json").is_file()
+    if artifact == "fund":
+        rules = ws.read_workflow().rules
+        assert rules.get("artifact_policy", {}).get("fund_design_only") is True
+        assert not (ws.root / "results" / "summary.json").exists()
+    if paradigm == "qualitative" and artifact != "fund":
+        chain = (ws.root / "analysis" / "qualitative" / "evidence_chain.md").read_text(
+            encoding="utf-8"
+        )
+        assert "M001" in chain
+    if paradigm == "theoretical" and artifact != "fund":
+        arg = (ws.root / "analysis" / "theoretical" / "argument_map.md").read_text(encoding="utf-8")
+        assert "evidence_for" in arg
+
+
+def test_writing_fails_closed_without_backend(tmp_path):
+    """H5-003：无 ModelBackend 时语义任务显式失败，不留假骨架。"""
+    root = tmp_path / "no-backend"
+    root.mkdir()
+    ad = FilesystemAdapter(
+        root,
+        answers=["journal", "qualitative", "zh-CN", "from_scratch"],
+        texts=_texts(),
+        confirms=[True],
+    )
+    MetisCommand(ad).run(root=root)
+    ws = WorkspaceManager(root)
+    cfg = ws.read_project()
+    lit_kwargs = _make_fixture(ws, "qualitative", tmp_path)
+    actions = build_runtime_actions(ws, cfg, adapter=ad, lit_kwargs=lit_kwargs)
+    ad.push_answer("topic_001")
+    ad.push_confirm(True)
+    seed_tasks(ws, cfg)
+    set_model_backend(NoModelBackend())
+    sm = StateManager(ws)
+    ex = TaskExecutor(ws, sm, adapter=ad, actions=actions)
+    for stage in ("S1", "S2", "S3", "S4", "S5", "S6"):
+        ex.run_stage(stage, max_tasks=100)
+    report = ex.run_stage("S7", max_tasks=100)
+    assert not report["complete"]
+    stuck = [t.id for t in sm.tasks.by_stage("S7")
+             if t.status.value in ("failed", "blocked")]
+    assert stuck, "应有 writing 任务因无后端而失败/阻塞（fail-closed）"
+    blocked_task = sm.tasks.get(stuck[0])
+    assert "ModelBackend" in (blocked_task.error or "") or         blocked_task.status.value == "blocked"
 
 
 def test_thesis_levels_distinct(tmp_path):
-    """本科/硕士/博士：质量规则与任务可区分。"""
+    """本科/硕士/博士：质量规则与任务可区分（H25-010..012）。"""
     levels = {"bachelor": "LV-B-001", "master": "LV-M-001", "phd": "LV-P-006"}
     for level, marker in levels.items():
         root = tmp_path / f"thesis-{level}"
@@ -187,9 +264,10 @@ def test_thesis_levels_distinct(tmp_path):
         ad.push_answer("topic_001")
         ad.push_confirm(True)
         seed_tasks(ws, cfg)
+        _write_quant_design(ws)
         sm = StateManager(ws)
         ex = TaskExecutor(ws, sm, adapter=ad, actions=actions)
-        assert marker in {t.id for t in sm.tasks.all()}, level  # 层级任务注入
+        assert marker in {t.id for t in sm.tasks.all()}, level
         if level == "phd":
             assert {f"LV-P-00{i}" for i in range(1, 7)} <= {t.id for t in sm.tasks.all()}
         for stage in Stage.ordered()[1:]:

@@ -32,6 +32,7 @@ from .errors import MetisError, TaskExecutionError
 from .executor import ActionRegistry, ExecutionContext
 from .generators import DraftAssembler, FundGenerator, JournalGenerator, ThesisGenerator
 from .literature import LiteratureManager, SearchQuery
+from .model_backend import ModelRequest, get_model_backend
 from .models import ProjectConfig, Task
 from .ppt import PPTBuilder
 from .qa import GlobalQA
@@ -221,6 +222,14 @@ def _build_actions(ctx: RuntimeContext) -> dict:
         dm.build_tasks(workflow_rules=[])  # 生成 S7 章节任务并入库
         # tasks.md 重渲染为全量任务树（含 workflow 规则任务）
         sm = StateManager(ws)
+        # H4：被 artifact policy 禁用的规则（如 fund 的 S5 执行链）不再存在于
+        # 任务树 → 清理指向它们的依赖（基金章节任务不依赖未执行的结果）
+        known = {t.id for t in sm.tasks.all()}
+        for t in sm.tasks.all():
+            dead = [d for d in t.dependencies if d not in known]
+            if dead:
+                t.dependencies = [d for d in t.dependencies if d in known]
+        sm.tasks.save()
         # 骨架任务排序：C-S7-001 依赖最后一个章节任务（章节先于组装）
         section_tasks = sorted(
             (t for t in sm.tasks.all() if t.id.startswith("T-") and t.stage == "S7"),
@@ -444,24 +453,43 @@ def _build_actions(ctx: RuntimeContext) -> dict:
             "qual.coding_units": lambda t, c: [_log_action(t, ctx, "编码单元划分")],
             "qual.initial_codes": q9_initial_codes,
             "qual.code": q10_code,
-            "qual.aggregate_codes": lambda t, c: [
-                _write(
-                    "analysis/qualitative/aggregate.yaml",
-                    yaml.safe_dump(
-                        {"counts": qual_engine().aggregate()}, allow_unicode=True, sort_keys=False
-                    ),
-                    ctx,
+            "qual.aggregate_codes": lambda t, c: (
+                lambda eng: (
+                    (
+                        eng.import_materials("data/processed"),
+                        eng.set_codebook(_load_codebook(ws)),
+                        eng.load_codings(),
+                    )
+                    and [
+                        _write(
+                            "analysis/qualitative/aggregate.yaml",
+                            yaml.safe_dump(
+                                {"counts": eng.aggregate()}, allow_unicode=True, sort_keys=False
+                            ),
+                            ctx,
+                        )
+                    ]
                 )
-            ],
+            )(qual_engine()),
             "qual.themes": lambda t, c: (
                 lambda eng: (
-                    (eng.set_codebook(_load_codebook(ws)), eng.run_coding(), eng.write_themes())
+                    (
+                        eng.import_materials("data/processed"),
+                        eng.set_codebook(_load_codebook(ws)),
+                        eng.load_codings(),
+                        eng.write_themes(),
+                    )
                     and ["analysis/qualitative/themes.md"]
                 )
             )(qual_engine()),
             "qual.negative_cases": lambda t, c: (
                 lambda eng: (
-                    (eng.load_codings(), eng.negative_cases())
+                    (
+                        eng.import_materials("data/processed"),
+                        eng.set_codebook(_load_codebook(ws)),
+                        eng.load_codings(),
+                        eng.negative_cases(),
+                    )
                     and ["analysis/qualitative/negative_cases.md"]
                 )
             )(qual_engine()),
@@ -478,7 +506,12 @@ def _build_actions(ctx: RuntimeContext) -> dict:
             "qual.mechanisms": q15_mechanisms,
             "qual.evidence_chain": lambda t, c: (
                 lambda eng: (
-                    (eng.load_codings(), eng.evidence_chain())
+                    (
+                        eng.import_materials("data/processed"),
+                        eng.set_codebook(_load_codebook(ws)),
+                        eng.load_codings(),
+                        eng.evidence_chain(),
+                    )
                     and ["analysis/qualitative/evidence_chain.md"]
                 )
             )(qual_engine()),
@@ -496,24 +529,31 @@ def _build_actions(ctx: RuntimeContext) -> dict:
         return qe_holder["qe"]
 
     def quant_define_vars(task, c):
-        """QT1–QT5：以数据字典为基础的确定性变量选择（数据优先原则）。"""
+        """H10-001：变量与识别策略必须来自 research/quant-design.yaml
+        （研究设计阶段产出 + 用户确认），禁止按字段名自动挑选。"""
+        design_file = ws.root / "research" / "quant-design.yaml"
+        if not design_file.is_file():
+            raise TaskExecutionError(
+                "缺少 research/quant-design.yaml（研究设计须显式声明 "
+                "outcome/exposure/controls 与识别策略，不能由字段名猜测）"
+            )
+        design = yaml.safe_load(design_file.read_text(encoding="utf-8")) or {}
+        for k in ("outcome", "exposure"):
+            if not design.get(k):
+                raise TaskExecutionError(f"quant-design.yaml 缺少 {k}")
+        dv = str(design["outcome"])
+        iv = str(design["exposure"])
+        controls = [str(x) for x in design.get("controls", [])]
+        mediators = [str(x) for x in design.get("mediators", [])]
+        moderators = [str(x) for x in design.get("moderators", [])]
+        # 校验设计中的变量在数据字典中存在（数据优先原则）
         cols: list[str] = []
         for f in sorted((ws.root / "data" / "metadata").glob("data_dictionary.*.yaml")):
             d = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
-            cols += [
-                k
-                for k, v in (d.get("variables") or {}).items()
-                if v.get("type") in ("int", "float")
-            ]
-        cols = list(dict.fromkeys(cols))
-        if not cols:
-            raise TaskExecutionError("数据字典无数值变量；请先提供数据")
-        dv = "consume" if "consume" in cols else cols[-1]
-        iv = "digital" if "digital" in cols else (cols[0] if cols[0] != dv else cols[-1])
-        rest = [c for c in cols if c not in (dv, iv)]
-        controls = [c for c in rest if c not in ("gender", "mediator")][:3]
-        mediators = ["mediator"] if "mediator" in rest else []
-        moderators = ["gender"] if "gender" in rest else []
+            cols += list((d.get("variables") or {}).keys())
+        missing = [v for v in {dv, iv, *controls, *mediators, *moderators} if v not in cols]
+        if missing:
+            raise TaskExecutionError(f"quant-design.yaml 中变量不存在于数据字典: {missing}")
         vdict = VariableDict(
             dv=dv, iv=iv, controls=controls, mediators=mediators, moderators=moderators
         )
@@ -936,6 +976,16 @@ def _build_actions(ctx: RuntimeContext) -> dict:
     # ---- 成文（S7） ----
     asm = DraftAssembler(ws, cfg, ctx.lit)
 
+    def _require_backend(task_type: str):
+        """H5-003：语义任务无后端时显式失败（不留假骨架）。"""
+        be = get_model_backend()
+        if not be.available():
+            raise TaskExecutionError(
+                f"任务 {task_type} 需要语义模型（ModelBackend 未接入）；"
+                "请通过 Harness 接入宿主模型后重试"
+            )
+        return be
+
     def writing_section(task, c):
         out = list(task.expected_outputs)
         section = task.procedure_params.get("section", task.section)
@@ -964,6 +1014,15 @@ def _build_actions(ctx: RuntimeContext) -> dict:
                 "结论呼应研究问题（RQ1–RQ3）。RQ1、RQ2、RQ3 均已回应。",
                 f"创新点：{_topic_title(ctx)} 的机制识别。",
             ]
+        backend = _require_backend("writing.section")
+        resp = backend.generate(
+            ModelRequest(
+                task_type="writing.section",
+                prompt=f"撰写章节「{task.procedure_params.get('section', task.section)}」",
+                context={"topic": _topic_title(ctx), "task_id": task.id},
+            )
+        )
+        generated = resp.text.strip()
         import re as _re
 
         rq_ids = _re.findall(r"RQ\d", asm.read_if_exists("research/research_questions.md"))
@@ -973,7 +1032,7 @@ def _build_actions(ctx: RuntimeContext) -> dict:
         if p is None:
             raise TaskExecutionError("章节任务缺期望输出")
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(f"# {section}\n\n" + "\n".join(body) + "\n", encoding="utf-8")
+        p.write_text(f"# {section}\n\n{generated}\n\n" + "\n".join(body) + "\n", encoding="utf-8")
         return out
 
     def writing_draft(task, c):
@@ -1113,8 +1172,9 @@ def _build_actions(ctx: RuntimeContext) -> dict:
         tpl = g.load_template()
         review = g.mock_review(tpl)
         g.revision_list(review)
-        lines = ["# 模拟评审", "", f"总分: {review.total}", ""]
-        lines += [f"- {k}: {v}" for k, v in review.scores.items()]
+        lines = ["# 模拟评审（rubric）", ""]
+        for c in review.criteria:
+            lines.append(f"- [{c['status']}] {c['criterion']}：{c['evidence']}")
         lines += ["", "## 形式问题", ""] + [f"- {i}" for i in review.issues]
         _write("reviews/mock-review.md", "\n".join(lines) + "\n", ctx)
         return ["reviews/fund-revision-list.md", "reviews/mock-review.md"]

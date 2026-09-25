@@ -17,21 +17,17 @@ class DraftAssembler:
         self.cfg = cfg
         self.lit = lit
 
-    # ---------- 引用池（只含 verified） ----------
+    # ---------- 引用池（H2-010：单一可信来源） ----------
     def verified_citations(self) -> dict[str, str]:
-        """key → 标题。key 同时是 references.bib 中的 bibkey。"""
+        """只返回带核验依据的 records（record_id → 标题）。
+
+        禁止从 references.bib 无核验元数据的 key 反推已核验；
+        bib 由 LiteratureManager 从同一 verified 集合生成。
+        """
         pool: dict[str, str] = {}
-        bib = self.ws.root / "literature" / "references.bib"
         if self.lit is not None:
             for rec in self.lit.verified_records():
-                from ..literature.sources import _bib_key
-
-                pool[_bib_key(rec)] = rec.title
-        if bib.is_file():
-            for ln in bib.read_text(encoding="utf-8").splitlines():
-                if ln.startswith("@") and "{" in ln:
-                    key = ln.split("{", 1)[1].split(",", 1)[0]
-                    pool.setdefault(key, "")
+                pool[rec.record_id] = rec.title
         return pool
 
     # ---------- 真实材料摘要 ----------

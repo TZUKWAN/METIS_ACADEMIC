@@ -1,0 +1,18 @@
+{
+ "id": "H1-007",
+ "status": "passed",
+ "changed_files": [],
+ "verification_commands": [
+  "pip install --dry-run -e '.[analysis]' / [docs] / [dev]"
+ ],
+ "verification_exit_codes": [
+  0,
+  0,
+  0
+ ],
+ "notes": "三个 extra 独立解析成功",
+ "evidence_files": [
+  ".audit/task-evidence/H1-007.json"
+ ],
+ "at": "2026-09-26T02:44:11"
+}

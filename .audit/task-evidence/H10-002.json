@@ -1,0 +1,18 @@
+{
+ "id": "H10-002",
+ "status": "passed",
+ "changed_files": [
+  "research/quant-design.yaml（约定）"
+ ],
+ "verification_commands": [
+  "E2E _write_quant_design schema: outcome/exposure/controls/estimand/identification_status"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "QuantResearchDesign schema 落地为 quant-design.yaml，缺失/缺 outcome 即阻断",
+ "evidence_files": [
+  ".audit/task-evidence/H10-002.json"
+ ],
+ "at": "2026-09-26T06:04:04"
+}

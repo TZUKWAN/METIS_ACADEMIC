@@ -1,0 +1,18 @@
+{
+ "id": "H1-013",
+ "status": "passed",
+ "changed_files": [
+  "dist/"
+ ],
+ "verification_commands": [
+  "python -m build --wheel --sdist -o dist/"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "whl + tar.gz 均生成",
+ "evidence_files": [
+  ".audit/task-evidence/H1-013.json"
+ ],
+ "at": "2026-09-26T02:44:11"
+}

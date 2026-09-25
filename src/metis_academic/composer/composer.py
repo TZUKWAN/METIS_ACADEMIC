@@ -29,9 +29,13 @@ FRAGMENT_ORDER_WEIGHT = {"common": 0, "paradigm": 1, "artifact": 2, "level": 3, 
 
 
 def _default_fragments_dir() -> Path:
+    """优先级：环境变量 > 包内资源（wheel 安装可用）> 仓库根（源码布局兜底）。"""
     env = os.environ.get("METIS_WORKFLOWS_DIR")
     if env:
         return Path(env)
+    bundled = Path(__file__).resolve().parents[1] / "workflows"
+    if bundled.is_dir():
+        return bundled
     return Path(__file__).resolve().parents[3] / "workflows"
 
 
@@ -154,6 +158,21 @@ class WorkflowComposer:
         rules: dict = {}
         for _, f in fragments:
             rules = _deep_merge(rules, f.get("rules") or {})
+
+        # H4-002/003：artifact capability policy——基金申报是“研究设计”，
+        # 不默认执行未来研究；S5 范式执行链（Q*/QT*/TH*）对 fund 全部禁用，
+        # 设计内容由 fund 专用链（F5–F21）承担。
+        dropped: list[str] = []
+        if cfg.artifact_type is ArtifactType.FUND:
+            kept = []
+            for r in task_rules:
+                if r.stage == "S5":
+                    dropped.append(r.id)
+                    continue
+                kept.append(r)
+            task_rules = kept
+            rules.setdefault("artifact_policy", {})["fund_design_only"] = True
+            rules["artifact_policy"]["disabled_s5_rules"] = dropped
 
         wf = WorkflowDefinition(
             composed_from=[n for n, _ in fragments],

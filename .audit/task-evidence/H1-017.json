@@ -1,0 +1,16 @@
+{
+ "id": "H1-017",
+ "status": "passed",
+ "changed_files": [],
+ "verification_commands": [
+  "pytest -rs"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "唯一 skip：tests/test_literature.py:211 联网 arXiv 测试（marker=online，理由注明）",
+ "evidence_files": [
+  ".audit/task-evidence/H1-017.json"
+ ],
+ "at": "2026-09-26T02:44:11"
+}

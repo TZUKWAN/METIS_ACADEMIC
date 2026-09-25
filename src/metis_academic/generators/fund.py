@@ -37,17 +37,25 @@ DEFAULT_FUND_TEMPLATE: dict = {
 
 @dataclass
 class FundReview:
-    """模拟评审结果（T019）。"""
+    """模拟评审（T019/H15-001/002）：rubric 解释项，无固定数值评分。
 
-    scores: dict[str, int] = field(default_factory=dict)
+    criteria 每条 = {criterion, status(pass/warn/fail), evidence, suggestion}
+    """
+
+    criteria: list[dict] = field(default_factory=list)
     issues: list[str] = field(default_factory=list)
 
-    @property
-    def total(self) -> int:
-        return sum(self.scores.values())
-
     def passed(self) -> bool:
-        return not self.issues
+        return not self.issues and not any(c.get("status") == "fail" for c in self.criteria)
+
+    def to_markdown(self) -> str:
+        lines = ["# 模拟评审（rubric）", ""]
+        for c in self.criteria:
+            lines.append(f"- [{c['status']}] {c['criterion']}：{c['evidence']}")
+            if c.get("suggestion"):
+                lines.append(f"  - 建议：{c['suggestion']}")
+        lines += ["", "## 形式问题", ""] + [f"- {i}" for i in self.issues]
+        return "\n".join(lines) + "\n"
 
 
 class FundGenerator:
@@ -178,7 +186,29 @@ class FundGenerator:
             raise GenerationError("尚未生成申请书初稿")
         draft = draft_path.read_text(encoding="utf-8")
         review = FundReview()
-        review.scores = {"选题价值": 80, "研究设计": 75, "可行性": 78, "创新性": 72}
+        rq_doc = self.asm.read_if_exists("research/research_questions.md")
+        methods_ok = (self.ws.root / "research" / "methods.md").is_file()
+        n_citations = len(self.asm.verified_citations())
+        review.criteria = [
+            {
+                "criterion": "研究问题明确（RQ 可辨识）",
+                "status": "pass" if "RQ1" in rq_doc else "fail",
+                "evidence": f"research_questions.md 含 {rq_doc.count('RQ')} 处 RQ 标记",
+                "suggestion": "" if "RQ1" in rq_doc else "先定义 RQ1–RQ3",
+            },
+            {
+                "criterion": "方法与数据可行性",
+                "status": "pass" if methods_ok else "fail",
+                "evidence": "research/methods.md 存在" if methods_ok else "缺 methods 文档",
+                "suggestion": "",
+            },
+            {
+                "criterion": "参考文献全部经核验",
+                "status": "pass" if n_citations else "warn",
+                "evidence": f"已核验引用 {n_citations} 条",
+                "suggestion": "" if n_citations else "完成文献核验（DOI/arXiv resolver）",
+            },
+        ]
         # 形式问题检查
         for sec in template.get("sections", []):
             if sec["title"] not in draft:
@@ -204,6 +234,9 @@ class FundGenerator:
             lines.append("形式检查全部通过。")
         for i in review.issues:
             lines.append(f"- [ ] {i}")
+        for c in review.criteria:
+            if c.get("status") in ("warn", "fail"):
+                lines.append(f"- [ ] [{c['status']}] {c['criterion']}：{c.get('suggestion', '')}")
         p.write_text("\n".join(lines) + "\n", encoding="utf-8")
         return p
 

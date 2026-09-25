@@ -1,0 +1,18 @@
+{
+ "id": "H1-006",
+ "status": "passed",
+ "changed_files": [
+  "docs/data-formats.md"
+ ],
+ "verification_commands": [
+  "cat docs/data-formats.md"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "登记 vs 分析分离的能力矩阵，与实现逐项核对",
+ "evidence_files": [
+  ".audit/task-evidence/H1-006.json"
+ ],
+ "at": "2026-09-26T02:44:11"
+}

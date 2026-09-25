@@ -22,7 +22,7 @@ import requests
 
 from ..errors import LiteratureError
 from ..logging_setup import get_logger
-from .models import LiteratureRecord, SearchQuery
+from .models import EntryType, LiteratureRecord, SearchQuery
 
 logger = get_logger("literature")
 
@@ -46,11 +46,14 @@ class SourceAdapter(ABC):
 
     # ---- 公共工具 ----
     def _make_record(self, **kw) -> LiteratureRecord:
+        """来源适配器只负责发现；核验状态一律从 unverified 开始（H2-005）。"""
         kw.setdefault("source", self.id)
         kw.setdefault("retrieved_at", _now())
+        kw.pop("verified", None)  # 来源发现不产生核验
+        kw.pop("verify_url", None)  # URL 形式不等于真实性
         rec = LiteratureRecord(**kw)
-        rec.citation_gbt7714 = format_gbt7714(rec)
-        rec.citation_apa = format_apa(rec)
+        if rec.entry_type == EntryType.WEB and self.id == "arxiv":
+            rec.entry_type = EntryType.PREPRINT
         return rec
 
 
@@ -208,10 +211,7 @@ class FixtureSource(SourceAdapter):
             d = dict(d)
             d.setdefault("source", self.id)
             d.setdefault("retrieved_at", _now())
-            rec = LiteratureRecord.from_dict(d)
-            rec.citation_gbt7714 = format_gbt7714(rec)
-            rec.citation_apa = format_apa(rec)
-            out.append(rec)
+            out.append(LiteratureRecord.from_dict(d))
             if len(out) >= query.max_results:
                 break
         if not out:
@@ -220,10 +220,7 @@ class FixtureSource(SourceAdapter):
                 d2 = dict(d)
                 d2.setdefault("source", self.id)
                 d2.setdefault("retrieved_at", _now())
-                rec = LiteratureRecord.from_dict(d2)
-                rec.citation_gbt7714 = format_gbt7714(rec)
-                rec.citation_apa = format_apa(rec)
-                out.append(rec)
+                out.append(LiteratureRecord.from_dict(d2))
                 if len(out) >= query.max_results:
                     break
         return out
@@ -266,13 +263,24 @@ def _has_cjk(items: list[str]) -> bool:
     return any(re.search(r"[\u4e00-\u9fff]", x) for x in items)
 
 
+_GBT_TYPE_MARKER = {
+    "journal": "[J/OL]",
+    "book": "[M]",
+    "chapter": "[M]//",
+    "web": "[EB/OL]",
+    "preprint": "[EB/OL]",
+    "thesis": "[D]",
+}
+
+
 def format_gbt7714(rec: LiteratureRecord) -> str:
-    """GB/T 7714-2015 简化格式：作者. 题名[文献类型]. 出版年. URL."""
+    """GB/T 7714-2015 格式（按 entry_type 选择文献类型标识，H2-013/014）。"""
     a = _authors_str(rec.authors)
     year = rec.year or "n.d."
+    marker = _GBT_TYPE_MARKER.get(rec.entry_type.value, "[EB/OL]")
     tail = f". {rec.url}" if rec.url else ""
     doi = f". DOI: {rec.doi}" if rec.doi else ""
-    return f"{a}. {rec.title}[EB/OL]. {year}{doi}{tail}."
+    return f"{a}. {rec.title}{marker}. {year}{doi}{tail}."
 
 
 def format_apa(rec: LiteratureRecord) -> str:
@@ -317,3 +325,108 @@ def _bib_key(rec: LiteratureRecord) -> str:
         (rec.authors[0] if rec.authors else "anon").split()[-1] if rec.authors else "anon",
     )
     return f"{first or 'anon'}{rec.year or 'nd'}{LiteratureRecord.normalize_title(rec.title)[:12]}"
+
+
+# ---------------- 元数据核验 resolver（H2-006/H2-007） ----------------
+
+
+def _title_similar(a: str, b: str) -> float:
+    ra = LiteratureRecord(title=a)
+    return ra.title_similarity(LiteratureRecord(title=b))
+
+
+def _set_verification(
+    rec: LiteratureRecord,
+    resolver: str,
+    status: str,
+    canonical: dict | None = None,
+    evidence: str = "",
+) -> LiteratureRecord:
+    """统一核验写入：状态 + 依据元数据（H2-004）。"""
+    from .models import VerificationInfo, VerificationStatus
+
+    rec.verification = VerificationStatus(status)
+    rec.verification_info = VerificationInfo(
+        resolver=resolver, at=_now(), canonical=canonical or {}, match_evidence=evidence
+    )
+    return rec
+
+
+def verify_doi(rec: LiteratureRecord, timeout: int = 15) -> LiteratureRecord:
+    """DOI resolver：CrossRef API 元数据匹配后才置 verified。
+
+    网络失败 → unreachable；元数据冲突 → conflict；无 DOI → 原样返回。
+    """
+    doi = LiteratureRecord.normalize_doi(rec.doi)
+    if not doi:
+        return rec
+    try:
+        resp = requests.get(f"https://api.crossref.org/works/{doi}", timeout=timeout)
+    except requests.RequestException:
+        return _set_verification(rec, "crossref-doi", "unreachable", evidence="network error")
+    if resp.status_code != 200:
+        return _set_verification(
+            rec, "crossref-doi", "unreachable", evidence=f"HTTP {resp.status_code}"
+        )
+    msg = resp.json().get("message", {})
+    cr_title = (msg.get("title") or [""])[0]
+    sim = _title_similar(rec.title, cr_title) if cr_title else 0.0
+    cr_year = None
+    for key in ("published-print", "published-online", "issued"):
+        parts = (msg.get(key) or {}).get("date-parts") or [[None]]
+        if parts and parts[0] and parts[0][0]:
+            cr_year = parts[0][0]
+            break
+    year_ok = rec.year is None or cr_year is None or rec.year == cr_year
+    canonical = {
+        "title": cr_title,
+        "year": cr_year,
+        "container": (msg.get("container-title") or [""])[0],
+        "authors": [
+            f"{a.get('family', '')} {a.get('given', '')}".strip() for a in msg.get("author", [])
+        ],
+    }
+    if sim >= 0.8 and year_ok:
+        return _set_verification(
+            rec,
+            "crossref-doi",
+            "verified",
+            canonical,
+            f"title similarity {sim:.2f}; year {rec.year}=={cr_year}",
+        )
+    status = "conflict" if (sim < 0.5 or not year_ok) else "resolved"
+    return _set_verification(
+        rec, "crossref-doi", status, canonical, f"title similarity {sim:.2f}; year_ok={year_ok}"
+    )
+
+
+def verify_arxiv(rec: LiteratureRecord, timeout: int = 15) -> LiteratureRecord:
+    """arXiv canonical metadata 核验：按 abs URL 的 id 查询 API 比对标题。"""
+    arxiv_id = rec.url.rsplit("/abs/", 1)[-1] if "/abs/" in rec.url else ""
+    if not arxiv_id:
+        return rec
+    try:
+        resp = requests.get(_ARXIV_API, params={"id_list": arxiv_id}, timeout=timeout)
+        root = ET.fromstring(resp.content)
+    except (requests.RequestException, ET.ParseError):
+        return _set_verification(rec, "arxiv-api", "unreachable", evidence="network error")
+    entry = root.find(f"{_ATOM}entry")
+    if entry is None:
+        return _set_verification(rec, "arxiv-api", "unreachable", evidence="no entry")
+    ax_title = (entry.findtext(f"{_ATOM}title") or "").strip().replace(chr(10), " ")
+    sim = _title_similar(rec.title, ax_title)
+    if sim >= 0.8:
+        return _set_verification(
+            rec,
+            "arxiv-api",
+            "verified",
+            {"title": ax_title, "arxiv_id": arxiv_id},
+            f"title similarity {sim:.2f}; id {arxiv_id}",
+        )
+    return _set_verification(
+        rec,
+        "arxiv-api",
+        "conflict",
+        {"title": ax_title, "arxiv_id": arxiv_id},
+        f"title similarity {sim:.2f}",
+    )

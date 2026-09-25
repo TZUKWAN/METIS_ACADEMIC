@@ -1,0 +1,20 @@
+{
+ "id": "H1-003",
+ "status": "passed",
+ "changed_files": [
+  "pyproject.toml"
+ ],
+ "verification_commands": [
+  ".audit/venv-clean/Scripts/python -c 'import tabulate'",
+  "venv pytest 全量"
+ ],
+ "verification_exit_codes": [
+  0,
+  0
+ ],
+ "notes": "tabulate>=0.9 声明进核心依赖；干净 venv 重装后 import 0.10.0 且测试全绿",
+ "evidence_files": [
+  ".audit/task-evidence/H1-003.json"
+ ],
+ "at": "2026-09-26T02:44:11"
+}

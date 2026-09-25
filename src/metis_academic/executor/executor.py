@@ -173,8 +173,8 @@ class TaskExecutor:
         try:
             fn = self.actions.get(task.procedure)
             outputs = fn(task, ctx) or list(task.expected_outputs)
-        except TaskExecutionError:
-            self.sm.tasks.set_status(task_id, "failed", error="action 未注册")
+        except TaskExecutionError as e:
+            self.sm.tasks.set_status(task_id, "failed", error=str(e))
             self._evidence(task, task.procedure, [], task.validation, "failed")
             return self._handle_failure(task)
         except Exception as e:  # noqa: BLE001

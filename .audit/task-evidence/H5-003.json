@@ -1,0 +1,19 @@
+{
+ "id": "H5-003",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/model_backend.py",
+  "src/metis_academic/runtime.py"
+ ],
+ "verification_commands": [
+  "tests/test_e2e_full_system.py::test_writing_fails_closed_without_backend"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "无后端时语义任务 fail-closed（任务 blocked，不留假骨架），E2E 断言",
+ "evidence_files": [
+  ".audit/task-evidence/H5-003.json"
+ ],
+ "at": "2026-09-26T06:04:04"
+}

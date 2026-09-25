@@ -1,0 +1,20 @@
+{
+ "id": "H1-015",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/workflows/",
+  "src/metis_academic/skill_defs/",
+  "pyproject.toml"
+ ],
+ "verification_commands": [
+  "python -m zipfile -l dist/*.whl | grep -cE 'workflows|skill_defs'"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "44 个资源文件入包；wheel 环境组合 64 规则 + 技能内容可读（包内化修复）",
+ "evidence_files": [
+  ".audit/task-evidence/H1-015.json"
+ ],
+ "at": "2026-09-26T02:44:11"
+}

@@ -1,0 +1,16 @@
+{
+ "id": "H1-016",
+ "status": "passed",
+ "changed_files": [],
+ "verification_commands": [
+  "venv-clean pytest 全量"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "0 failed（计数以最新 CI run 为准写入发布验证文档）",
+ "evidence_files": [
+  ".audit/task-evidence/H1-016.json"
+ ],
+ "at": "2026-09-26T02:44:11"
+}

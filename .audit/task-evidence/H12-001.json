@@ -1,0 +1,18 @@
+{
+ "id": "H12-001",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/engines/theoretical.py"
+ ],
+ "verification_commands": [
+  "pytest tests/test_theoretical.py"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "TheoreticalProjectState：concepts/claims/evidence/counters/edges/genealogy schema v1",
+ "evidence_files": [
+  ".audit/task-evidence/H12-001.json"
+ ],
+ "at": "2026-09-26T06:04:04"
+}

@@ -20,26 +20,21 @@ def ws(tmp_path):
 @pytest.fixture
 def lm(ws):
     m = LiteratureManager(ws)
-    m._ingest(
-        [
-            LiteratureRecord(
-                title="数字劳动的过程控制研究",
-                authors=["张三"],
-                year=2023,
-                source="fixture",
-                verified=True,
-                verify_url="https://arxiv.org/abs/1",
-            ),
-            LiteratureRecord(
-                title="平台经济与劳动秩序",
-                authors=["李四"],
-                year=2022,
-                source="fixture",
-                verified=True,
-                verify_url="https://arxiv.org/abs/2",
-            ),
-        ]
-    )
+    recs = []
+    for title, author, year in (
+        ("数字劳动的过程控制研究", "张三", 2023),
+        ("平台经济与劳动秩序", "李四", 2022),
+    ):
+        r = LiteratureRecord(
+            title=title,
+            authors=[author],
+            year=year,
+            source="fixture",
+            url=f"https://arxiv.org/abs/{year}",
+        )
+        r.verified = True  # 测试夹具：legacy 核验标记
+        recs.append(r)
+    m._ingest(recs)
     return m
 
 

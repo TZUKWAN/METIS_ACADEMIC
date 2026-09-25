@@ -1,0 +1,18 @@
+{
+ "id": "H2-010",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/generators/base.py"
+ ],
+ "verification_commands": [
+  "pytest tests/test_generators.py tests/test_literature.py"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "verified_citations 只来自带核验依据 records；删除 bib 无核验 key 兜底",
+ "evidence_files": [
+  ".audit/task-evidence/H2-010.json"
+ ],
+ "at": "2026-09-26T04:00:15"
+}

@@ -1,0 +1,18 @@
+{
+ "id": "H5-001",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/model_backend.py"
+ ],
+ "verification_commands": [
+  "python -c 'import metis_academic.model_backend'"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "ModelBackend/ModelRequest/ModelResponse 抽象；核心不绑定供应商",
+ "evidence_files": [
+  ".audit/task-evidence/H5-001.json"
+ ],
+ "at": "2026-09-26T06:04:04"
+}

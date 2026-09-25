@@ -1,0 +1,18 @@
+{
+ "id": "H12-002",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/engines/theoretical.py"
+ ],
+ "verification_commands": [
+  "E2E theoretical: TH9 的 claims 在 TH13 argument_map 可见"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "每次 th_engine() 自动 load_state；跨任务状态保留",
+ "evidence_files": [
+  ".audit/task-evidence/H12-002.json"
+ ],
+ "at": "2026-09-26T06:04:04"
+}

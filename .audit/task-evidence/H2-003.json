@@ -1,0 +1,18 @@
+{
+ "id": "H2-003",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/literature/models.py"
+ ],
+ "verification_commands": [
+  "pytest tests/test_literature.py::test_verification_states_roundtrip"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "五态枚举 unverified/resolved/verified/conflict/unreachable；序列化 roundtrip",
+ "evidence_files": [
+  ".audit/task-evidence/H2-003.json"
+ ],
+ "at": "2026-09-26T04:00:15"
+}

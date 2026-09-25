@@ -1,0 +1,18 @@
+{
+ "id": "H20-009",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/qa/global_qa.py"
+ ],
+ "verification_commands": [
+  "pytest tests/test_qa.py::test_qa_citation_checks"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "final citation 全链校验（key→bib→verified record+resolver），断任一环即阻断",
+ "evidence_files": [
+  ".audit/task-evidence/H20-009.json"
+ ],
+ "at": "2026-09-26T06:04:04"
+}

@@ -123,9 +123,17 @@ class QuantEngine:
             raise DataError(f"数据不存在: {p}")
         if p.suffix.lower() == ".csv":
             return pd.read_csv(p)
-        if p.suffix.lower() in (".xlsx", ".xls"):
-            return pd.read_excel(p)
-        raise DataError(f"暂不支持的格式: {p.suffix}")
+        if p.suffix.lower() == ".xlsx":
+            try:
+                return pd.read_excel(p)  # 依赖 analysis extra 的 openpyxl
+            except ImportError as e:
+                raise DataError(
+                    "读取 .xlsx 需要 openpyxl：pip install 'metis-academic[analysis]'"
+                ) from e
+        raise DataError(
+            f"分析不支持该格式: {p.suffix}（csv/xlsx 可分析；"
+            f"xls/parquet/dta/sav 仅登记元数据，请先转换为 csv/xlsx）"
+        )
 
     def data_checks(self, df: pd.DataFrame) -> dict:
         rep = {

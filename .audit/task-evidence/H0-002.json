@@ -1,0 +1,18 @@
+{
+ "id": "H0-002",
+ "status": "passed",
+ "changed_files": [
+  ".audit/baseline/commit.txt"
+ ],
+ "verification_commands": [
+  "git rev-parse HEAD > .audit/baseline/commit.txt && cat .audit/baseline/commit.txt"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "evidence_files": [
+  ".audit/task-evidence/H0-002.json"
+ ],
+ "notes": "c0d3e8352beccd19033e920562794f2b9ea9d4c8",
+ "at": "2026-09-26T02:14:14"
+}

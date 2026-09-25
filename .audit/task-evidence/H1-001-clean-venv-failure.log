@@ -1,0 +1,10 @@
+[notice] A new release of pip is available: 24.3.1 -> 26.2.1
+[notice] To update, run: D:\METIS超级合并\.audit\venv-clean\Scripts\python.exe -m pip install --upgrade pip
+INFO     metis.literature:manager.py:59 检索 '平台劳动与数字经济研究'：新增 3 条（累计 3）
+INFO     metis.state:state_manager.py:89 stage S2 → S3 (TOPIC_SELECTION)
+INFO     metis.topics:topic_manager.py:273 选题确认: topic_001 (平台劳动与数字经济研究的形成机制研究)
+INFO     metis.state:state_manager.py:89 stage S3 → S4 (RESEARCH_DESIGN)
+INFO     metis.state:state_manager.py:89 stage S4 → S5 (RESEARCH_EXECUTION)
+=========================== short test summary info ===========================
+FAILED tests/test_e2e_full_system.py::test_full_pipeline_e2e[fund-quantitative]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!

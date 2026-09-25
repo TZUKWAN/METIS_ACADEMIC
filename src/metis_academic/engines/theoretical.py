@@ -64,7 +64,7 @@ class ArgumentEdge:
 
 
 class TheoreticalEngine:
-    def __init__(self, ws: WorkspaceManager):
+    def __init__(self, ws: WorkspaceManager, load_state: bool = True):
         self.ws = ws
         self.tdir = ws.root / "analysis" / "theoretical"
         self.tdir.mkdir(parents=True, exist_ok=True)
@@ -74,10 +74,43 @@ class TheoreticalEngine:
         self.counters: list[CounterArgument] = []
         self.edges: list[ArgumentEdge] = []
         self.genealogy: list[dict] = []
+        if load_state:
+            self.load_state()  # H12-002：跨进程/跨任务恢复
+
+    # ---------- 状态持久化（H12-001/002/003） ----------
+    STATE_FILE = "state.yaml"
+
+    def save_state(self) -> Path:
+        data = {
+            "schema_version": 1,
+            "concepts": [c.__dict__ for c in self.concepts],
+            "claims": [c.__dict__ for c in self.claims],
+            "evidence": [e.__dict__ for e in self.evidence],
+            "counters": [c.__dict__ for c in self.counters],
+            "edges": [e.__dict__ for e in self.edges],
+            "genealogy": self.genealogy,
+        }
+        out = self.tdir / self.STATE_FILE
+        out.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False), encoding="utf-8")
+        return out
+
+    def load_state(self) -> bool:
+        f = self.tdir / self.STATE_FILE
+        if not f.is_file():
+            return False
+        data = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+        self.concepts = [Concept(**c) for c in data.get("concepts", [])]
+        self.claims = [Claim(**c) for c in data.get("claims", [])]
+        self.evidence = [Evidence(**e) for e in data.get("evidence", [])]
+        self.counters = [CounterArgument(**c) for c in data.get("counters", [])]
+        self.edges = [ArgumentEdge(**e) for e in data.get("edges", [])]
+        self.genealogy = list(data.get("genealogy", []))
+        return True
 
     # ---------- 概念（TH2/P006） ----------
     def add_concept(self, c: Concept) -> None:
         self.concepts.append(c)
+        self.save_state()
 
     def concept_map(self) -> Path:
         lines = ["# 概念地图", ""]
@@ -92,6 +125,7 @@ class TheoreticalEngine:
     def set_genealogy(self, items: list[dict]) -> None:
         """items: [{"year":2020,"author":"张三","work":"...","contribution":"..."}]"""
         self.genealogy = sorted(items, key=lambda x: x.get("year", 0))
+        self.save_state()
         lines = ["# 文献谱系", ""]
         for g in self.genealogy:
             lines.append(
@@ -105,12 +139,15 @@ class TheoreticalEngine:
     # ---------- 命题/论证（TH9–TH13/P008/P009） ----------
     def set_claims(self, claims: list[Claim]) -> None:
         self.claims = claims
+        self.save_state()
 
     def add_evidence(self, e: Evidence) -> None:
         self.evidence.append(e)
+        self.save_state()
 
     def add_edge(self, e: ArgumentEdge) -> None:
         self.edges.append(e)
+        self.save_state()
 
     def core_claims(self) -> Path:
         lines = ["# 核心命题", ""]
@@ -137,6 +174,7 @@ class TheoreticalEngine:
     # ---------- 反论证（TH16–TH17/P010） ----------
     def add_counter(self, c: CounterArgument) -> None:
         self.counters.append(c)
+        self.save_state()
 
     def counter_arguments(self) -> Path:
         lines = ["# 反论证与回应", ""]

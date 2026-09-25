@@ -14,7 +14,15 @@ from .defaults import default_skill_registry
 
 logger = get_logger("skills")
 
-REPO_SKILLS_DIR = Path(__file__).resolve().parents[3] / "skills"
+
+def _default_skill_defs_dir() -> Path:
+    bundled = Path(__file__).resolve().parents[1] / "skill_defs"
+    if bundled.is_dir():
+        return bundled
+    return Path(__file__).resolve().parents[3] / "skills"
+
+
+REPO_SKILLS_DIR = _default_skill_defs_dir()
 
 
 @dataclass

@@ -1,0 +1,18 @@
+{
+ "id": "H1-002",
+ "status": "passed",
+ "changed_files": [
+  "docs/data-formats.md"
+ ],
+ "verification_commands": [
+  "grep -rn to_markdown\\|read_excel src/"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "pandas to_markdown 仅 quant 引擎 1 处；read_excel 1 处；其余为自定义方法",
+ "evidence_files": [
+  ".audit/task-evidence/H1-002.json"
+ ],
+ "at": "2026-09-26T02:44:11"
+}

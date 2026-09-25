@@ -1,0 +1,18 @@
+{
+ "id": "H2-001",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/literature/manager.py"
+ ],
+ "verification_commands": [
+  "pytest tests/test_literature.py::test_records_persist_and_reload"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "records.jsonl 机器可读持久化；重启后全字段（含 verification_info）恢复",
+ "evidence_files": [
+  ".audit/task-evidence/H2-001.json"
+ ],
+ "at": "2026-09-26T04:00:15"
+}

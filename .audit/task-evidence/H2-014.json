@@ -1,0 +1,18 @@
+{
+ "id": "H2-014",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/literature/sources.py"
+ ],
+ "verification_commands": [
+  "pytest tests/test_literature.py::test_gbt7714_format 等"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "GB/T 7714-2015 主要类型 golden 断言（作者/题名/类型标识/年份/DOI）；复杂合著缩写为 documented simplification",
+ "evidence_files": [
+  ".audit/task-evidence/H2-014.json"
+ ],
+ "at": "2026-09-26T04:00:15"
+}

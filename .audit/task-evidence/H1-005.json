@@ -1,0 +1,18 @@
+{
+ "id": "H1-005",
+ "status": "passed",
+ "changed_files": [
+  "docs/data-formats.md"
+ ],
+ "verification_commands": [
+  "grep 'xls' docs/data-formats.md"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": ".xls 明确标注不支持分析，读路径报错",
+ "evidence_files": [
+  ".audit/task-evidence/H1-005.json"
+ ],
+ "at": "2026-09-26T02:44:11"
+}

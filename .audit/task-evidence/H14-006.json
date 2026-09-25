@@ -1,0 +1,18 @@
+{
+ "id": "H14-006",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/validation/engine.py"
+ ],
+ "verification_commands": [
+  "新增 manuscript.no_placeholder 规则（待补/依…撰写/占位/TODO/to be finalized 等）"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "placeholder detector 就绪，最终稿校验可阻断骨架文字",
+ "evidence_files": [
+  ".audit/task-evidence/H14-006.json"
+ ],
+ "at": "2026-09-26T06:04:04"
+}

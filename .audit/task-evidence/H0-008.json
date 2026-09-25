@@ -1,0 +1,18 @@
+{
+ "id": "H0-008",
+ "status": "passed",
+ "changed_files": [
+  ".github/workflows/ci.yml"
+ ],
+ "verification_commands": [
+  "grep -A1 'Hardening status consistency' .github/workflows/ci.yml"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "evidence_files": [
+  ".audit/task-evidence/H0-008.json"
+ ],
+ "notes": "CI 增加 hardening_status.py --check 步骤；坏状态时 CI 红（验证逻辑见 H0-007 失败路径）",
+ "at": "2026-09-26T02:14:14"
+}

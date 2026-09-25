@@ -65,18 +65,16 @@ def ws(tmp_path):
     (w.root / "research" / "selected_topic.md").write_text(topic.to_markdown(), encoding="utf-8")
     # 已核验文献
     lm = LiteratureManager(w)
-    lm._ingest(
-        [
-            LiteratureRecord(
-                title="算法与劳动控制",
-                authors=["张三"],
-                year=2023,
-                source="fixture",
-                verified=True,
-                verify_url="https://arxiv.org/abs/1",
-            )
-        ]
+    rec = LiteratureRecord(
+        title="算法与劳动控制",
+        authors=["张三"],
+        year=2023,
+        source="fixture",
+        url="https://arxiv.org/abs/1",
     )
+    rec.verified = True  # 测试夹具：legacy 核验标记
+    lm._ingest([rec])
+    w._lit = lm  # 生成器共享同一文献管理器（H2-010 引用池）
     # 研究设计文档
     (w.root / "research" / "research_questions.md").write_text(
         "# 研究问题\n\nRQ1 现状？RQ2 机制？RQ3 边界？\n\n## 初步框架\n\n概念→机制→检验\n",
@@ -94,7 +92,7 @@ def ws(tmp_path):
 
 class TestFund:
     def test_template_default_and_sections(self, ws):
-        g = FundGenerator(ws, _cfg())
+        g = FundGenerator(ws, _cfg(), lit=getattr(ws, "_lit", None))
         tpl = g.load_template()
         ids = [s["id"] for s in tpl["sections"]]
         assert {"basis", "content", "method", "innovation", "feasibility"} <= set(ids)
@@ -105,18 +103,20 @@ class TestFund:
         p.write_text(
             "name: my-fund\nsections: [{id: a, title: 选题依据, limit: 100}]", encoding="utf-8"
         )
-        g = FundGenerator(ws, _cfg())
+        g = FundGenerator(ws, _cfg(), lit=getattr(ws, "_lit", None))
         tpl = g.load_template(p)
         assert tpl["name"] == "my-fund"
 
     def test_draft_review_revision_docx(self, ws):
-        g = FundGenerator(ws, _cfg())
+        g = FundGenerator(ws, _cfg(), lit=getattr(ws, "_lit", None))
         tpl = g.load_template()
         draft = g.build_draft(tpl)
         assert "选题依据" in draft and "平台经济下的劳动过程控制" in draft
         assert "[bib:" in draft  # 真实引用
         review = g.mock_review(tpl)
-        assert review.total >= 200
+        # H15-001：无固定数值分；rubric 项均有 evidence
+        assert not hasattr(review, "scores") or not review.scores
+        assert review.criteria and all(c.get("evidence") for c in review.criteria)
         rev = g.revision_list(review)
         assert rev.is_file()
         g.revise(tpl, review)
@@ -132,7 +132,7 @@ class TestFund:
 class TestJournal:
     def test_rules_and_manuscript(self, ws):
         cfg = _cfg(ArtifactType.JOURNAL)
-        g = JournalGenerator(ws, cfg)
+        g = JournalGenerator(ws, cfg, lit=getattr(ws, "_lit", None))
         rules = g.load_rules()
         assert rules["journal"] == "未指定期刊"
         m = g.build_manuscript()
@@ -144,13 +144,15 @@ class TestJournal:
 
     def test_checks_and_submission(self, ws):
         cfg = _cfg(ArtifactType.JOURNAL)
-        g = JournalGenerator(ws, cfg)
+        g = JournalGenerator(ws, cfg, lit=getattr(ws, "_lit", None))
         g.load_rules()
         g.build_manuscript()
         checks = g.language_and_style_check()
         assert checks.ok
         sub = g.anonymize(enabled=True)
-        assert "（匿名）" in sub.read_text(encoding="utf-8") or True
+        # 规则默认不写作者行；匿名化开关不引入假身份信息
+        text = sub.read_text(encoding="utf-8")
+        assert "作者：张三" not in text and "机构：某大学" not in text
         out = g.export_submission()
         assert out.is_file()
 
@@ -161,7 +163,7 @@ class TestJournal:
 class TestThesis:
     def test_rules_and_body(self, ws):
         cfg = _cfg(ArtifactType.THESIS)
-        g = ThesisGenerator(ws, cfg)
+        g = ThesisGenerator(ws, cfg, lit=getattr(ws, "_lit", None))
         rules = g.load_rules()
         assert rules["level_requirements"]["min_words"] == 30000  # 硕士
         text = g.build_body()
@@ -177,7 +179,7 @@ class TestThesis:
 
     def test_checks_and_defense(self, ws):
         cfg = _cfg(ArtifactType.THESIS)
-        g = ThesisGenerator(ws, cfg)
+        g = ThesisGenerator(ws, cfg, lit=getattr(ws, "_lit", None))
         g.load_rules()
         g.build_body()
         checks = g.consistency_checks()

@@ -1,0 +1,19 @@
+{
+ "id": "H2-013",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/literature/models.py",
+  "src/metis_academic/literature/sources.py"
+ ],
+ "verification_commands": [
+  "pytest tests/test_literature.py::test_gbt7714_entry_types"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "EntryType 六类；GB/T 类型标识 [J/OL]/[M]/[EB/OL]/[D]",
+ "evidence_files": [
+  ".audit/task-evidence/H2-013.json"
+ ],
+ "at": "2026-09-26T04:00:15"
+}

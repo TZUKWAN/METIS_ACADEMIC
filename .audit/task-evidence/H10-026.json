@@ -1,0 +1,18 @@
+{
+ "id": "H10-026",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/runtime.py（quant-design.identification_status）"
+ ],
+ "verification_commands": [
+  "quant-design.yaml identification_status=not_causal 字段贯通"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "因果措辞控制字段进入设计 schema（QA 因果越界检查已有）",
+ "evidence_files": [
+  ".audit/task-evidence/H10-026.json"
+ ],
+ "at": "2026-09-26T06:04:04"
+}

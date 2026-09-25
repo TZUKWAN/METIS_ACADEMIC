@@ -1,0 +1,18 @@
+{
+ "id": "H1-009",
+ "status": "passed",
+ "changed_files": [
+  ".github/workflows/ci.yml"
+ ],
+ "verification_commands": [
+  "CI matrix 3.10"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "CI job 已配置；结果以推送后 run 为准（RELEASE_VERIFICATION 引用）",
+ "evidence_files": [
+  ".audit/task-evidence/H1-009.json"
+ ],
+ "at": "2026-09-26T02:44:11"
+}

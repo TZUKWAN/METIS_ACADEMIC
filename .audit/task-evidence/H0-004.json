@@ -1,0 +1,19 @@
+{
+ "id": "H0-004",
+ "status": "passed",
+ "changed_files": [
+  "IMPLEMENTATION_STATUS.md",
+  "docs/final-report.md"
+ ],
+ "verification_commands": [
+  "grep -rn 456/456 --include=*.md ."
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "evidence_files": [
+  ".audit/task-evidence/H0-004.json"
+ ],
+ "notes": "两文档头部加历史实现记录标注，指向 HARDENING_STATUS 为生产验收",
+ "at": "2026-09-26T02:14:14"
+}

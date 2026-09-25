@@ -1,0 +1,20 @@
+{
+ "id": "H1-011",
+ "status": "passed",
+ "changed_files": [
+  "pyproject.toml",
+  ".github/workflows/ci.yml",
+  "README.md"
+ ],
+ "verification_commands": [
+  "grep requires-python pyproject.toml"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "requires-python >=3.10；CI 覆盖 3.10/3.12；README 声明与 CI 一致（已更新）",
+ "evidence_files": [
+  ".audit/task-evidence/H1-011.json"
+ ],
+ "at": "2026-09-26T02:44:11"
+}

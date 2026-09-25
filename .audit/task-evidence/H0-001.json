@@ -1,0 +1,19 @@
+{
+ "id": "H0-001",
+ "status": "passed",
+ "changed_files": [
+  "HARDENING_STATUS.md",
+  "scripts/hardening_status.py"
+ ],
+ "verification_commands": [
+  "python scripts/hardening_status.py"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "evidence_files": [
+  ".audit/task-evidence/H0-001.json"
+ ],
+ "notes": "394 个任务 ID 从文档提取建表，无遗漏无重复（extract_tasks 按 Phase 归组去重）",
+ "at": "2026-09-26T02:14:14"
+}

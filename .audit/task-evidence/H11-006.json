@@ -1,0 +1,18 @@
+{
+ "id": "H11-006",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/runtime.py"
+ ],
+ "verification_commands": [
+  "E2E qual: evidence_chain.md 含 M001（回原材料）"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "evidence_chain 全链：theme→code→quote→material id",
+ "evidence_files": [
+  ".audit/task-evidence/H11-006.json"
+ ],
+ "at": "2026-09-26T06:04:04"
+}

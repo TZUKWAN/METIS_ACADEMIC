@@ -1,0 +1,18 @@
+{
+ "id": "H0-003",
+ "status": "passed",
+ "changed_files": [
+  ".audit/baseline/ci-run-36166870763.md"
+ ],
+ "verification_commands": [
+  "gh run view 36166870763 --log-failed | grep tabulate"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "evidence_files": [
+  ".audit/task-evidence/H0-003.json"
+ ],
+ "notes": "记录 run ID/结论 failure/9 failed 208 passed/根因 tabulate",
+ "at": "2026-09-26T02:14:14"
+}

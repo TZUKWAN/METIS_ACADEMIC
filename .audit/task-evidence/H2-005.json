@@ -1,0 +1,19 @@
+{
+ "id": "H2-005",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/literature/sources.py",
+  "src/metis_academic/literature/manager.py"
+ ],
+ "verification_commands": [
+  "pytest tests/test_literature.py::test_no_url_prefix_auto_verify"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "删除 URL 前缀自动 verified；来源发现一律 unverified",
+ "evidence_files": [
+  ".audit/task-evidence/H2-005.json"
+ ],
+ "at": "2026-09-26T04:00:15"
+}

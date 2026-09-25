@@ -1,0 +1,18 @@
+{
+ "id": "H2-015",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/literature/sources.py"
+ ],
+ "verification_commands": [
+  "pytest tests/test_literature.py::test_apa_format"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "APA 7 journal/web/preprint golden 断言；书章节规则为 documented simplification",
+ "evidence_files": [
+  ".audit/task-evidence/H2-015.json"
+ ],
+ "at": "2026-09-26T04:00:15"
+}

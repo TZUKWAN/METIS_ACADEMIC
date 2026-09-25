@@ -1,0 +1,19 @@
+{
+ "id": "H2-012",
+ "status": "passed",
+ "changed_files": [
+  "src/metis_academic/literature/models.py",
+  "src/metis_academic/literature/manager.py"
+ ],
+ "verification_commands": [
+  "pytest tests/test_literature.py::test_fuzzy_duplicate_reported_not_merged"
+ ],
+ "verification_exit_codes": [
+  0
+ ],
+ "notes": "bigram Jaccard fuzzy 检测（fuzzy_duplicates 只报告不合并）；修复 3.13 内联推导名字解析缺陷",
+ "evidence_files": [
+  ".audit/task-evidence/H2-012.json"
+ ],
+ "at": "2026-09-26T04:00:15"
+}

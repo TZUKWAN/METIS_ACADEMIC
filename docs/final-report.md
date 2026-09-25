@@ -1,5 +1,9 @@
 # METIS ACADEMIC 最终交付报告
 
+> ⚠️ **历史实现记录（首轮）**：本文中的 456/456 与“217 全绿”为开发机自报状态，
+> 公开 CI 实际为 9 failed / 208 passed / 1 skipped（tabulate 依赖缺失）。
+> 生产验收以 HARDENING_STATUS.md 与 docs/RELEASE_VERIFICATION.md 为准。
+
 > 依据《METIS_ACADEMIC_implementation_tasks.md》实现；状态总表见
 > [IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md)（456/456 任务 DONE，含逐任务验证注记）。
 

@@ -95,7 +95,7 @@ class GlobalQA:
             if t.status.value == "blocked":
                 rep.add("blocked_tasks", f"{t.id} 阻塞：{t.error}")
 
-    # ---------- Y004–Y007 引用 ----------
+    # ---------- Y004–Y007 引用（H2-017 全链：key→bib→verified record） ----------
     def check_references(self, rep: QaReport) -> None:
         bib = self.ws.root / "literature" / "references.bib"
         bib_keys: set[str] = set()
@@ -103,32 +103,50 @@ class GlobalQA:
             for ln in bib.read_text(encoding="utf-8").splitlines():
                 if ln.startswith("@") and "{" in ln:
                     bib_keys.add(ln.split("{", 1)[1].split(",", 1)[0])
-        if not bib_keys:
-            rep.add("references", "references.bib 为空或缺失")
-        # 重复 key（@ 行重复）
-        seen: dict[str, int] = {}
-        for ln in bib.read_text(encoding="utf-8").splitlines() if bib.is_file() else []:
-            if ln.startswith("@") and "{" in ln:
-                key = ln.split("{", 1)[1].split(",", 1)[0]
-                seen[key] = seen.get(key, 0) + 1
-        for k, n in seen.items():
-            if n > 1:
-                rep.add("references", f"重复引用条目: {k}")
-        # 正文引文 ⊆ bib
+        # 正文引文
         cited: set[str] = set()
-        manuscript = ""
-        md = self.ws.root / "manuscript"
-        if md.is_dir():
-            for f in md.rglob("*.md"):
-                manuscript += f.read_text(encoding="utf-8")
+        manuscript = self._manuscript_text()
         for mkey in re.findall(r"\[bib:([^\]]+)\]", manuscript):
             cited.add(mkey)
-            if mkey not in bib_keys:
-                rep.add("citations", f"正文引用不存在于文献库: {mkey}")  # Y004
-        # 格式（简化：gb 键需含年份）
+        # 全链：正文 key 必须在 bib，且必须有带核验依据的 record
+        verified_map: dict[str, object] = {}
+        records_file = self.ws.root / "literature" / "records.jsonl"
+        if records_file.is_file():
+            import json as _json
+
+            from ..literature.models import LiteratureRecord, VerificationStatus
+
+            for line in records_file.read_text(encoding="utf-8").splitlines():
+                if not line.strip():
+                    continue
+                rec = LiteratureRecord.from_dict(_json.loads(line))
+                if (
+                    rec.verification is VerificationStatus.VERIFIED
+                    and rec.verification_info.resolver
+                ):
+                    verified_map[rec.record_id] = rec
+        for key in sorted(cited):
+            if key not in bib_keys:
+                rep.add("citations", f"正文引用不存在于文献库: {key}")  # Y004
+            elif key not in verified_map:
+                rep.add("citations", f"引用无核验依据（bib 有 record 无/未 verified）: {key}")
+        # bib 中存在但正文未引 → 提示不阻断
+        # 重复 key
+        if bib.is_file():
+            seen: dict[str, int] = {}
+            for ln in bib.read_text(encoding="utf-8").splitlines():
+                if ln.startswith("@") and "{" in ln:
+                    k = ln.split("{", 1)[1].split(",", 1)[0]
+                    seen[k] = seen.get(k, 0) + 1
+            for k, n in seen.items():
+                if n > 1:
+                    rep.add("references", f"重复引用条目: {k}")
+        if cited and not bib_keys:
+            rep.add("references", "正文有引用但 references.bib 为空")
+        # 引用键年份（GB/T 7714 键约定）
         for mkey in cited:
             if not re.search(r"\d{4}", mkey):
-                rep.add("citation_format", f"引用键缺年份（不符合 GB/T 7714 键约定）: {mkey}")
+                rep.add("citation_format", f"引用键缺年份: {mkey}")
 
     # ---------- Y008/Y009 变量与数据源 ----------
     def check_variables(self, rep: QaReport) -> None:
