@@ -1,0 +1,12 @@
+{
+  "name": "metis",
+  "displayName": "METIS",
+  "version": "0.1.0",
+  "description": "METIS — 对话级哲学社会科学研究工作流运行时。/metis 立项，/metis-resume 续作，/metis-deliver 交付。",
+  "components": {
+    "skills": ["skills/metis"],
+    "commands": ["commands"],
+    "agents": ["agents"],
+    "mcp": ["mcp/metis-server.json"]
+  }
+}
