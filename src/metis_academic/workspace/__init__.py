@@ -10,9 +10,13 @@ from .layout import (
     TASK_STATE_JSON,
     WORKFLOW_YAML,
 )
+from .locking import MetisLockError, TaskLock, TaskLockError
 from .manager import WorkspaceManager, file_sha256
 
 __all__ = [
+    "TaskLock",
+    "TaskLockError",
+    "MetisLockError",
     "WorkspaceManager",
     "file_sha256",
     "METIS_DIR",

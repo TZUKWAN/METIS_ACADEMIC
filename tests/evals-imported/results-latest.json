@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-14T07:00:23.356Z",
+  "model": "cloudlob/qwen3.8-flash-bai",
+  "summary": {
+    "total": 8,
+    "pass": 6,
+    "fail": 2
+  },
+  "results": [
+    {
+      "id": "sociology-lit-review",
+      "status": "PASS",
+      "projectId": "rp-103fe2d5-3501-4e97-a2f3-160bb5ae44be",
+      "metrics": {
+        "taskCompleted": true,
+        "artifactCreated": true,
+        "citationsTotal": 19,
+        "citationsVerified": 19,
+        "evidenceCoverage": 0.88,
+        "unsupportedClaims": 2,
+        "toolErrors": 3,
+        "providerFailures": 0,
+        "hallucinatedReferences": "structural-check-not-applicable",
+        "restartRecoverable": "covered-by-runtime-gate",
+        "finalTextChars": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "marxist-theory",
+      "status": "PASS",
+      "projectId": "rp-89d4dc56-5d8f-4990-8b65-c5145b669c05",
+      "metrics": {
+        "taskCompleted": true,
+        "artifactCreated": true,
+        "citationsTotal": 34,
+        "citationsVerified": 34,
+        "evidenceCoverage": 0,
+        "unsupportedClaims": 7,
+        "toolErrors": 1,
+        "providerFailures": 0,
+        "hallucinatedReferences": "structural-check-not-applicable",
+        "restartRecoverable": "covered-by-runtime-gate",
+        "finalTextChars": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "political-science-design",
+      "status": "PASS",
+      "projectId": "rp-1ccfa9ad-1f4b-4e4d-800d-5cfa83d91632",
+      "metrics": {
+        "taskCompleted": true,
+        "artifactCreated": true,
+        "citationsTotal": 11,
+        "citationsVerified": 11,
+        "evidenceCoverage": 0,
+        "unsupportedClaims": 0,
+        "toolErrors": 0,
+        "providerFailures": 0,
+        "hallucinatedReferences": "structural-check-not-applicable",
+        "restartRecoverable": "covered-by-runtime-gate",
+        "finalTextChars": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "education-ai-learning",
+      "status": "PASS",
+      "projectId": "rp-9e79f54c-7066-401c-9128-fe80b17c1d6d",
+      "metrics": {
+        "taskCompleted": true,
+        "artifactCreated": true,
+        "citationsTotal": 26,
+        "citationsVerified": 26,
+        "evidenceCoverage": 0,
+        "unsupportedClaims": 2,
+        "toolErrors": 0,
+        "providerFailures": 0,
+        "hallucinatedReferences": "structural-check-not-applicable",
+        "restartRecoverable": "covered-by-runtime-gate",
+        "finalTextChars": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "paper-review",
+      "status": "PASS",
+      "projectId": "rp-a791f9ef-700b-48d0-809a-951470663d5f",
+      "metrics": {
+        "taskCompleted": true,
+        "artifactCreated": true,
+        "citationsTotal": 6,
+        "citationsVerified": 6,
+        "evidenceCoverage": 0.5,
+        "unsupportedClaims": 0,
+        "toolErrors": 2,
+        "providerFailures": 1,
+        "hallucinatedReferences": "structural-check-not-applicable",
+        "restartRecoverable": "covered-by-runtime-gate",
+        "finalTextChars": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "journal-selection",
+      "status": "FAIL",
+      "projectId": "rp-1d2dcf7e-1ff8-401d-9fd4-7a24046940cb",
+      "metrics": {
+        "taskCompleted": false,
+        "artifactCreated": true,
+        "citationsTotal": 19,
+        "citationsVerified": 19,
+        "evidenceCoverage": 0.88,
+        "unsupportedClaims": 1,
+        "toolErrors": 2,
+        "providerFailures": 0,
+        "hallucinatedReferences": "structural-check-not-applicable",
+        "restartRecoverable": "covered-by-runtime-gate",
+        "finalTextChars": 0
+      },
+      "failures": [
+        "未创建投稿案例"
+      ]
+    },
+    {
+      "id": "funding-template",
+      "status": "FAIL",
+      "projectId": "rp-f2f29807-a8f0-41e9-9149-a544e5c3b41a",
+      "metrics": {
+        "taskCompleted": true,
+        "artifactCreated": true,
+        "citationsTotal": 0,
+        "citationsVerified": 0,
+        "evidenceCoverage": 0,
+        "unsupportedClaims": 0,
+        "toolErrors": 2,
+        "providerFailures": 0,
+        "hallucinatedReferences": "structural-check-not-applicable",
+        "restartRecoverable": "covered-by-runtime-gate",
+        "finalTextChars": 0
+      },
+      "failures": [
+        "模板未登记: user:eval-template"
+      ]
+    },
+    {
+      "id": "history-concept",
+      "status": "PASS",
+      "projectId": "rp-a09d9348-6f2b-4557-9b04-a90b3ccc89f7",
+      "metrics": {
+        "taskCompleted": true,
+        "artifactCreated": true,
+        "citationsTotal": 14,
+        "citationsVerified": 14,
+        "evidenceCoverage": 0.57,
+        "unsupportedClaims": 3,
+        "toolErrors": 4,
+        "providerFailures": 0,
+        "hallucinatedReferences": "structural-check-not-applicable",
+        "restartRecoverable": "covered-by-runtime-gate",
+        "finalTextChars": 0
+      },
+      "failures": []
+    }
+  ]
+}

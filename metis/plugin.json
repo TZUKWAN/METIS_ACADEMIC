@@ -1,0 +1,51 @@
+{
+  "name": "metis",
+  "displayName": "METIS ACADEMIC",
+  "version": "0.1.0",
+  "description": "对话级哲学社会科学研究工作流运行时（/metis 触发）：七阶段研究脊柱 + 真实性闸门 + 引擎持久化",
+  "author": {
+    "name": "TZUKWAN"
+  },
+  "license": "MIT",
+  "keywords": [
+    "research",
+    "academic",
+    "workflow",
+    "metis"
+  ],
+  "capabilities": {
+    "commands": [
+      "metis",
+      "metis-resume",
+      "metis-deliver"
+    ],
+    "agents": [
+      "metis-executor"
+    ],
+    "skills": [
+      "metis"
+    ],
+    "mcp": true,
+    "engine": "python>=3.10"
+  },
+  "entry": {
+    "skill": "skills/metis/SKILL.md",
+    "commands": [
+      "commands/"
+    ],
+    "agents": [
+      "agents/"
+    ],
+    "mcp": "mcp/metis-server.py"
+  },
+  "compat": {
+    "claude-code": {
+      "manifest": ".claude-plugin/plugin.json",
+      "mcp": "stdio (.mcp.json)"
+    },
+    "claude-desktop": {
+      "mcp": "http-loopback"
+    },
+    "generic-fallback": "skills/metis/SKILL.md 直接作为对话纪律注入"
+  }
+}

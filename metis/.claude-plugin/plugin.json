@@ -1,0 +1,16 @@
+{
+  "name": "metis",
+  "displayName": "METIS ACADEMIC",
+  "version": "0.1.0",
+  "description": "对话级哲学社会科学研究工作流运行时（/metis 触发）",
+  "author": {
+    "name": "TZUKWAN"
+  },
+  "license": "MIT",
+  "keywords": [
+    "research",
+    "academic",
+    "workflow",
+    "metis"
+  ]
+}

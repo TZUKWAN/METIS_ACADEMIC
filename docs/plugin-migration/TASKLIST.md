@@ -218,3 +218,19 @@
 ## §7 完成定义（DoD）
 
 §4 全部任务 = DONE 且各有复测证据；S1–S7 全 PASS 且最近一轮为全新子智能体实跑；全量 pytest 0 failed 且 ≥ 基线；三份治理文档（ENGINE_CONTRACT / PLUGIN_SPEC / FINAL_REPORT）齐备；§0.2 各仓库冻结就位。**缺任何一项 = 未完成。**
+
+---
+
+## 附录 A — 复测命令表（T0.4 定稿）
+
+> 全量回归与检查的确切命令（T0.4 已逐条实跑通过；阶段门按此表执行）。
+
+| 用途 | 命令 | 通过标准 |
+|---|---|---|
+| 全量回归 | `python -m pytest -q` | 0 failed 且通过数 ≥ N₀=229（+1 skip online） |
+| Lint | `ruff check src tests scripts examples` | All checks passed |
+| CLI 冒烟 | `metis --version` | 输出 `metis-academic 0.2.x` |
+| 插件完整性 | `python tests/plugin/test_plugin_structure.py`（T1.2 起可用） | exit 0 |
+| 引擎 CLI 冒烟 | `python -m metis_academic.cli status --workspace <tmp>`（T1.6 起可用） | 退出码符合契约 |
+| MCP 冒烟 | `python tests/mcp/test_mcp_smoke.py`（T3.2 起可用） | exit 0 |
+| 场景重跑 | `python -m pytest tests/scenarios/ -q`（S 编号以文件为准；子智能体实跑走 §2 流程） | 全 PASS |

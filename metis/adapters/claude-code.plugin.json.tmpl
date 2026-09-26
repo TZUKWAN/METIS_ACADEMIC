@@ -1,0 +1,13 @@
+{
+  "name": "metis",
+  "displayName": "METIS ACADEMIC",
+  "version": "0.1.0",
+  "description": "/metis 研究工作流（命令+子智能体+MCP stdio）",
+  "author": { "name": "TZUKWAN" },
+  "mcpServers": {
+    "metis": {
+      "command": "python",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/metis-server.py", "--workspace", "."]
+    }
+  }
+}

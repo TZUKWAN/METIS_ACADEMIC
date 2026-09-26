@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from datetime import datetime, timezone
 
 from ..errors import StateError
@@ -58,13 +59,22 @@ class TaskStore:
 
     def upsert(self, task: Task) -> None:
         task.validate()
-        self.load()[task.id] = task
-        self.save()  # 立即持久化：task-state.json 是唯一事实来源
+        with self._mutation_lock():
+            self.load()[task.id] = task  # 锁内重读再合并
+            self.save()
 
     def all(self) -> list[Task]:
         return list(self.load().values())
 
     # ---------- 状态迁移 ----------
+    @contextlib.contextmanager
+    def _mutation_lock(self):
+        # task-state.json 读-改-写的跨进程互斥（S3 修复：last-writer-wins）
+        from ..workspace.locking import file_lock
+
+        with file_lock(self.ws.root, "task-state.lock", timeout=60.0):
+            yield
+
     def set_status(
         self, task_id: str, new_status: TaskStatus | str, error: str | None = None, note: str = ""
     ) -> Task:
@@ -74,7 +84,13 @@ class TaskStore:
             raise StateError(
                 f"非法任务状态: {new_status!r}；只允许 {sorted(s.value for s in TaskStatus)}"
             ) from None
-        task = self.get(task_id)
+        with self._mutation_lock():
+            return self._set_status_locked(task_id, new_status, error, note)
+
+    def _set_status_locked(
+        self, task_id: str, new_status: TaskStatus, error: str | None, note: str
+    ) -> Task:
+        task = self.get(task_id)  # 锁内重读：其他进程可能已写入
         old = task.status
         if new_status == old:
             return task
