@@ -26,6 +26,8 @@
   ```
 - **保留不变**：`/metis` 全部使用逻辑（项目初始化 → 研究类型选择 → 工作流装配 → 动态 Skill/MCP 路由 → 任务执行 → 阶段验证 → 成文 → 格式适配 → 最终交付）；七阶段研究脊柱；真实性闸门（文献核验、fail-closed、未实测不声明）。
 - **硬性产品原则**：用户永远只待在主对话里；所有执行由插件自派的子智能体完成；用户只在检查点做研究判断。
+- **硬性兼容准入（刘总 2026-09-26 指定）**：以下 9 个 Agent **全部适配、全部验收**，缺一不可：
+  `Claude Code` · `Claude Desktop` · `Kimi Code` · `Kimi Work` · `ZCode` · `ChatGPT Desktop` · `DeepSeek Harness (DSH)` · `Pi Agent` · `Workbuddy`
 
 ### 0.2 其他仓库的处置（本工程内一律**只读**，禁止修改）
 
@@ -78,11 +80,11 @@
 
 ---
 
-## §3 待用户提供（开工前问一次，记录答案）
+## §3 用户已答与遗留（2026-09-26）
 
-- [ ] Q1：主用 Agent（第一个适配目标）是哪一个？（候选：ZCode / Claude Code / OpenCode / 其他）
-- [ ] Q2：确认 `D:\LATEXTEST\metis-alpha2-release` 桌面应用**冻结保留**（不删除）。
-- [ ] Q3：DeepSeek 或其他模型 API 凭据是否需要配置给引擎的在线核验（跨 ref/OpenAlex 为公开 API 可先跑；NCPSSD 等可能需要）。
+- [x] Q1（已答）：**不做单一主用 Agent。9 个 Agent 全部适配**：Claude Code、Claude Desktop、Kimi Code、Kimi Work、ZCode、ChatGPT Desktop、DeepSeek Harness (DSH)、Pi Agent、Workbuddy。逐 Agent 适配任务见 Phase 5 与附录 B；执行顺序上可先做本机已装的（ZCode、Claude Code 等）以缩短反馈环，但**验收准入 = 9/9**。
+- [x] Q2（按战略指令执行）：桌面应用 `metis-alpha2-release` 冻结保留（"其他的东西都不搞了"）——不删除、不再投入，仅作功能语义来源。
+- [ ] Q3（待确认）：在线文献核验凭据（NCPSSD 等站点凭据；Crossref/OpenAlex 为公开 API 可先行）。开工后首次触达该环节时向刘总要一次。
 
 ---
 
@@ -99,7 +101,7 @@
 | T0.2 | 建工程分支 | `git checkout -b plugin-migration` | `git branch --show-current` = plugin-migration |
 | T0.3 | 审计 `adapters/` 既有适配层 | 逐文件列出入口、参数、被谁调用、状态性（是否幂等） | 产出 `docs/plugin-migration/adapters-audit.md`，覆盖 adapters/ 下 100% 文件 |
 | T0.4 | 定稿复测命令表 | 盘点仓库真实测试/检查脚本，把本清单所有"全量回归"落到确切命令 | 命令表写入本文件附录 A；每条命令实际跑通一次 |
-| T0.5 | 定稿 plugin.json 规范 | 参考 ZCode 插件元数据（`D:\LATEXTEST\ZCode`）+ Claude/OpenCode 公开格式，定义字段/能力标签/最低兼容 Agent 清单 | 产出 `docs/plugin-migration/PLUGIN_SPEC.md`；含一个符合规范的样例 plugin.json（json 语法校验通过） |
+| T0.5 | 定稿 plugin.json 规范 + 9-Agent 兼容矩阵 | 参考 ZCode 插件元数据（本地目录已删；以 https://github.com/zai-org/ZCode 在线文档/克隆为准）+ Claude Code 插件/技能公开格式，定义字段/能力标签；为 §0.1 的 9 个 Agent 各建一行兼容档案（扩展面：插件/技能/命令/子智能体/MCP 传输形态，先勘察后填写，禁止臆造） | 产出 `docs/plugin-migration/PLUGIN_SPEC.md`（样例 plugin.json 通过 json 校验）+ `docs/plugin-migration/AGENT_COMPAT_MATRIX.md`（9 行齐全，每行标注信息来源：实测/官方文档/待勘察） |
 | T0.6 | 定稿引擎调用契约 v1 | 基于 T0.3 审计，定义 CLI 入口：`init / status / plan / tasks / exec / artifacts / deliver / verify`（每个的参数、stdout 契约、退出码、幂等性声明） | 产出 `docs/plugin-migration/ENGINE_CONTRACT.md`；契约中每个入口在现有代码中能指出实现处或标注"待实现（映射到 Phase 任务）" |
 | T0.7 | 问刘总 §3 三问并记录 | 直接询问 | 答案写入 `docs/plugin-migration/DECISIONS.md` |
 | T0.8 | **阶段门 0** | T0.1 的全量回归重跑 + 本 Phase 全部产出文件存在性检查 | pytest 计数 ≥ N₀；全部产出文件在 git 里；台账 8 行齐全 |
@@ -142,8 +144,9 @@
 | T3.4 | 暴露 Artifact 工具组 | register / new-version / list / lineage | 每个工具单测全绿；真实调用 register→new-version→list 链路成功 |
 | T3.5 | 安全与上限 | 工具白名单、超时、返回大小上限、错误不泄漏内部路径 | 越权/超时/ oversized 三种情况的负向测试全绿 |
 | T3.6 | 场景 S4：MCP 全链路 | 写 `S4-mcp-flow.md`（子智能体仅经 MCP 工具完成：检索→核验→Artifact 注册 v1→v2）→ 实跑 | S4 = PASS，证据存 evidence/s4/ |
-| T3.7 | plugin mcp 段在目标 Agent 的注册断言 | 按主用 Agent 验证 Plugin MCP 服务器出现在其 MCP 列表 | 目标 Agent 中工具可被调用一次（截图/日志留证） |
-| T3.8 | **阶段门 3** | S1–S4 全重跑 + 全量回归 | 全 PASS |
+| T3.7 | 双传输：stdio + HTTP 网关 | 本地 CLI 类 Agent 走 stdio；Desktop/远程类（Claude Desktop、ChatGPT Desktop、Kimi Work、Workbuddy）走 HTTP/SSE 网关（仅绑回环 + 令牌鉴权） | 同一工具集经两种传输各被客户端列举并成功调用一次（留证） |
+| T3.8 | plugin mcp 段在各 Agent 的注册断言 | 按 9-Agent 矩阵逐个验证 Plugin MCP 服务器出现在其 MCP 列表（可本机验证的先做） | 每验证一个：该 Agent 中工具成功调用一次（截图/日志留证）；不可本机验证的标注 BLOCKED 原因 |
+| T3.9 | **阶段门 3** | S1–S4 全重跑 + 全量回归 + T3.7 双传输通过 | 全 PASS |
 
 ### Phase 4 — 功能收编（每域：引擎模块 → 复测 → 场景；阶段门 = T4.7）
 
@@ -157,17 +160,26 @@
 | T4.6 | 场景 S6：重画与版本 | 写 `S6-figure-redraw.md` → 实跑"选中图 → 输入重画要求 → v2 出现 → 切回 v1" | S6 = PASS |
 | T4.7 | **阶段门 4** | S1–S6 全重跑 + 全量回归 + Phase 4 每域复测重跑 | 全 PASS |
 
-### Phase 5 — Data / Laya 收编 + 跨 Agent 泛化（阶段门 = T5.7）
+### Phase 5 — Data / Laya 收编 + 9-Agent 全量适配（阶段门 = T5.12）
+
+> 准入标准（刘总 2026-09-26）：以下 9 个 Agent 全部适配并验收，缺一即本 Phase 未完成。
+> 每个 Agent 的适配物 = 薄 manifest/网关 + 注册断言 + S1 实跑；机制差异按 T0.5 的 AGENT_COMPAT_MATRIX 勘察结论执行，禁止臆造。
 
 | 编号 | 任务 | 做法 | 复测 |
 |---|---|---|---|
-| T5.1 | Data 域评估与收编 | 审计 `D:\METIS_PARALLEL\B_research\sources\data`（22 个真 adapter）→ 按 CAPABILITY_MATRIX 决定逐个移植或桥接 → 引擎 data 模块 | 评估结论写入 `docs/plugin-migration/DATA_ADOPTION.md`；移植的 adapter 各自带测试全绿 |
-| T5.2 | Laya 验证层评估与收编 | 审计 `D:\METIS_PARALLEL\integration` 的 Decision Runtime → 引擎验证模块（评分/一致性闸门）或独立可选组件 | 决策 + 实现的测试全绿；fail-closed 行为断言（无模型时拒绝放行） |
+| T5.1 | Data 域评估与收编 | ⚠️ 本地 `D:\METIS_PARALLEL` 已删（2026-09-26）；资产从远端 `TZUKWAN/METIS_PARALLEL` 与 `TZUKWAN/metis-data` clone 恢复后，审计 `B_research/sources/data`（22 个真 adapter）→ 按 CAPABILITY_MATRIX 决定逐个移植或桥接 → 引擎 data 模块 | clone 成功（远端 commit 与 2026-09-22 snapshot `8f36932` 一致或更晚）；评估结论写入 `docs/plugin-migration/DATA_ADOPTION.md`；移植的 adapter 各自带测试全绿 |
+| T5.2 | Laya 验证层评估与收编 | 资产从 `TZUKWAN/METIS_PARALLEL` 远端恢复（integration 的 Decision Runtime、decision-evals）→ 引擎验证模块（评分/一致性闸门）或独立可选组件 | 同上恢复断言；决策 + 实现的测试全绿；fail-closed 行为断言（无模型时拒绝放行） |
 | T5.3 | 场景 S7：Data 链路 | 子智能体经插件完成一次"接入数据集 → 描述统计 → 产物落库" | S7 = PASS |
-| T5.4 | 兼容矩阵落地 | 按 `docs/HARNESS_SUPPORT_MATRIX.md` + 主用 Agent 结论，实现各 Agent 薄 manifest 适配 | 每个 Agent 一个适配文件 + 注册断言子智能体测试 |
-| T5.5 | 跨 Agent 实跑 | 对矩阵中每个可本机安装的 Agent：安装插件 → 派子智能体跑 S1 | 每个 Agent 的 S1 = PASS（不可本机安装的标注 BLOCKED 及原因，不算 PASS） |
-| T5.6 | 降级路径验证 | 在不支持 agents/ 自动注册的 Agent 上验证降级路径（读 SKILL.md 直跑） | 降级 S1 = PASS |
-| T5.7 | **阶段门 5** | 全场景 S1–S7 重跑 + 全量回归 | 全 PASS |
+| T5.4 | 通用适配物定稿 | skills/commands/agents/mcp 四类组件的最大公约数包 + 各 Agent 薄 manifest 模板（覆盖：命令注册 / 子智能体注册 / MCP 接入 / 无命令环境的对话触发降级） | 模板评审通过；每类组件在至少一个 Agent 上被正确识别 |
+| T5.5 | **Claude Code** 适配 | 插件/技能/命令/agents/MCP(stdio) 按其原生格式接入 | 注册断言 + S1 = PASS（全新子智能体实跑，证据归档） |
+| T5.6 | **ZCode** 适配 | 本机已装：技能目录 + Skill tool + MCP 接入 | 注册断言 + S1 = PASS |
+| T5.7 | **DeepSeek Harness (DSH)** 适配 | 参考 `D:\LATEXTEST\METIS4DSH` 既有经验（skill/mcp/workflow/subagent 包）；注意上游 breaking changes，锁定当期版本 | 注册断言 + S1 = PASS（或 BLOCKED 注明上游阻塞点） |
+| T5.8 | **Pi Agent** 适配 | 参考 `D:\LATEXTEST	ools\genoffice` 旁的 ACS 经验（pi 扩展/custom tools） | 同上 |
+| T5.9 | **Kimi Code** 适配 | 先勘察其技能/MCP/子智能体机制（据实填写 AGENT_COMPAT_MATRIX） | 勘察记录 + 注册断言 + S1 = PASS |
+| T5.10 | **Claude Desktop** 适配 | 无命令/子智能体概念：MCP 连接器（HTTP 网关 T3.7）+ Skills 上传；对话触发降级路径 | MCP 工具列举成功 + 降级 S1 = PASS |
+| T5.11 | **ChatGPT Desktop** 适配 | 远程 MCP connector（HTTP + 令牌）+ 提示词包；对话触发降级路径 | connector 连通 + 工具调用一次 + 降级 S1 = PASS（无法本机验证的部分如实 BLOCKED 并给出刘总自验步骤） |
+| T5.12 | **Kimi Work / Workbuddy** 适配 | 两个 Agent 的扩展面先行勘察（MCP 支持？文件/任务交互？），据实选择接入方式；确无插件面的，以"MCP 网关 + 导入产物目录"的文件协议兜底并如实标注局限 | 勘察记录 + 所选方式验证（连通或文件协议闭环）+ 降级 S1 = PASS（或 BLOCKED + 刘总自验步骤） |
+| T5.13 | **阶段门 5** | 9/9 适配状态全部为 PASS 或 BLOCKED(附原因+自验步骤)；S1–S7 全重跑 + 全量回归 | 准入表 9/9 已处置；全 PASS（BLOCKED 项不计 PASS，需刘总验收或解除阻塞后补验） |
 
 ### Phase 6 — 退役与归档（阶段门 = T6.5）
 
@@ -183,7 +195,7 @@
 
 | 编号 | 任务 | 做法 | 复测 |
 |---|---|---|---|
-| T7.1 | 全场景回归 | S1–S7 在主用 Agent 全部重跑 | 全 PASS，证据归档 |
+| T7.1 | 全场景回归 | S1–S7 在 9 个 Agent 中每个至少重跑 S1；S1–S7 全集在本机可装 Agent 全重跑 | 全 PASS，证据归档 |
 | T7.2 | 全量测试对比基线 | `python -m pytest -q` 对照 T0.1 | 通过数 ≥ N₀，0 failed |
 | T7.3 | 红队自查 | 按 §1 铁律逐条审计台账：有无跳测/弱断言/无证据声明；抽查 3 个"PASS"重新实跑 | 抽查 3/3 与台账一致 |
 | T7.4 | 交付报告 | `docs/plugin-migration/FINAL_REPORT.md`：全部任务状态 + 证据指针 + 残余风险（只允许 DONE/FAIL/NOT RUN/BLOCKED，禁止"基本完成"） | 报告覆盖 §4 全部任务号，无一遗漏 |
