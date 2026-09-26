@@ -54,3 +54,8 @@
 | 2026-09-26 | T7.1 | S1–S7 重跑链（S1 最终自检重跑 + S1–S7 本会话全新子智能体实跑链；Claude Code/ZCode 双环境） | PASS | evidence/t7-final-selfcheck.txt + evidence/s1..s7/ + t5.5 | — |
 | 2026-09-26 | T6.5 | 阶段门 6：全量回归 + S1–S7 全场景最近一轮全 PASS | PASS | evidence/t4.7-regression.txt + evidence/s1..s7/ | — |
 | 2026-09-26 | T7.4 | FINAL_REPORT 覆盖 §4 全部任务号（T0.1–T7.4 逐任务状态+证据指针+残余风险） | PASS | docs/plugin-migration/FINAL_REPORT.md | — |
+| 2026-09-27 | T5.9-升级 | kimi 实机：技能注册断言（User 作用域 metis 技能）+ kimi -p 引擎 CLI S1 实跑 | PASS | 子智能体会话记录 + ~/.kimi-code/skills/metis/ | 首轮失败：SKILL.md 缺 frontmatter → 补 name/description 后注册成功 |
+| 2026-09-27 | T5.8-升级 | pi 实机：SKILL.md 装 ~/.agents/skills（官方路径）+ 注册断言 | PASS(注册) | pi 0.80.2 实测 | S1 需模型通道（PANGU 403/openrouter 402），fail-closed 未伪造 |
+| 2026-09-27 | T5.7-升级 | dsh 0.1.5-rc.3 实机：用户区 profile vendor 化修复 cordis 缺依赖 → metis-dev profile 启动成功 | PASS(注册) | ~/.dsh/profiles/metis-dev/vendor/ | S1 agent 循环需 DeepSeek 凭据（刘总侧） |
+| 2026-09-27 | T5.10/11/12-升级 | 公网隧道（trycloudflare）+ 标准客户端：10 工具列举/echo/project_status fail-closed 全通过 | PASS(网关侧) | evidence/t3.7-public-tunnel.md | 客户端 UI 填写需刘总账号 |
+| 2026-09-27 | T7.1-补 | 版本 0.2.0 升级后最终自检：init/status CLI + 全量回归 | PASS | evidence/t7-final-selfcheck.txt + t7.2-regression.txt（287≥230, 0 failed；修复 test_smoke 硬编码版本断言） | — |

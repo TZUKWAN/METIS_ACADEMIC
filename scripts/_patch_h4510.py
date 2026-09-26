@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """补丁：H4 基金设计语义 / H10-001 变量来自设计 / H5 ModelBackend。"""
+
 from pathlib import Path
 
 # ---------- 1) Composer：基金项目禁用 S5 范式执行链（H4-002/003） ----------
@@ -96,13 +97,13 @@ assert old in s2, "quant vars anchor"
 s2 = s2.replace(old, new)
 
 # ---------- 3) H5-003：语义任务 fail-closed 挂钩 + writing.section 走后端 ----------
-old = '''from .literature import LiteratureManager, SearchQuery'''
-new = '''from .literature import LiteratureManager, SearchQuery
-from .model_backend import ModelRequest, get_model_backend'''
+old = """from .literature import LiteratureManager, SearchQuery"""
+new = """from .literature import LiteratureManager, SearchQuery
+from .model_backend import ModelRequest, get_model_backend"""
 assert old in s2, "import anchor"
 s2 = s2.replace(old, new)
 
-old = '''    def writing_section(task, c):'''
+old = """    def writing_section(task, c):"""
 new = '''    def _require_backend(task_type: str):
         """H5-003：语义任务无后端时显式失败（不留假骨架）。"""
         be = get_model_backend()
@@ -116,10 +117,10 @@ new = '''    def _require_backend(task_type: str):
 assert old in s2, "writing anchor"
 s2 = s2.replace(old, new)
 
-old = '''        import re as _re
+old = """        import re as _re
 
-        rq_ids = _re.findall(r"RQ\\d", asm.read_if_exists("research/research_questions.md"))'''
-new = '''        backend = _require_backend("writing.section")
+        rq_ids = _re.findall(r"RQ\\d", asm.read_if_exists("research/research_questions.md"))"""
+new = """        backend = _require_backend("writing.section")
         resp = backend.generate(
             ModelRequest(
                 task_type="writing.section",
@@ -130,16 +131,16 @@ new = '''        backend = _require_backend("writing.section")
         generated = resp.text.strip()
         import re as _re
 
-        rq_ids = _re.findall(r"RQ\\d", asm.read_if_exists("research/research_questions.md"))'''
+        rq_ids = _re.findall(r"RQ\\d", asm.read_if_exists("research/research_questions.md"))"""
 assert old in s2, "rq anchor"
 s2 = s2.replace(old, new)
 
-old = '''        p.parent.mkdir(parents=True, exist_ok=True)
+old = """        p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(f"# {section}\\n\\n" + "\\n".join(body) + "\\n", encoding="utf-8")
-        return out'''
-new = '''        p.parent.mkdir(parents=True, exist_ok=True)
+        return out"""
+new = """        p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(f"# {section}\\n\\n{generated}\\n\\n" + "\\n".join(body) + "\\n", encoding="utf-8")
-        return out'''
+        return out"""
 assert old in s2, "write anchor"
 s2 = s2.replace(old, new)
 p2.write_text(s2, encoding="utf-8")

@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """一次性补丁：manager.py 升级（H2-001/002/005/008/011/012/016/009）。"""
+
 from pathlib import Path
 
 p = Path("src/metis_academic/literature/manager.py")
 s = p.read_text(encoding="utf-8")
 
 # 1) __init__ 自动加载 + 稳定 id
-old = '''    def __init__(self, ws: WorkspaceManager, source_kwargs: dict | None = None):
+old = """    def __init__(self, ws: WorkspaceManager, source_kwargs: dict | None = None):
         self.ws = ws
         self._source_kwargs = source_kwargs or {}
-        self.records: dict[str, LiteratureRecord] = {}  # key: dedupe 标题键'''
+        self.records: dict[str, LiteratureRecord] = {}  # key: dedupe 标题键"""
 new = '''    RECORDS_FILE = "records.jsonl"
 
     def __init__(self, ws: WorkspaceManager, source_kwargs: dict | None = None,
@@ -40,7 +41,7 @@ assert old in s, "init anchor"
 s = s.replace(old, new)
 
 # 2) _ingest：去 auto-verify、加合并冲突规则
-old = '''    def _ingest(self, records: list[LiteratureRecord]) -> list[LiteratureRecord]:
+old = """    def _ingest(self, records: list[LiteratureRecord]) -> list[LiteratureRecord]:
         added = []
         for rec in records:
             rec.validate()
@@ -64,7 +65,7 @@ old = '''    def _ingest(self, records: list[LiteratureRecord]) -> list[Literatu
     @staticmethod
     def _auto_verifiable(rec: LiteratureRecord) -> bool:
         trusted = ("https://arxiv.org/abs/", "https://doi.org/")
-        return any(rec.verify_url.startswith(p) for p in trusted)'''
+        return any(rec.verify_url.startswith(p) for p in trusted)"""
 new = '''    def _ingest(self, records: list[LiteratureRecord]) -> list[LiteratureRecord]:
         """收录：来源发现不产生核验（H2-005）；合并保留 provenance、冲突显式化。"""
         added = []
@@ -116,11 +117,11 @@ assert old in s, "ingest anchor"
 s = s.replace(old, new)
 
 # 3) verified-only bib + records.jsonl 持久化
-old = '''    def _write_bib(self) -> None:
+old = """    def _write_bib(self) -> None:
         entries = [format_bibtex(rec) for rec in self.records.values()]
         (self._literature_dir() / "references.bib").write_text(
             "% METIS 参考文献库（BibTeX）\\n\\n" + "\\n\\n".join(entries) + "\\n", encoding="utf-8"
-        )'''
+        )"""
 new = '''    def _write_bib(self) -> None:
         """最终 references.bib 只写 verified 记录（H2-008，J024 真正成立）。"""
         entries = []
@@ -239,8 +240,10 @@ new = "from .models import LiteratureRecord, SearchQuery, VerificationStatus"
 assert old in s
 s = s.replace(old, new)
 old = "from .sources import format_bibtex, get_source"
-new = ("from .sources import (_set_verification, format_apa, format_bibtex,\n"
-       "                      format_gbt7714, get_source)")
+new = (
+    "from .sources import (_set_verification, format_apa, format_bibtex,\n"
+    "                      format_gbt7714, get_source)"
+)
 assert old in s
 s = s.replace(old, new)
 

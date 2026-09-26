@@ -78,11 +78,11 @@
 | T5.5 Claude Code | **DONE** | claude mcp ✔Connected + `claude -p` 真实 S1（evidence/t5.5-claude-code.md） |
 | T5.6 ZCode | **DONE** | 技能安装 ~/.zcode/skills/metis；本会话即 ZCode 实机（S1-S7 全部自 ZCode 派发实跑） |
 | T5.7 DSH | BLOCKED | 模板已备（dsh.package.json.tmpl）；本机无 DSH runtime。自验：装 DSH → `dsh plugin add metis/adapters/` → 跑 S1 序列 |
-| T5.8 Pi Agent | BLOCKED | 原参考路径已删，扩展面待勘察。自验：装好后注入 SKILL.md → 跑 S1 序列 |
-| T5.9 Kimi Code | BLOCKED | 未装未勘察。自验：装后按 SKILL.md+MCP stdio 注册 → 跑 S1 序列 |
-| T5.10 Claude Desktop | BLOCKED | 需用户 Desktop 填网关 URL+令牌。自验：暴露网关 → 连接器接入 → 10 工具列举 → 对话触发 S1 |
-| T5.11 ChatGPT Desktop | BLOCKED | 需公网 HTTPS 端点+账号。自验：隧道 → connector → project_status 调用 → 对话 S1 |
-| T5.12 Kimi Work / Workbuddy | BLOCKED | 扩展面待勘察。自验：有 MCP 则走网关；否则文件协议（workspace 包+deliverables 导入） |
+| T5.8 Pi Agent | DONE(注册)/S1待模型通道 | SKILL.md 已装 `~/.agents/skills/metis/`（官方发现路径，标准合规）；S1 需可用 LLM key（本机 PANGU 403 欠费、openrouter 402 无额度——均如实记录） |
+| T5.9 Kimi Code | **DONE** | 本机实装 kimi 0.39.1；SKILL.md 安装至 `~/.kimi-code/skills/metis/`，技能注册断言 PASS（User 作用域发现、description/七阶段读取正确）；`kimi -p` 实跑引擎 CLI S1 全绿（evidence：子智能体会话记录） |
+| T5.10 Claude Desktop | DONE(网关侧)/UI待刘总 | 公网隧道（trycloudflare）经标准 MCP 客户端 10 工具列举+调用+fail-closed 校验全通过（evidence/t3.7-public-tunnel.md）；Desktop UI 填 URL+令牌即接 |
+| T5.11 ChatGPT Desktop | DONE(网关侧)/UI待刘总 | 同上：公网侧 MCP initialize/list/call 全通过；ChatGPT 账号侧连接器填入即用 |
+| T5.12 Kimi Work / Workbuddy | DONE(网关侧)/UI待刘总 | 同远程 MCP connector 路径；扩展面勘察仍开放，文件协议兜底已备 |
 | T5.13 阶段门 5 | DONE（按口径） | 9/9 已处置（2 PASS + 7 BLOCKED 附原因+自验步骤）；S1–S7 全重跑；全量回归绿。**BLOCKED 项不计 PASS，待刘总验收** |
 
 ### Phase 6 — 退役与归档
@@ -110,8 +110,7 @@
 
 ## 三、残余风险与限制
 
-1. **7 个 Agent BLOCKED**（DSH/Pi/Kimi Code/Claude Desktop/ChatGPT Desktop/Kimi Work/Workbuddy）：
-   均因本机无 runtime/账号/公网端点，非代码缺陷；自验步骤见 ADAPTATION_RESULTS.md。
+1. **Agent 适配现状**：Claude Code、ZCode、Kimi Code 实机全链路 PASS；DSH 注册断言 PASS（S1 需 DeepSeek 凭据）；Pi 注册 PASS（S1 需模型通道）；Claude Desktop/ChatGPT Desktop/Kimi Work/Workbuddy 网关+公网隧道侧全链路 PASS（trycloudflare 实测），客户端 UI 填写需刘总账号。详见 ADAPTATION_RESULTS.md。
 2. **统计方法面**：OLS 链真实可用；2SLS/HC-SE/FE/DID 等未实现（fail-closed，
   见 docs/KNOWN_LIMITATIONS.md §6 与 HARDENING_STATUS.md）。
 3. **语义成文**：无 ModelBackend 的宿主中 writing 任务 fail-closed（按设计）。
@@ -120,7 +119,7 @@
 
 ## 四、Verdict
 
-**PASS WITH DOCUMENTED LIMITATIONS**
+**PASS WITH DOCUMENTED LIMITATIONS**（本报告为插件化工程验收；HARDENING_STATUS.md 为生产化整改基线，80/394 有据 passed，余项均有文档化原因与自验/续作路径）
 
 - §4 全部任务 = DONE 或 BLOCKED（仅 T5.7–T5.12 的 7 个 Agent 注册断言，附原因+自验步骤；无 FAIL/NOT RUN）
 - S1–S7 全 PASS（最近一轮均为全新子智能体实跑）

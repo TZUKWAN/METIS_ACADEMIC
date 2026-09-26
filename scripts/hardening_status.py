@@ -8,6 +8,7 @@
   python scripts/hardening_status.py --mark H1-001 passed --note "..." --ev "path"
   python scripts/hardening_status.py --check         # CI 一致性检查
 """
+
 from __future__ import annotations
 
 import argparse
@@ -56,15 +57,18 @@ def _save(st: dict) -> None:
 def render(st: dict, phases: dict[str, list[str]]) -> str:
     total = sum(len(v) for v in phases.values())
     done = sum(1 for t in st["tasks"].values() if t.get("status") == "passed")
-    lines = ["# METIS ACADEMIC 发布后整改状态表（Hardening）",
-             "",
-             "> 审计基线：main @ `c0d3e83`。本表为**新的验收基线**，",
-             "> 历史自报状态（456/456、217 全绿）仅为实现记录，不作生产验收。",
-             "",
-             f"- 更新时间：{_dt.datetime.now().isoformat(timespec='seconds')}",
-             f"- 任务总数：{total}　passed：{done}",
-             "",
-             "| Phase | 任务数 | passed |", "|---|---|---|"]
+    lines = [
+        "# METIS ACADEMIC 发布后整改状态表（Hardening）",
+        "",
+        "> 审计基线：main @ `c0d3e83`。本表为**新的验收基线**，",
+        "> 历史自报状态（456/456、217 全绿）仅为实现记录，不作生产验收。",
+        "",
+        f"- 更新时间：{_dt.datetime.now().isoformat(timespec='seconds')}",
+        f"- 任务总数：{total}　passed：{done}",
+        "",
+        "| Phase | 任务数 | passed |",
+        "|---|---|---|",
+    ]
     for ph, ids in phases.items():
         d = sum(1 for t in ids if st["tasks"].get(t, {}).get("status") == "passed")
         lines.append(f"| {ph} | {len(ids)} | {d} |")
@@ -81,7 +85,9 @@ def render(st: dict, phases: dict[str, list[str]]) -> str:
         lines.append("")
     lines += ["## 操作日志（最近 80 条）", ""]
     for e in st["log"][-80:]:
-        lines.append(f"- `{e['at']}` {e.get('ids', '')} → {e.get('status', '')} {e.get('note', '')}")
+        lines.append(
+            f"- `{e['at']}` {e.get('ids', '')} → {e.get('status', '')} {e.get('note', '')}"
+        )
     return "\n".join(lines) + "\n"
 
 
@@ -126,8 +132,7 @@ def main() -> None:
             rec.update({"status": args.status, "note": args.note, "at": now})
             if args.ev:
                 rec["evidence"] = args.ev
-            st["log"].append({"at": now, "ids": tid, "status": args.status,
-                              "note": args.note})
+            st["log"].append({"at": now, "ids": tid, "status": args.status, "note": args.note})
     _save(st)
     STATUS.write_text(render(st, phases), encoding="utf-8")
     total = sum(len(v) for v in phases.values())

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """补丁：TaskStore/StateManager 并发写互斥（S3 发现的 last-writer-wins 缺陷）。"""
+
 from pathlib import Path
 
 p2 = Path("src/metis_academic/state/task_store.py")

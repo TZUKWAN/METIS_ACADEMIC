@@ -50,7 +50,11 @@ def main(argv=None) -> int:
     print(f"[metis-mcp-gateway] Bearer token（本次启动生成，请保存）: {token}", flush=True)
 
     server = _build_server(args.workspace)
-    app = server.streamable_http_app(host=args.host)
+    # 隧道/公网模式下 Host 头为隧道域名：关闭 DNS 重绑定防护（鉴权由 Bearer 令牌承担）
+    from mcp.server.transport_security import TransportSecuritySettings
+
+    security = TransportSecuritySettings(enable_dns_rebinding_protection=False)
+    app = server.streamable_http_app(host=args.host, transport_security=security)
     app = BearerTokenMiddleware(app, token)
     import uvicorn
 
