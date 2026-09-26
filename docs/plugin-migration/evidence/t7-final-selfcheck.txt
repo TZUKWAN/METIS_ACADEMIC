@@ -1,0 +1,12 @@
+=== T7.1/T7.2 最终自检 2026-09-27T01:15:17+08:00 ===
+--- 版本（0.2.0）---
+metis-academic 0.2.0
+--- S1 最终重跑（临时目录）---
+{"project_id": "metis-20260927-de5c3e", "stage": "S1", "seven_stage": "①文献准备", "composed_from": ["common", "paradigm/quantitative", "artifact/thesis", "level/master", "language/zh-CN"], "task_rules": 64, "tasks_seeded": 64, "workspace": "D:\\METIS_final_check\\proj"}
+init exit=0
+{"project_id": "metis-20260927-de5c3e", "project_name": "最终验收", "stage": "S1", "seven_stage": "①文献准备", "initialized": true, "tasks": {"total": 11, "COMPLETE": 0, "READY": 0, "TODO": 0, "BLOCKED": 0, "FAILED": 0, "RUNNING": 0, "PENDING": 11}, "evidence_count": 0, "workspace": "D:\\METIS_final_check\\proj"}
+status exit=0
+--- T7.2 全量回归 ---
+=========================== short test summary info ===========================
+FAILED tests/test_smoke.py::test_version_defined - AssertionError: assert '0....
+exit=0

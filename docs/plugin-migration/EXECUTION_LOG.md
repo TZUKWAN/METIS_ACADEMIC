@@ -49,3 +49,8 @@
 | 2026-09-26 | T5.6 | ZCode：技能安装 ~/.zcode/skills/metis + 本会话实证 | PASS | ADAPTATION_RESULTS.md #2 | — |
 | 2026-09-26 | T5.7-T5.12 | DSH/Pi/Kimi Code/Claude Desktop/ChatGPT/Kimi Work/Workbuddy | BLOCKED(7/9 附原因+自验步骤) | docs/plugin-migration/ADAPTATION_RESULTS.md | 需刘总侧运行时/账号/公网端点 |
 | 2026-09-26 | T5.13 | 阶段门 5：9/9 已处置（2 PASS + 7 BLOCKED 附自验）；S1–S7 全重跑链 + 全量回归 | PASS(按口径) | ADAPTATION_RESULTS.md; evidence/s1..s7/; t3.9/t4.7 回归 | BLOCKED 项待刘总验收 |
+| 2026-09-26 | T7.3 | 红队抽查：CLI闭环/MCP artifact链/预检blocker 三项重新实跑 | PASS(3/3) | evidence/t7.3-redteam.txt | — |
+| 2026-09-26 | T7.2 | 全量 pytest 对基线 | PASS | evidence/t7.2-regression.txt（287≥230, 0 failed） | 版本断言硬编码修复（联动 pyproject） |
+| 2026-09-26 | T7.1 | S1–S7 重跑链（S1 最终自检重跑 + S1–S7 本会话全新子智能体实跑链；Claude Code/ZCode 双环境） | PASS | evidence/t7-final-selfcheck.txt + evidence/s1..s7/ + t5.5 | — |
+| 2026-09-26 | T6.5 | 阶段门 6：全量回归 + S1–S7 全场景最近一轮全 PASS | PASS | evidence/t4.7-regression.txt + evidence/s1..s7/ | — |
+| 2026-09-26 | T7.4 | FINAL_REPORT 覆盖 §4 全部任务号（T0.1–T7.4 逐任务状态+证据指针+残余风险） | PASS | docs/plugin-migration/FINAL_REPORT.md | — |

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "metis-academic"
-version = "0.1.0"
+version = "0.2.0"
 description = "METIS ACADEMIC — 面向跨 Agent Harness 的对话级哲学社会科学研究工作流运行时"
 readme = "README.md"
 requires-python = ">=3.10"

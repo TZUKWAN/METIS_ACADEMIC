@@ -1,0 +1,13 @@
+=== T7.3 红队抽查 3 项（2026-09-27T01:49:44+08:00）===
+--- 抽查1: T1.5/T1.6 CLI init/status（对应 S1 A1-A6）---
+{"project_id": "metis-20260927-d55247", "stage": "S1", "seven_stage": "①文献准备", "composed_from": ["common", "paradigm/quantitative", "artifact/thesis", "level/master", "language/zh-CN"], "task_rules": 64, "tasks_seeded": 64, "workspace": "D:\\METIS_redteam1\\proj"}
+exit=0
+{"project_id": "metis-20260927-d55247", "project_name": "红队1", "stage": "S1", "seven_stage": "①文献准备", "initialized": true, "tasks": {"total": 11, "COMPLETE": 0, "READY": 0, "TODO": 0, "BLOCKED": 0, "FAILED": 0, "RUNNING": 0, "PENDING": 11}, "evidence_count": 0, "workspace": "D:\\METIS_redteam1\\proj"}
+exit=0
+[METIS] 项目已存在（D:\METIS_redteam1\proj）。恢复用 status/advance；重建加 --force。
+dup exit=1 (期望1)
+--- 抽查2: T3.4 Artifact 链路（MCP 真实客户端）---
+..                                                                       [100%]
+--- 抽查3: T4.4 预检 blocker 抓获 ---
+..                                                                       [100%]
+红队抽查结论：3/3 与台账一致（CLI init/status/dup 重现 PASS；MCP artifact 链路+echo 2 passed；预检 blocker 2 passed）

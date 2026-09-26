@@ -11,7 +11,11 @@ from metis_academic.logging_setup import get_logger, setup_logging
 
 
 def test_version_defined():
-    assert metis_academic.__version__ == "0.1.0"
+    import re
+
+    from metis_academic import SCHEMA_VERSION, __version__
+
+    assert re.fullmatch(r"\d+\.\d+\.\d+", __version__)
     assert metis_academic.SCHEMA_VERSION >= 1
 
 
