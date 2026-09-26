@@ -25,7 +25,7 @@
     "skills": [
       "metis"
     ],
-    "mcp": false,
+    "mcp": true,
     "engine": "python>=3.10"
   },
   "entry": {
@@ -35,12 +35,13 @@
     ],
     "agents": [
       "agents/"
-    ]
+    ],
+    "mcp": "mcp/metis-server.py"
   },
   "compat": {
     "claude-code": {
       "manifest": ".claude-plugin/plugin.json",
-      "mcp": "stdio (Phase 3)"
+      "mcp": "stdio (.mcp.json)"
     },
     "claude-desktop": {
       "mcp": "http-loopback"

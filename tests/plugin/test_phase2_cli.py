@@ -13,10 +13,25 @@ from metis_academic.workspace import TaskLock, TaskLockError
 @pytest.fixture
 def ws_root(tmp_path):
     root = str(tmp_path / "proj")
-    rc = run_engine_cli(["init", "--workspace", root, "--name", "x",
-                         "--artifact", "journal", "--paradigm", "qualitative",
-                         "--lang", "zh-CN", "--start", "from_scratch",
-                         "--non-interactive", "--json"])
+    rc = run_engine_cli(
+        [
+            "init",
+            "--workspace",
+            root,
+            "--name",
+            "x",
+            "--artifact",
+            "journal",
+            "--paradigm",
+            "qualitative",
+            "--lang",
+            "zh-CN",
+            "--start",
+            "from_scratch",
+            "--non-interactive",
+            "--json",
+        ]
+    )
     assert rc == 0
     return root
 
@@ -143,8 +158,7 @@ def test_lock_exclusive_and_stale_recovery(ws_root, tmp_path):
     import time as _time
 
     lock_path.parent.mkdir(parents=True, exist_ok=True)
-    lock_path.write_text(_json.dumps({"pid": 999999999, "at": _time.time()}),
-                         encoding="utf-8")
+    lock_path.write_text(_json.dumps({"pid": 999999999, "at": _time.time()}), encoding="utf-8")
     with TaskLock(ws.root, "C-S1-001"):
         assert True  # stale 已被接管
     # 集成：exec 遇持锁任务一成一拒（同进程内模拟并发）

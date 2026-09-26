@@ -1,0 +1,42 @@
+项目已初始化。
+  项目: metis-20260926-f3ee39「live」
+  工作流: 11 阶段 / 50 任务规则（组合自 common, paradigm/qualitative, artifact/journal, language/zh-CN；已播种 50 任务）
+  当前进入: S1（①文献准备）
+tools listed: 10
+LIVE VERIFY: {
+ "verification": "verified",
+ "evidence": "title similarity 1.00; year 2020==2020",
+ "canonical": {
+  "title": "Array programming with NumPy",
+  "year": 2020,
+  "container": "Nature",
+  "authors": [
+   "Harris Charles R.",
+   "Millman K. Jarrod",
+   "van der Walt Stéfan J.",
+   "Gommers Ralf",
+   "Virtanen Pauli",
+   "Cournapeau David",
+   "Wieser Eric",
+   "Taylor Julian",
+   "Berg Sebastian",
+   "Smith Nathaniel J.",
+   "Kern Robert",
+   "Picus Matti",
+   "Hoyer Stephan",
+   "van Kerkwijk Marten H.",
+   "Brett Matthew",
+   "Haldane Allan",
+   "del Río Jaime Fernández",
+   "Wiebe Mark",
+   "Peterson Pearu",
+   "Gérard-Marchant Pierre",
+   "Sheppard Kevin",
+   "Reddy Tyler",
+   "Weckesser Warren",
+   "Abbasi Hameer",
+   "Gohlke Christoph",
+   "Oliphant Travis E."
+  ]
+ }
+}

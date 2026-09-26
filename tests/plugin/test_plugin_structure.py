@@ -15,7 +15,7 @@ def test_plugin_json_valid():
     assert data["name"] == "metis"
     assert "-" not in data["name"]  # kebab-case（单词也合法）
     assert data["version"].count(".") == 2
-    assert data["capabilities"]["mcp"] is False  # Phase 3 (T3.2) 置 True
+    assert data["capabilities"]["mcp"] is True  # T3.2 起：真实 MCP 服务器
 
 
 def test_plugin_entry_paths_exist():
@@ -54,6 +54,9 @@ def test_claude_code_mirror_consistent():
         "commands/metis.md",
         "commands/metis-resume.md",
         "commands/metis-deliver.md",
+        "mcp/metis-server.py",
+        "mcp/mcp-http-gateway.py",
+        ".mcp.json",
         "agents/metis-executor.md",
     ],
 )

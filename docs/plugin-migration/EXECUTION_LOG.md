@@ -25,3 +25,12 @@
 | 2026-09-26 | T2.6 | 子智能体实跑 S2 | PASS(6/6) | evidence/s2/s2-run-report.md | — |
 | 2026-09-26 | T2.7 | 子智能体实跑 S3→FAIL(5/6 并发缺陷)→修复跨进程锁→全新子智能体重跑 | PASS(6/6) | evidence/s3/s3-run-report.md + s3-rerun-report.md | FAIL:task-state last-writer-wins→file_lock修复 |
 | 2026-09-26 | T2.8 | S1(9/9)+S2(6/6)+S3(6/6) 门内重跑 + 全量 pytest | PASS | evidence/s1/s1-gate-rerun.md; s2/s2-gate-rerun.md; s3/s3-rerun-report.md; t2.8-regression.txt | — |
+| 2026-09-26 | T3.1 | SDK 冒烟 echo 工具经标准 MCP 客户端调用 | PASS | tests/mcp_server/test_mcp_server.py::test_t31 + MCP_SPEC.md | — |
+| 2026-09-26 | T3.2 | list_tools 与 MCP_SPEC 一致 + project_status 调用 | PASS | test_t32_* | — |
+| 2026-09-26 | T3.3 | literature_search(fixture)+literature_verify_doi 真实 Crossref live（经 MCP 客户端） | PASS | evidence/t3.3-live-crossref.txt（verified, sim 1.00） | — |
+| 2026-09-26 | T3.4 | register→new_version→list→lineage 真实链路 | PASS | test_t34_artifact_chain | — |
+| 2026-09-26 | T3.5 | 非项目 workspace 拒/缺失 artifact 可读错/超长输出截断/错误脱敏 | PASS | test_t35_* | — |
+| 2026-09-26 | T3.6 | 子智能体 S4 全链路（仅 MCP 工具） | PASS(6/6) | evidence/s4/s4-run-report.md | — |
+| 2026-09-26 | T3.7 | stdio + HTTP 网关（令牌鉴权 401/连通）同工具集双传输 | PASS | test_t37_dual_transport_same_tools | — |
+| 2026-09-26 | T3.8 | Claude Code 本机：注册+✔Connected+真实工具调用；其余 Agent 按 Phase 5 处置 | PASS(Claude Code) / 其余转 Phase5 | evidence/t3.8-claude-code.md | — |
+| 2026-09-26 | T3.9 | 阶段门 3：全量回归 exit=0 + ruff clean | PASS | evidence/t3.9-regression.txt | — |

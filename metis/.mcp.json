@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "metis": {
+      "command": "python",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp/metis-server.py",
+        "--workspace",
+        "."
+      ]
+    }
+  }
+}
