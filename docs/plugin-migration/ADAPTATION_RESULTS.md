@@ -21,3 +21,18 @@
 - **BLOCKED（附原因+自验步骤）**：DSH、Pi、Kimi Code、Claude Desktop、ChatGPT Desktop、Kimi Work、Workbuddy（7/9）
 - **通用兜底已验证**：SKILL.md 对话注入 + 引擎 CLI 的降级路径 = S1 场景能力等价（tests/scenarios/S1，两轮子智能体实跑）
 - 前置依赖：Q3 凭据、各 Agent 账号/运行时——均属刘总侧输入（DECISIONS.md 已记）
+
+## 待刘总输入清单（逐项精确化，2026-09-27）
+
+> 执行者侧已全部就绪：收到对应输入后，每个 Agent 的 S1 补验约需 10–30 分钟。
+
+| Agent | 缺口 | 刘总需提供 | 到货后执行者动作 |
+|---|---|---|---|
+| DSH | DeepSeek API Key | `sk-…`（DeepSeek 开放平台） | 写入 `~/.dsh/settings` env → `dsh --profile metis-dev` 启动 agent 循环 → 跑 S1 序列 → T5.7 转 DONE |
+| Pi Agent | 任一可用 LLM Key | OpenRouter（有额度）/ DeepSeek / 其他 openai-compatible key | 配入 pi（env 或 custom provider 扩展）→ 跑 S1 序列 → T5.8 转 DONE |
+| Claude Desktop | 本机未安装 Desktop | 安装 Claude Desktop 并登录 | 执行者把 metis stdio server 写入 `claude_desktop_config.json` → 重启 Desktop → 确认 metis 工具出现 → 跑对话触发 S1 → T5.10 转 DONE |
+| ChatGPT Desktop | 公网 HTTPS 端点 + ChatGPT 账号 | 保持 cloudflared 隧道运行（命令已给）+ ChatGPT Plus 账号 | 连接器填 `https://<隧道>/mcp` + 令牌 → 工具列表出现 → 跑对话触发 S1 → T5.11 转 DONE |
+| Kimi Work / Workbuddy | 账号 + 扩展面确认 | 账号；或确认二者支持的接入面（MCP？文件协议？） | 按确认结果接入（网关或文件协议）→ 对话触发 S1 → T5.12 转 DONE |
+
+注：隧道 URL 为临时（cloudflared quick tunnel 重启即换）；正式使用建议
+`cloudflared tunnel` 命名隧道或自备反代 + 固定域名。
