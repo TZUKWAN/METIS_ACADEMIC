@@ -153,9 +153,9 @@
 | 编号 | 任务 | 做法 | 复测 |
 |---|---|---|---|
 | T4.1 | 七阶段对齐 | 把 ACADEMIC 工作流阶段命名/顺序与桌面应用 B79 七阶段（①文献准备…⑦交付）做映射表；调整 YAML 工作流命名对齐 | 产出 `docs/plugin-migration/STAGE_MAP.md`；工作流装配测试全绿 |
-| T4.2 | PPT 模板生成收编 | 从 `metis-alpha2-release` 复制 GordenPPTSkill 集成语义（注明来源）→ 引擎 PPT 生成模块（模板 slug + 标题 + 要点 → 真实 .pptx） | 引擎单测全绿；真实生成一次 .pptx 并断言 zip 魔数 + slide XML 含要点文本（可参照 `metis-alpha2-release/logs/gorden-live-deck.pptx` 的探针方法） |
+| T4.2 | PPT 模板生成收编 | 使用已抢救件 `docs/plugin-migration/rescued/GordenPptService.ts`（来源 metis-alpha2-release，已注明）→ 引擎 PPT 生成模块（模板 slug + 标题 + 要点 → 真实 .pptx） | 引擎单测全绿；真实生成一次 .pptx 并断言 zip 魔数 + slide XML 含要点文本（探针方法参照 rescued 件与本清单 T4.2 描述（zip 魔数 + slide XML 文本断言）） |
 | T4.3 | 场景 S5：PPT 交付 | 写 `S5-ppt-delivery.md` → 子智能体实跑"由交付物生成答辩 PPT" | S5 = PASS |
-| T4.4 | 投稿预检/材料包收编 | 从 B79 语义转写：预检规则清单 → 引擎 submission 模块；材料包组装与冻结 | 引擎单测全绿；真实预检一个示例项目（含一条故意 blocker）断言 blocker 被抓 |
+| T4.4 | 投稿预检/材料包收编 | 从 B79 语义转写（参考抢救件 `rescued/SubmissionPreflightService.ts` 的规则清单）→ 引擎 submission 模块；材料包组装与冻结 | 引擎单测全绿；真实预检一个示例项目（含一条故意 blocker）断言 blocker 被抓 |
 | T4.5 | 图表重画收编 | 指令式重画（用户给重画要求 → 新版本追加，不覆盖旧版本）→ 引擎模块 | 单测全绿；重画一次断言 v1 保留 v2 出现 |
 | T4.6 | 场景 S6：重画与版本 | 写 `S6-figure-redraw.md` → 实跑"选中图 → 输入重画要求 → v2 出现 → 切回 v1" | S6 = PASS |
 | T4.7 | **阶段门 4** | S1–S6 全重跑 + 全量回归 + Phase 4 每域复测重跑 | 全 PASS |
