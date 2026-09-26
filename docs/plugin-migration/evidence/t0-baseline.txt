@@ -1,0 +1,19 @@
+=== T0.1 基线快照 2026-09-26T19:30:28+08:00 ===
+=== git ===
+?? docs/plugin-migration/evidence/
+d9896e8 docs(rescue): preserve B79 semantic assets before legacy cleanup — preflight rules, GordenPpt service, metis2 report/status/migration-map
+901b4ec docs: TASKLIST v1.1 — 9-Agent admission matrix (Claude Code/Desktop, Kimi Code/Work, ZCode, ChatGPT Desktop, DSH, Pi, Workbuddy), dual-transport MCP, asset recovery from remotes after local cleanup
+f61b1df docs: plugin-migration TASKLIST v1.0 — merge all METIS lines into generalized plugin (per 刘总 2026-09-26)
+main
+=== ruff check ===
+All checks passed!
+=== pytest -q ===
+........................................................................ [ 31%]
+............................s........................................... [ 62%]
+........................................................................ [ 93%]
+..............                                                           [100%]
+
+=== T0.1 结论 ===
+N0 = 230 collected = 229 passed + 1 skipped (online marker)
+ruff check: All checks passed
+分支基线 commit: d9896e8 (main)

@@ -1,0 +1,17 @@
+=== T0.8 阶段门 0 复测 2026-09-26T19:47:30+08:00 ===
+分支: plugin-migration
+=== 产出文件存在性 ===
+OK docs/plugin-migration/adapters-audit.md
+OK docs/plugin-migration/PLUGIN_SPEC.md
+OK docs/plugin-migration/AGENT_COMPAT_MATRIX.md
+OK docs/plugin-migration/ENGINE_CONTRACT.md
+OK docs/plugin-migration/DECISIONS.md
+OK docs/plugin-migration/EXECUTION_LOG.md
+OK docs/plugin-migration/TASKLIST.md
+OK docs/plugin-migration/evidence/t0-baseline.txt
+=== 全量回归 ===
+............................s........................................... [ 62%]
+........................................................................ [ 93%]
+..............                                                           [100%]
+=== ruff ===
+All checks passed!
