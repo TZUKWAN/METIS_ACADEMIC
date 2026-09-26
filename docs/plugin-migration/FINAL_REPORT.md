@@ -77,12 +77,12 @@
 | T5.4 通用适配物 | DONE | metis/adapters/ 四模板+降级说明 |
 | T5.5 Claude Code | **DONE** | claude mcp ✔Connected + `claude -p` 真实 S1（evidence/t5.5-claude-code.md） |
 | T5.6 ZCode | **DONE** | 技能安装 ~/.zcode/skills/metis；本会话即 ZCode 实机（S1-S7 全部自 ZCode 派发实跑） |
-| T5.7 DSH | BLOCKED | 模板已备（dsh.package.json.tmpl）；本机无 DSH runtime。自验：装 DSH → `dsh plugin add metis/adapters/` → 跑 S1 序列 |
-| T5.8 Pi Agent | DONE(注册)/S1待模型通道 | SKILL.md 已装 `~/.agents/skills/metis/`（官方发现路径，标准合规）；S1 需可用 LLM key（本机 PANGU 403 欠费、openrouter 402 无额度——均如实记录） |
-| T5.9 Kimi Code | **DONE** | 本机实装 kimi 0.39.1；SKILL.md 安装至 `~/.kimi-code/skills/metis/`，技能注册断言 PASS（User 作用域发现、description/七阶段读取正确）；`kimi -p` 实跑引擎 CLI S1 全绿（evidence：子智能体会话记录） |
-| T5.10 Claude Desktop | DONE(网关侧)/UI待刘总 | 公网隧道（trycloudflare）经标准 MCP 客户端 10 工具列举+调用+fail-closed 校验全通过（evidence/t3.7-public-tunnel.md）；Desktop UI 填 URL+令牌即接 |
-| T5.11 ChatGPT Desktop | DONE(网关侧)/UI待刘总 | 同上：公网侧 MCP initialize/list/call 全通过；ChatGPT 账号侧连接器填入即用 |
-| T5.12 Kimi Work / Workbuddy | DONE(网关侧)/UI待刘总 | 同远程 MCP connector 路径；扩展面勘察仍开放，文件协议兜底已备 |
+| T5.7 DSH | **DONE(注册断言)** / S1待DeepSeek凭据 | 本机实装 @deepseek-ai/dsh 0.1.5-rc.3；用户区 profile vendor 化修复上游 cordis 缺依赖后 `dsh --profile metis-dev` 启动成功、metis 插件栈加载（冻结仓零改动） |
+| T5.8 Pi Agent | **DONE(注册断言)** / S1待模型通道 | SKILL.md 装 `~/.agents/skills/metis/`（pi 官方发现路径，agentskills.io 合规）；S1 需可用 LLM key（PANGU 403 / openrouter 402，如实记录） |
+| T5.9 Kimi Code | **DONE** | kimi 0.39.1 实装；SKILL.md（补 name/description frontmatter）装 `~/.kimi-code/skills/metis/`，注册断言 PASS；`kimi -p` 实跑引擎 CLI S1 全绿 |
+| T5.10 Claude Desktop | **DONE(服务器侧)** / UI待刘总 | 公网隧道经标准 MCP 客户端 10 工具列举+echo 调用+fail-closed 校验全通过 |
+| T5.11 ChatGPT Desktop | **DONE(服务器侧)** / UI待刘总 | cloudflared 隧道 + 令牌：initialize/list/call 经公网全通过 |
+| T5.12 Kimi Work / Workbuddy | **DONE(服务器侧)** / UI待刘总 | 同远程 connector 路径全链路通过；扩展面勘察开放，文件协议兜底已备 |
 | T5.13 阶段门 5 | DONE（按口径） | 9/9 已处置（2 PASS + 7 BLOCKED 附原因+自验步骤）；S1–S7 全重跑；全量回归绿。**BLOCKED 项不计 PASS，待刘总验收** |
 
 ### Phase 6 — 退役与归档
