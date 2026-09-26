@@ -54,7 +54,7 @@ def test_claude_code_mirror_consistent():
         "commands/metis.md",
         "commands/metis-resume.md",
         "commands/metis-deliver.md",
-        # "agents/metis-executor.md",  # Phase 2 (T2.4) 交付后加入
+        "agents/metis-executor.md",
     ],
 )
 def test_required_components_exist(rel):

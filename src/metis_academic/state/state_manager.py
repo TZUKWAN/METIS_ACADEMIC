@@ -90,6 +90,14 @@ class StateManager:
 
     # ---------- 历史（D003/D004） ----------
     def log_task(self, task_id: str, stage: str, action: str, note: str = "") -> None:
+        from ..workspace.locking import file_lock
+
+        with file_lock(self.ws.root, "state.yaml.lock", timeout=60.0):
+            self.load(force=True)  # 锁内重读，避免覆盖他进程追加的历史
+            self._append_task_history(task_id, stage, action, note)
+            self.save()
+
+    def _append_task_history(self, task_id: str, stage: str, action: str, note: str = "") -> None:
         st = self.load()
         st["task_history"].append(
             {

@@ -273,6 +273,99 @@ def _validate_stage(ws: WorkspaceManager, stage: str):
     return ValidationEngine(ws).validate_stage(stage)
 
 
+# ---------------- tasks / exec（Phase 2，T2.1/T2.2） ----------------
+
+_STATUS_VOCAB = {
+    "pending": "TODO",
+    "ready": "READY",
+    "running": "RUNNING",
+    "passed": "COMPLETE",
+    "failed": "FAILED",
+    "blocked": "BLOCKED",
+    "skipped": "SKIPPED",
+}
+
+
+def _vocab(task) -> str:
+    if task.status.value == "failed" and task.failure_action == "manual":
+        return "NEEDS_REVISION"
+    return _STATUS_VOCAB.get(task.status.value, task.status.value.upper())
+
+
+def cmd_tasks(args) -> int:
+    ws = _workspace(args)
+    if not ws.exists():
+        return _fail("不是 METIS 项目。先运行 init。")
+    sm = StateManager(ws)
+    pool = sm.tasks.by_stage(args.stage) if args.stage else sm.tasks.all()
+    items = [
+        {
+            "id": t.id,
+            "stage": t.stage,
+            "section": t.section,
+            "title": t.title,
+            "status": _vocab(t),
+            "dependencies": list(t.dependencies),
+            "expected_outputs": list(t.expected_outputs),
+            "retry_count": t.retry_count,
+        }
+        for t in pool
+    ]
+    if args.json:
+        print(json.dumps({"count": len(items), "tasks": items}, ensure_ascii=False))
+    else:
+        for it in items:
+            print(f"{it['id']:14s} {it['status']:15s} {it['title']}")
+        print(f"共 {len(items)} 个任务")
+    return EXIT_OK
+
+
+def cmd_exec(args) -> int:
+    ws = _workspace(args)
+    if not ws.exists():
+        return _fail("不是 METIS 项目。先运行 init。")
+    sm = StateManager(ws)
+    try:
+        task = sm.tasks.get(args.task_id)
+    except MetisError as e:
+        return _fail(str(e))
+    if task.status.value == "passed":
+        return _fail(f"任务 {args.task_id} 已 COMPLETE，不可重复执行（fail-closed）。")
+    cfg = _load_project(ws)
+
+    from .executor import TaskExecutor
+    from .runtime import build_runtime_actions
+    from .workspace import TaskLock, TaskLockError
+
+    actions = build_runtime_actions(ws, cfg, adapter=None)
+    ex = TaskExecutor(ws, sm, actions=actions)
+    error_msg = None
+    try:
+        with TaskLock(ws.root, args.task_id):
+            ex.run_task(args.task_id)
+    except TaskLockError as e:
+        error_msg = str(e)
+    except MetisError as e:
+        error_msg = str(e)  # 如 blocked→running 非法迁移（fail-closed）
+    final = sm.tasks.get(args.task_id)
+    # 锁拒绝/迁移被拒时不回写状态：状态归属当前赢家（避免陈旧快照覆写）
+    payload = {
+        "task_id": args.task_id,
+        "status": _vocab(final),
+        "error": final.error,
+        "outputs": list(final.expected_outputs),
+    }
+    ok = final.status.value == "passed" and error_msg is None
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False))
+    elif error_msg:
+        print(f"{args.task_id} → 失败（{error_msg}）")
+    else:
+        detail = f"（{final.error}）" if final.error else ""
+        print(f"{args.task_id} → {_vocab(final)} {detail}")
+    return EXIT_OK if ok else EXIT_FAIL
+
+
 # ---------------- parser ----------------
 
 
@@ -313,6 +406,18 @@ def build_parser() -> argparse.ArgumentParser:
     p_adv.add_argument("--workspace", default=".")
     p_adv.add_argument("--json", action="store_true")
     p_adv.set_defaults(fn=cmd_advance)
+
+    p_tasks = sub.add_parser("tasks", help="任务计划（契约状态词汇）")
+    p_tasks.add_argument("--workspace", default=".")
+    p_tasks.add_argument("--stage", default=None, help="仅列某阶段（如 S1）")
+    p_tasks.add_argument("--json", action="store_true")
+    p_tasks.set_defaults(fn=cmd_tasks)
+
+    p_exec = sub.add_parser("exec", help="执行指定任务（带任务级锁）")
+    p_exec.add_argument("--workspace", default=".")
+    p_exec.add_argument("task_id")
+    p_exec.add_argument("--json", action="store_true")
+    p_exec.set_defaults(fn=cmd_exec)
     return ap
 
 

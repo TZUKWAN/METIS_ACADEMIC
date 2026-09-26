@@ -59,8 +59,13 @@ class Task(Serializable):
             if self.stage != "":
                 raise ValueError(f"Task.stage 非法: {self.stage!r}") from None
             raise ValueError("Task.stage 不能为空") from None
-        if self.status.value not in ALLOWED_TASK_STATUSES:
-            raise ValueError(f"非法任务状态: {self.status}")  # pragma: no cover
+        status_value = (
+            self.status.value
+            if isinstance(self.status, TaskStatus)
+            else TaskStatus(self.status).value
+        )
+        if status_value not in ALLOWED_TASK_STATUSES:  # pragma: no cover
+            raise ValueError(f"非法任务状态: {self.status}")
         if self.failure_action not in ("retry", "blocked", "skip", "manual"):
             raise ValueError(f"非法 failure_action: {self.failure_action}")
 

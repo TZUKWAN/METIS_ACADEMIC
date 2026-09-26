@@ -19,7 +19,9 @@
       "metis-resume",
       "metis-deliver"
     ],
-    "agents": [],
+    "agents": [
+      "metis-executor"
+    ],
     "skills": [
       "metis"
     ],

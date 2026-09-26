@@ -41,6 +41,18 @@ Workspace（`<项目目录>/.metis/`），随时可中断、可恢复。
 2. 引导研究类型选择（检查点 1）。
 3. 引擎 `plan` 装配工作流，向用户报告七阶段计划概览。
 
+## 执行循环调度纪律（阶段开始后）
+
+1. `tasks --json` 读取任务计划；找出当前阶段全部可执行任务（READY）。
+2. 有子智能体能力：按依赖逐个/并行派 `metis-executor`（无依赖的任务可并行）；
+   回收其固定格式回报（TASK/STATUS/OUTPUTS/EVIDENCE/NOTES）。
+3. 无子智能体能力（降级路径）：以后台任务方式自己逐个执行 `exec`，提示词直接
+   引用 `agents/metis-executor.md` 的纪律；能力等价。
+4. 每个任务回报后：`status` 刷新状态 → 全部完成则 `advance` 推进下一阶段 →
+   到达检查点时**必须停下询问用户**。
+5. 任务 FAILED：重试由引擎负责（max_retries）；仍失败则如实向用户汇报并停在
+   当前阶段，禁止跳过。
+
 ## 环境要求
 
 - Python ≥ 3.10；本插件 `engine/` 可用（`python -m metis_academic.cli --version`）。

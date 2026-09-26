@@ -17,3 +17,11 @@
 | 2026-09-26 | T1.3 | 子智能体 SKILL 五问问答 | PASS | evidence/s1/t1.3-t1.4-quiz-report.md（5/5） | — |
 | 2026-09-26 | T1.4 | 子智能体命令 dry-run 对照 ENGINE_CONTRACT | PASS | evidence/s1/t1.3-t1.4-quiz-report.md（10/10 ✓） | — |
 | 2026-09-26 | T1.9 | 子智能体实跑 S1 场景 A1–A9 | PASS | evidence/s1/s1-run-report.md（9/9，附加 18 plugin tests） | — |
+| 2026-09-26 | T2.7-S3 首轮 | 子智能体实跑 S3 | FAIL(5/6) | evidence/s3/s3-run-report.md | 根因:task-state并发写last-writer-wins→修复:TaskStore/StateManager变更持跨进程file_lock+锁内重读;cmd_exec锁拒绝不再回写状态 |
+| 2026-09-26 | T2.1/T2.2 | pytest tests/plugin/test_phase2_cli.py（词汇映射/READY执行落盘/BLOCKED拒/COMPLETE拒） | PASS | tests/plugin/test_phase2_cli.py | — |
+| 2026-09-26 | T2.3 | 锁互斥+stale恢复+并发双开测试 | PASS | tests/plugin/test_phase2_cli.py + evidence/s3/ | — |
+| 2026-09-26 | T2.4 | 子智能体定义评审→FAIL→修复(frontmatter+去advance)→重派复测 | PASS(修复后) | evidence/s3/s3-rerun-report.md 附评审两轮 | FAIL:缺frontmatter+advance越权→已修 |
+| 2026-09-26 | T2.5 | 子智能体调度纪律五问 | PASS(5/5) | 子智能体回报原文 | — |
+| 2026-09-26 | T2.6 | 子智能体实跑 S2 | PASS(6/6) | evidence/s2/s2-run-report.md | — |
+| 2026-09-26 | T2.7 | 子智能体实跑 S3→FAIL(5/6 并发缺陷)→修复跨进程锁→全新子智能体重跑 | PASS(6/6) | evidence/s3/s3-run-report.md + s3-rerun-report.md | FAIL:task-state last-writer-wins→file_lock修复 |
+| 2026-09-26 | T2.8 | S1(9/9)+S2(6/6)+S3(6/6) 门内重跑 + 全量 pytest | PASS | evidence/s1/s1-gate-rerun.md; s2/s2-gate-rerun.md; s3/s3-rerun-report.md; t2.8-regression.txt | — |
