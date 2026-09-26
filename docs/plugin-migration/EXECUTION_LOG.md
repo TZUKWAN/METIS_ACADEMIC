@@ -34,3 +34,10 @@
 | 2026-09-26 | T3.7 | stdio + HTTP 网关（令牌鉴权 401/连通）同工具集双传输 | PASS | test_t37_dual_transport_same_tools | — |
 | 2026-09-26 | T3.8 | Claude Code 本机：注册+✔Connected+真实工具调用；其余 Agent 按 Phase 5 处置 | PASS(Claude Code) / 其余转 Phase5 | evidence/t3.8-claude-code.md | — |
 | 2026-09-26 | T3.9 | 阶段门 3：全量回归 exit=0 + ruff clean | PASS | evidence/t3.9-regression.txt | — |
+| 2026-09-26 | T4.1 | STAGE_MAP 产出 + 装配测试全绿（七阶段口径映射，不破坏状态机基线） | PASS | docs/plugin-migration/STAGE_MAP.md | — |
+| 2026-09-26 | T4.2 | PptBuildService 真实生成 .pptx + zip魔数/slideXML 探针（B79 同法） | PASS | tests/plugin/test_phase4_submission.py | — |
+| 2026-09-26 | T4.3 | 子智能体实跑 S5（PPT 交付） | PASS(4/4) | evidence/s5/s5-run-report.md | — |
+| 2026-09-26 | T4.4 | SubmissionPreflight（B79 规则转写：字数/声明/盲审/无快照 warn；故意 blocker 抓获） | PASS | tests/plugin/test_phase4_submission.py（7 测试） | — |
+| 2026-09-26 | T4.5 | FigureRedraw 追加式版本（v1 保留 v2 追加，不覆盖） | PASS | test_redraw_appends_version_not_overwrite | — |
+| 2026-09-26 | T4.6 | 子智能体实跑 S6（重画与版本） | PASS(4/4) | evidence/s6/s6-run-report.md | — |
+| 2026-09-26 | T4.7 | 阶段门 4：S1–S6 全重跑 + 全量回归 exit=0 | PASS | evidence/t4.7-regression.txt + 各场景证据 | — |

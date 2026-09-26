@@ -36,10 +36,10 @@ def slugify(name: str) -> str:
 
 @dataclass
 class ArtifactEntry:
-    name: str            # 逻辑名（slug）
+    name: str  # 逻辑名（slug）
     version: int
-    path: str            # 相对 workspace
-    kind: str            # file|figure|table|document|data|slide|report
+    path: str  # 相对 workspace
+    kind: str  # file|figure|table|document|data|slide|report
     sha256: str
     task_id: str = ""
     registered_at: str = ""
@@ -75,30 +75,36 @@ class ArtifactRegistry:
             raise DataError(f"artifact 文件不存在: {path_rel}")
         return p
 
-    def register(self, name: str, path: str, kind: str = "file",
-                 task_id: str = "", note: str = "") -> ArtifactEntry:
+    def register(
+        self, name: str, path: str, kind: str = "file", task_id: str = "", note: str = ""
+    ) -> ArtifactEntry:
         if self.lineage(slugify(name)):
             raise DataError(f"artifact 已存在: {name}（用 new_version 追加版本）")
         return self._add(slugify(name), 1, path, kind, task_id, note)
 
-    def new_version(self, name: str, path: str, note: str = "",
-                    task_id: str = "") -> ArtifactEntry:
+    def new_version(self, name: str, path: str, note: str = "", task_id: str = "") -> ArtifactEntry:
         sid = slugify(name)
         history = self.lineage(sid)
         if not history:
             raise DataError(f"artifact 不存在: {name}（先 register）")
-        return self._add(sid, history[-1].version + 1, path, history[-1].kind,
-                         task_id, note)
+        return self._add(sid, history[-1].version + 1, path, history[-1].kind, task_id, note)
 
-    def _add(self, sid: str, version: int, path: str, kind: str,
-             task_id: str, note: str) -> ArtifactEntry:
+    def _add(
+        self, sid: str, version: int, path: str, kind: str, task_id: str, note: str
+    ) -> ArtifactEntry:
         p = self._resolve(path)
         if kind not in ("file", "figure", "table", "document", "data", "slide", "report"):
             raise DataError(f"非法 artifact kind: {kind}")
-        entry = ArtifactEntry(name=sid, version=version,
-                              path=str(p.relative_to(self.ws_root)).replace("\\", "/"),
-                              kind=kind, sha256=_sha256(p), task_id=task_id,
-                              registered_at=_now(), note=note)
+        entry = ArtifactEntry(
+            name=sid,
+            version=version,
+            path=str(p.relative_to(self.ws_root)).replace("\\", "/"),
+            kind=kind,
+            sha256=_sha256(p),
+            task_id=task_id,
+            registered_at=_now(),
+            note=note,
+        )
         self._append(entry)
         return entry
 
@@ -112,5 +118,4 @@ class ArtifactRegistry:
 
     def lineage(self, name: str) -> list[ArtifactEntry]:
         sid = slugify(name)
-        return sorted([e for e in self._load() if e.name == sid],
-                      key=lambda e: e.version)
+        return sorted([e for e in self._load() if e.name == sid], key=lambda e: e.version)
