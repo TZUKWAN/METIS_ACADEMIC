@@ -13,3 +13,7 @@
 | 2026-09-26 | T0.6 | 契约 8 入口逐条映射实现处/待实现 | PASS | docs/plugin-migration/ENGINE_CONTRACT.md | — |
 | 2026-09-26 | T0.7 | 三问落库（Q1/Q2 已答引用 §3；Q3 待确认不阻塞） | PASS | docs/plugin-migration/DECISIONS.md | — |
 | 2026-09-26 | T0.8 | 全量 pytest + 产出检查（见 t0-gate.txt） | PASS | docs/plugin-migration/evidence/t0-gate.txt（230 collected, 0 failed, ruff clean, 8 文件齐） | — |
+| 2026-09-26 | T1.8 | python -m pytest -q + ruff check（全量回归） | PASS | docs/plugin-migration/evidence/t1.8-regression.txt（≥N0，0 failed） | — |
+| 2026-09-26 | T1.3 | 子智能体 SKILL 五问问答 | PASS | evidence/s1/t1.3-t1.4-quiz-report.md（5/5） | — |
+| 2026-09-26 | T1.4 | 子智能体命令 dry-run 对照 ENGINE_CONTRACT | PASS | evidence/s1/t1.3-t1.4-quiz-report.md（10/10 ✓） | — |
+| 2026-09-26 | T1.9 | 子智能体实跑 S1 场景 A1–A9 | PASS | evidence/s1/s1-run-report.md（9/9，附加 18 plugin tests） | — |

@@ -1,16 +1,42 @@
 """``metis`` CLI 入口。
 
-- ``metis``            ：在当前目录启动 /metis 交互流程（文本向导）
-- ``metis --version``  ：显示版本
+- ``metis <subcommand>`` ：引擎契约子命令（init/status/plan/advance/…，engine_cli）
+- ``metis``             ：在当前目录启动 /metis 交互流程（文本向导）
+- ``metis --version``   ：显示版本
 """
 
 from __future__ import annotations
 
-import argparse
 import sys
+
+_SUBCOMMANDS = (
+    "init",
+    "status",
+    "plan",
+    "advance",
+    "tasks",
+    "exec",
+    "artifacts",
+    "deliver",
+    "verify",
+)
 
 
 def main(argv: list[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] in _SUBCOMMANDS:
+        from .engine_cli import run_engine_cli
+
+        return run_engine_cli(argv)
+    if argv and argv[0] in ("-h", "--help"):
+        from .engine_cli import build_parser
+
+        build_parser().print_help()
+        print("\n无子命令 = 交互式 /metis 文本向导；--version 显示版本。")
+        return 0
+
+    import argparse
+
     ap = argparse.ArgumentParser(
         prog="metis", description="METIS ACADEMIC — 对话级研究工作流运行时"
     )
