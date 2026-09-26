@@ -11,6 +11,23 @@
 > 与 [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md)。桌面 Harness 接入、
 > 真实 MCP 协议层等尚未实现——未实测的能力不标注「已支持」。
 
+## 插件安装（泛化插件发行体）
+
+```text
+metis/                 ← 目录即插件
+├── plugin.json / .claude-plugin/plugin.json / .mcp.json
+├── skills/metis/SKILL.md      # /metis 触发 + 七阶段纪律
+├── commands/                   # /metis、/metis-resume、/metis-deliver
+├── agents/metis-executor.md    # 执行子智能体
+├── mcp/                        # MCP 服务器（stdio）+ HTTP 网关（令牌）
+└── engine/                     # 本仓库 Python 运行时
+```
+
+- **Claude Code**：`claude --plugin-dir metis`（或复制到插件目录）；MCP 经 `.mcp.json` 自动注册。
+- **ZCode**：将 `metis/skills/metis` 复制到 `~/.zcode/skills/metis`。
+- **其他 Agent**：`skills/metis/SKILL.md` 对话注入 + 引擎 CLI（通用降级，见
+  [docs/HARNESS_SUPPORT_MATRIX.md](docs/HARNESS_SUPPORT_MATRIX.md)）。
+
 ## 核心公式
 
 ```text

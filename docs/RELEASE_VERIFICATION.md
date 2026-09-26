@@ -83,3 +83,22 @@ Test（pytest）→ Hardening status consistency（passed 必须有证据）。
 - H10 统计深化（正确 t df、HC/cluster SE、正式 BP/White、正确 2SLS、FE/RE/DID 等）
 - H13 Method Router、H14 其余成文证据深化、H16-18 期刊/学位/Word 深化、H19 PPT style
 - H20-004/005/006/011/012、H22 其余、H23 跨平台矩阵、H27 48 项终审
+
+
+---
+
+# 插件化里程碑（plugin-migration 分支，2026-09-26）
+
+- 分支：`plugin-migration`（自 d9896e8；Phase 0–6 见 docs/plugin-migration/EXECUTION_LOG.md）
+- 插件版本：0.2.0（metis/plugin.json 与 .claude-plugin 镜像一致）
+- 新增：真实 MCP 服务器（mcp 2.x SDK，stdio + HTTP 网关令牌鉴权，10 工具）、
+  引擎 CLI 契约（init/status/plan/advance/tasks/exec/artifacts/deliver/verify）、
+  metis-executor 子智能体、投稿预检/图表重画/PPT 生成、metis-data catalog 桥接
+  （84 providers）、DecisionGate（Laya 转写）、evals-imported（8 任务归档）
+- 真实性增强：变量必须来自 quant-design.yaml（禁止字段名猜测）；基金 design-only；
+  无 ModelBackend 时语义任务 fail-closed；task-state 并发写加跨进程锁
+- 场景验收：S1（9/9×2 轮）、S2（6/6×2）、S3（6/6 重跑后）、S4（6/6）、S5（4/4）、
+  S6（4/4）、S7（5/5）——全部为全新子智能体实跑
+- Harness：Claude Code 本机全链路 PASS（MCP ✔Connected + 真实工具调用 + S1 CLI 流程）；
+  ZCode 本机 PASS（本会话即运行环境）；其余 7 Agent BLOCKED 附自验步骤
+  （ADAPTATION_RESULTS.md）
