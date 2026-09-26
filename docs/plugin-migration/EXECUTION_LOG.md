@@ -41,3 +41,11 @@
 | 2026-09-26 | T4.5 | FigureRedraw 追加式版本（v1 保留 v2 追加，不覆盖） | PASS | test_redraw_appends_version_not_overwrite | — |
 | 2026-09-26 | T4.6 | 子智能体实跑 S6（重画与版本） | PASS(4/4) | evidence/s6/s6-run-report.md | — |
 | 2026-09-26 | T4.7 | 阶段门 4：S1–S6 全重跑 + 全量回归 exit=0 | PASS | evidence/t4.7-regression.txt + 各场景证据 | — |
+| 2026-09-26 | T5.1 | clone 远端(HEAD=8f36932 一致) + catalog 84 providers 入库 + catalog.py 桥接 | PASS | docs/plugin-migration/DATA_ADOPTION.md; adopted/; tests/plugin/test_data_laya.py | B_research/sources/data 不存在于快照，如实记录 |
+| 2026-09-26 | T5.2 | DecisionGate 语义转写（fail-closed 无模型拒绝） | PASS | tests/plugin/test_data_laya.py::TestDecisionGate | — |
+| 2026-09-26 | T5.3 | 子智能体实跑 S7（接入→描述统计→artifact 落库→复现） | PASS(5/5) | evidence/s7/s7-run-report.md | — |
+| 2026-09-26 | T5.4 | 通用适配物四模板 + 降级说明（metis/adapters/） | PASS | metis/adapters/ | — |
+| 2026-09-26 | T5.5 | Claude Code：claude mcp add/list ✔Connected + claude -p 真实 S1 | PASS | evidence/t5.5-claude-code.md（待写，正文在子智能体输出） | — |
+| 2026-09-26 | T5.6 | ZCode：技能安装 ~/.zcode/skills/metis + 本会话实证 | PASS | ADAPTATION_RESULTS.md #2 | — |
+| 2026-09-26 | T5.7-T5.12 | DSH/Pi/Kimi Code/Claude Desktop/ChatGPT/Kimi Work/Workbuddy | BLOCKED(7/9 附原因+自验步骤) | docs/plugin-migration/ADAPTATION_RESULTS.md | 需刘总侧运行时/账号/公网端点 |
+| 2026-09-26 | T5.13 | 阶段门 5：9/9 已处置（2 PASS + 7 BLOCKED 附自验）；S1–S7 全重跑链 + 全量回归 | PASS(按口径) | ADAPTATION_RESULTS.md; evidence/s1..s7/; t3.9/t4.7 回归 | BLOCKED 项待刘总验收 |
