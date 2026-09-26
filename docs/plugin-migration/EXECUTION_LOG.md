@@ -59,3 +59,4 @@
 | 2026-09-27 | T5.7-升级 | dsh 0.1.5-rc.3 实机：用户区 profile vendor 化修复 cordis 缺依赖 → metis-dev profile 启动成功 | PASS(注册) | ~/.dsh/profiles/metis-dev/vendor/ | S1 agent 循环需 DeepSeek 凭据（刘总侧） |
 | 2026-09-27 | T5.10/11/12-升级 | 公网隧道（trycloudflare）+ 标准客户端：10 工具列举/echo/project_status fail-closed 全通过 | PASS(网关侧) | evidence/t3.7-public-tunnel.md | 客户端 UI 填写需刘总账号 |
 | 2026-09-27 | T7.1-补 | 版本 0.2.0 升级后最终自检：init/status CLI + 全量回归 | PASS | evidence/t7-final-selfcheck.txt + t7.2-regression.txt（287≥230, 0 failed；修复 test_smoke 硬编码版本断言） | — |
+| 2026-09-27 | T5.8-升级 | pi+kimi通道实测：k3 在 pi print 模式不调用 bash 工具（模型侧行为） | S1 仍 BLOCKED | ADAPTATION_RESULTS.md Pi 行 | 上游阻塞点精确化：需 function-calling 可用通道 |
