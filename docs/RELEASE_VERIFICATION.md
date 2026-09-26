@@ -102,3 +102,9 @@ Test（pytest）→ Hardening status consistency（passed 必须有证据）。
 - Harness：Claude Code 本机全链路 PASS（MCP ✔Connected + 真实工具调用 + S1 CLI 流程）；
   ZCode 本机 PASS（本会话即运行环境）；其余 7 Agent BLOCKED 附自验步骤
   （ADAPTATION_RESULTS.md）
+
+## 插件化里程碑最终 CI（2026-09-26）
+
+- 最终 commit：`6e33aa3`（main，tag plugin-v0.2.0）
+- Run 36261450454：**✅ 3.10 + 3.12 全绿**（CI 现已安装 mcp extra；MCP 真实协议测试在 CI 上运行）
+- 插件化完整证据链：docs/plugin-migration/FINAL_REPORT.md（T0.1–T7.4 逐任务）+ EXECUTION_LOG.md 台账
