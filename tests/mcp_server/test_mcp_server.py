@@ -15,6 +15,8 @@ from pathlib import Path
 
 import pytest
 
+mcp = pytest.importorskip("mcp", reason="MCP 测试需要 mcp>=2.2（pip install '.[mcp]'）")
+
 PLUGIN_MCP = Path(__file__).resolve().parents[2] / "metis" / "mcp" / "metis-server.py"
 GATEWAY = Path(__file__).resolve().parents[2] / "metis" / "mcp" / "mcp-http-gateway.py"
 SERVER_DIR = str(PLUGIN_MCP.parent)

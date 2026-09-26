@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install
-        run: pip install -e ".[dev,analysis,docs]"
+        run: pip install -e ".[dev,analysis,docs,mcp]"
       - name: Dependency consistency
         run: pip check
       - name: Lint
