@@ -1,99 +1,125 @@
-# METIS ACADEMIC
+<p align="center">
+  <img src="assets/hero.svg" alt="METIS — 和 AI 一起，让研究按你的方式推进" width="100%">
+</p>
 
-面向跨 Agent Harness 的**对话级哲学社会科学研究工作流运行时**。
+<p align="center">
+  <a href="https://github.com/TZUKWAN/METIS_ACADEMIC/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/TZUKWAN/METIS_ACADEMIC?color=dca06b&label=METIS"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-8bcdb8"></a>
+  <img alt="DeepSeek Harness plugin" src="https://img.shields.io/badge/DeepSeek%20Harness-Plugin-bb9bce">
+</p>
 
-用户在受支持的 Harness 中只需调用 `/metis`，系统即可完成项目初始化 → 研究类型
-选择 → 工作流装配 → 动态 Skill/MCP 路由 → 任务执行 → 阶段验证 → 成文 →
-格式适配 → 最终交付。
+<p align="center"><strong>一起搭流程 · 看见研究进展 · 按步骤改成果</strong></p>
 
-> **状态：PASS WITH DOCUMENTED LIMITATIONS（整改中）**
-> 能力声明与实测严格对齐，见 [docs/CAPABILITY_MATRIX.md](docs/CAPABILITY_MATRIX.md)
-> 与 [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md)。桌面 Harness 接入、
-> 真实 MCP 协议层等尚未实现——未实测的能力不标注「已支持」。
+METIS 是 DeepSeek Harness 里的 AI 科研工作台。把研究想法聊清楚，和 AI 一起搭建流程；研究开始后，在同一个界面查看它正在做什么、检查每一步的产物，并继续提出修改意见。
 
-## 插件安装（泛化插件发行体）
+适合需要反复整理资料、构建论证、写作和修订的人文社会科学项目，也支持编排自己的其他研究流程。
+
+## 从想法到一套自己的流程
+
+直接和右侧 AI 助手讨论目标，让它帮助设计步骤、挑选技能和完善要求。需要微调时，也可以自己改：
+
+- **步骤名称与主要目的**：明确这一阶段做什么。
+- **交付内容**：约定留下哪些文件、清单或其他成果。
+- **技能与提示词**：给不同步骤安排合适的做法。
+- **禁止事项**：可选，写下这一步不允许 AI 做什么。
+- **达标循环**：未达到目标时继续改进，再交付。
+
+步骤能新增、删除、复制、拖动排序。AI 和界面共同编辑同一份流程，手动修改保留优先，最后点击一次 **保存并生效**。
+
+![模式编排：步骤、技能与 AI 助手共同编辑](assets/workflow.png)
+
+## 研究过程，看得见也点得动
+
+研究项目是一张可以缩放、平移的离子回路网络。主阶段是骨架，目标、技能、工具调用、读取对象、核验和交付文件逐渐展开。
+
+执行中的线路会点亮；完成、失败、等待处理各有自己的状态。点一个节点，就能查看具体记录；也能用缩略图快速定位，切换完整网络或执行记录。
+
+右侧保留 **DSH 原生研究助手**，继续使用 DSH 已配置的模型、工具、流式消息和会话历史。
+
+![研究网络：查看阶段与执行记录](assets/research.png)
+
+## 哪一步不满意，就改哪一步
+
+点开一个阶段，研究助手会知道你正在看哪一步。直接说哪里不满意、希望怎样改，不必每次重述步骤编号。
+
+本步修改并交付后，再选择后续结果是保留还是重做。已有交付可以回看，研究过程不必每次从头开始。
+
+## 把科研技能组合成自己的工具箱
+
+内置 **2000+ 条具体技能的来源目录**，支持搜索、查看来源、阅读说明，并把选中的技能放进步骤。
+
+技能正文和资源按需从原作者的固定版本读取。运行到哪一步，再加载该步需要的内容；需要脚本时准备对应资源，不把整座技能库一次塞进对话。也可以通过配置助手创建、安装和修改技能。
+
+首次读取第三方技能需要联网；相关工具、账号与依赖按各技能的实际要求准备。技能保留各自许可。
+
+## 成果在项目里审阅，意见直接交给助手
+
+点击文件节点，在工作台内打开成果：
+
+| 文件 | 可以做什么 |
+|---|---|
+| Word / PPT | 预览并修改文字内容，保存后继续核对。 |
+| Excel | 查看工作表、修改单元格。 |
+| Markdown / TXT | 直接查看和编辑。 |
+| PDF | 预览内容，把修改意见交给研究助手。 |
+
+最终步骤可选择 Word、PPT、PDF 或 Markdown 等交付格式。Word 的排版要求可以用自然语言写，例如“正文宋体小四、1.5 倍行距，一级标题黑体”。
+
+![文档审阅：在项目中修改文件](assets/documents.png)
+
+<sub>以上为示例项目与演示文档，用于展示界面和操作。</sub>
+
+## 新流程继续改，旧项目保留原样
+
+项目创建时会固定所选模式的配置。以后修改模式、技能或提示词，供新项目使用；已有项目继续沿用自己的流程版本，重启后也能恢复。
+
+## 安装与开始
+
+建议使用 **DSH 0.2.2 系列或更新的兼容 0.2.x 版本**。
+
+1. 在 DSH 插件管理中使用下面的预构建安装包来源，按宿主提示确认安装。
+
+   ```text
+   https://github.com/TZUKWAN/METIS_ACADEMIC/releases/latest/download/metis-academic-preset.tgz
+   ```
+
+2. 按 DSH 提示完成加载，打开侧边栏 **METIS**。
+3. 新建模式，和 AI 讨论或手动编辑步骤，**保存并生效**。
+4. 新建研究项目，选择模式与资料目录，在研究助手中说明这次任务。
+
+<details>
+<summary>在 DSH「发现」页搜索 METIS</summary>
+
+启用 DSH 的“自定义插件索引”，在“发现 → 添加索引源”中添加：
 
 ```text
-metis/                 ← 目录即插件
-├── plugin.json / .claude-plugin/plugin.json / .mcp.json
-├── skills/metis/SKILL.md      # /metis 触发 + 七阶段纪律
-├── commands/                   # /metis、/metis-resume、/metis-deliver
-├── agents/metis-executor.md    # 执行子智能体
-├── mcp/                        # MCP 服务器（stdio）+ HTTP 网关（令牌）
-└── engine/                     # 本仓库 Python 运行时
+https://raw.githubusercontent.com/TZUKWAN/METIS_ACADEMIC/main/marketplace/index.json
 ```
 
-- **Claude Code**：`claude --plugin-dir metis`（或复制到插件目录）；MCP 经 `.mcp.json` 自动注册。
-- **ZCode**：将 `metis/skills/metis` 复制到 `~/.zcode/skills/metis`。
-- **其他 Agent**：`skills/metis/SKILL.md` 对话注入 + 引擎 CLI（通用降级，见
-  [docs/HARNESS_SUPPORT_MATRIX.md](docs/HARNESS_SUPPORT_MATRIX.md)）。
+随后可在该索引里搜索 **METIS**。公共社区目录的收录状态以提交记录和市场实际更新为准。
 
-## 核心公式
+</details>
 
-```text
-Common Workflow + Research Paradigm Workflow + Artifact Workflow
-+ Level Rules + Language Rules + Template Rules = 最终运行工作流
+<details>
+<summary>网页版命令行安装</summary>
+
+```sh
+dsh plugin --profile web add https://github.com/TZUKWAN/METIS_ACADEMIC/releases/latest/download/metis-academic-preset.tgz
 ```
 
-12 个 YAML 碎片组合出全部工作流（无复制套件）。所有状态、任务、产物持久化到
-Workspace；研究真实性闸门：文献必须经 resolver 核验才能进入最终参考文献，
-定量变量必须来自显式研究设计（quant-design.yaml），基金申报默认只做设计不执行
-未来研究，语义成文在未接入宿主模型时 fail-closed。
+桌面版请使用应用自己的插件管理；`web` profile 和桌面应用的 profile 不相同。
 
-## 安装与运行
+</details>
 
-支持 Python（与 CI 矩阵一致：3.10 / 3.12）：
+## 使用前了解
 
-```bash
-pip install -e ".[dev,analysis,docs]"   # 开发全量
-pytest                                   # 测试（数量以最新 CI run 为准）
-ruff check src tests                     # lint
-metis --version                          # CLI 入口（reference adapter）
-python -m metis_academic                 # 等价入口
-python examples/demo-quant-journal/run_demo.py   # 最小闭环示例
-```
+- 使用你自己的 DSH 模型配置，模型服务产生的费用由对应服务计收。
+- 三维网络需要 WebGL2；文档功能需要 DSH 可用的文档服务及相应依赖。首次使用具体技能或文档功能时，可能需要准备 Python 3.10+、相关工具或账号。
+- METIS 帮助组织和执行研究，引用、事实、数据与最终稿仍需核对。技能入库不等于它的全部环境和科研效果已经验证。
+- 工作流、项目和会话数据保存在使用者自己的环境中。本仓库不包含作者的账号配置、会话或研究资料。
 
-## `/metis` 使用示例（真实终端）
+## 开源与参与
 
-```text
-$ metis
-检测到当前目录没有 METIS 项目，开始项目配置。
-请选择成果类型：1.基金申报书 2.期刊论文 3.毕业论文
-（选择 3 → 定量实证 → 中文 → 硕士 → 默认模板 → 从零开始 → 输入项目名 → 确认）
+欢迎反馈使用问题、改进流程设计和贡献兼容修正。请在 [Issues](https://github.com/TZUKWAN/METIS_ACADEMIC/issues) 描述你使用的 DSH 版本、操作与实际结果，提交日志前移除密钥和私人资料。
 
-项目已初始化。
-层级：硕士 / 类型：毕业论文 / 范式：定量实证 / 语言：中文
-工作流：11 阶段 / 64 任务规则（组合自：common, paradigm/quantitative, artifact/thesis, level/master, language/zh-CN）
-当前进入：S1 Workspace Audit
-
-$ metis    # 第二次进入
-检测到已有 METIS 项目，恢复到阶段 S1
-```
-
-## 代码结构
-
-```text
-src/metis_academic/   核心运行时（Harness 无关）
-  models/ workspace/ state/ command/ wizard/ composer/
-  skills/ mcp/        动态 Skill / MCP 路由（MCP 为元数据路由层）
-  literature/         文献检索 + DOI/arXiv 元数据核验 + verified-only bib
-  topics/ design/ data/ engines/ executor/ validation/ repro/
-  generators/ word_engine/ ppt/ qa/ delivery/ runtime.py model_backend.py
-workflows/（包内）     common/paradigm/artifact/level/language YAML
-skill_defs/（包内）    技能定义与说明
-tests/                单元/集成/工作流/恢复/夹具/E2E（9 组合 + 本硕博）
-docs/                 能力矩阵/支持矩阵/限制/发布验证/方法文档
-```
-
-## 文档索引
-
-- [能力矩阵](docs/CAPABILITY_MATRIX.md) — 每项能力有证据或明确 unsupported
-- [Harness 支持矩阵](docs/HARNESS_SUPPORT_MATRIX.md)
-- [文献来源能力](docs/literature-sources.md)
-- [已知限制](docs/KNOWN_LIMITATIONS.md)
-- [发布验证](docs/RELEASE_VERIFICATION.md)
-- [整改状态](HARDENING_STATUS.md) / [实现状态（历史）](IMPLEMENTATION_STATUS.md)
-
-## License
-
-MIT — 见 [LICENSE](LICENSE)。
+METIS 原创代码采用 [MIT](LICENSE) 许可。第三方组件和技能各自保留原许可，见 [第三方说明](THIRD_PARTY_NOTICES.md)。构建和贡献方式见 [开发说明](CONTRIBUTING.md)。

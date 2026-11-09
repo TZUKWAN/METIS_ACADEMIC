@@ -12,7 +12,10 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+import subprocess
+import sys
 import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
@@ -188,6 +191,290 @@ class WebFallbackSource(SourceAdapter):
         return self._search_fn(query)
 
 
+class PaperSearchProSource(SourceAdapter):
+    """paper-search-pro headless adapter.
+
+    The upstream tool owns retrieval, cross-source federation and deterministic
+    relevance signals.  This adapter deliberately treats its envelope as
+    *discovery evidence only*: every mapped record starts unverified and still
+    passes through METIS's CrossRef/arXiv resolver before it can enter the
+    final bibliography.
+
+    The vendored copy is used by default.  ``METIS_PAPER_SEARCH_PRO_HOME`` or
+    the ``root`` keyword can point at another checked-out copy when a project
+    wants to track upstream independently.
+    """
+
+    id = "paper-search-pro"
+
+    def __init__(
+        self,
+        root: str | Path | None = None,
+        python_executable: str | None = None,
+        timeout: int = 120,
+        per_strategy: int = 3,
+        verify: bool = False,
+        with_nssd: bool | None = None,
+        with_yiigle: bool = False,
+        primary_source: str | None = None,
+        min_relevance: float = 0.0,
+        journal_metric: bool = False,
+        runner=None,
+    ):
+        self.root = self._resolve_root(root)
+        self.python_executable = python_executable or sys.executable
+        self.timeout = max(1, int(timeout))
+        self.per_strategy = max(1, int(per_strategy))
+        self.verify = bool(verify)
+        self.with_nssd = with_nssd
+        self.with_yiigle = bool(with_yiigle)
+        self.primary_source = primary_source
+        self.min_relevance = float(min_relevance)
+        self.journal_metric = bool(journal_metric)
+        self._runner = runner or subprocess.run
+        self.last_meta: dict = {}
+        self.last_error: str = ""
+
+    @staticmethod
+    def _resolve_root(root: str | Path | None) -> Path:
+        candidates: list[Path] = []
+        if root:
+            candidates.append(Path(root).expanduser())
+        env_root = os.environ.get("METIS_PAPER_SEARCH_PRO_HOME", "").strip()
+        if env_root:
+            candidates.append(Path(env_root).expanduser())
+        # sources.py -> literature -> metis_academic -> src -> workspace root
+        workspace_root = Path(__file__).resolve().parents[3]
+        candidates.extend(
+            [
+                Path(__file__).resolve().parents[1] / "paper_search_pro_vendor",
+                workspace_root / "src" / "metis_academic" / "paper_search_pro_vendor",
+                workspace_root / "vendor" / "paper-search-pro",
+                Path.cwd() / "vendor" / "paper-search-pro",
+                Path.cwd() / "paper-search-pro",
+            ]
+        )
+        for candidate in candidates:
+            if (candidate / "scripts" / "agent_search.py").is_file():
+                return candidate.resolve()
+        # Keep the first candidate for a useful diagnostic in search().
+        fallback = candidates[0] if candidates else workspace_root / "vendor" / "paper-search-pro"
+        return fallback.resolve()
+
+    def _module_name(self) -> str:
+        if self.root.name == "paper_search_pro_vendor":
+            return "metis_academic.paper_search_pro_vendor.scripts.agent_search"
+        return "scripts.agent_search"
+
+    @staticmethod
+    def _is_cjk(text: str) -> bool:
+        return bool(re.search(r"[\u3400-\u4dbf\u4e00-\u9fff]", text or ""))
+
+    @staticmethod
+    def _as_text(value) -> str:
+        return str(value).strip() if value is not None else ""
+
+    @staticmethod
+    def _parse_envelope(stdout: str) -> dict:
+        """Parse the JSON envelope even when the upstream CLI logs a preamble.
+
+        The upstream helper normally writes JSON to stdout, but its first-run
+        config hardening can emit a human-readable warning on that same stream.
+        We accept one object envelope after such a preamble and still reject
+        arbitrary/non-object output.
+        """
+
+        try:
+            parsed = json.loads(stdout)
+            if isinstance(parsed, dict):
+                return parsed
+        except (TypeError, ValueError):
+            pass
+        decoder = json.JSONDecoder()
+        for match in re.finditer(r"\{", stdout):
+            try:
+                parsed, _ = decoder.raw_decode(stdout[match.start() :])
+            except (TypeError, ValueError):
+                continue
+            if isinstance(parsed, dict):
+                return parsed
+        raise ValueError("未找到 JSON 对象 envelope")
+
+    @classmethod
+    def _authors(cls, raw) -> list[str]:
+        if not isinstance(raw, list):
+            return []
+        out: list[str] = []
+        for item in raw:
+            if isinstance(item, dict):
+                name = cls._as_text(item.get("name"))
+            else:
+                name = cls._as_text(item)
+            if name and name not in out:
+                out.append(name)
+        return out
+
+    def _record_from_paper(self, paper: dict) -> LiteratureRecord | None:
+        if not isinstance(paper, dict):
+            return None
+        title = self._as_text(paper.get("title"))
+        if not title:
+            return None
+        doi = LiteratureRecord.normalize_doi(self._as_text(paper.get("doi")))
+        # Some upstream strategies expose only ``doi_url``.  Treat that URL
+        # as a DOI *candidate* for later METIS verification; do not infer a
+        # verified record from its presence.
+        if not doi:
+            doi_url_candidate = self._as_text(paper.get("doi_url"))
+            match = re.match(r"https?://(?:dx\.)?doi\.org/(.+)$", doi_url_candidate, re.I)
+            if match:
+                doi = LiteratureRecord.normalize_doi(
+                    match.group(1).split("?", 1)[0].split("#", 1)[0]
+                )
+        arxiv_id = self._as_text(paper.get("arxiv_id"))
+        url = next(
+            (
+                self._as_text(paper.get(key))
+                for key in ("doi_url", "openalex_url", "pdf_url", "pmc_url")
+                if self._as_text(paper.get(key))
+            ),
+            "",
+        )
+        if not url and doi:
+            url = f"https://doi.org/{doi}"
+        if not url and arxiv_id:
+            url = f"https://arxiv.org/abs/{arxiv_id}"
+        raw_type = self._as_text(paper.get("type")).lower()
+        entry_type = EntryType.PREPRINT if arxiv_id else EntryType.JOURNAL
+        if raw_type in {"book", "chapter", "thesis", "web", "preprint"}:
+            entry_type = EntryType(raw_type)
+        year = LiteratureRecord.normalize_year(paper.get("year"))
+        keywords = paper.get("keywords")
+        if not isinstance(keywords, list):
+            keywords = []
+        keywords = [self._as_text(k) for k in keywords if self._as_text(k)]
+        return self._make_record(
+            title=title,
+            authors=self._authors(paper.get("authors")),
+            year=year,
+            doi=doi,
+            url=url,
+            abstract=self._as_text(paper.get("abstract")),
+            keywords=keywords,
+            entry_type=entry_type,
+        )
+
+    def search(self, query: SearchQuery) -> list[LiteratureRecord]:
+        # A source instance is reused by LiteratureManager across searches.
+        # Clear per-call diagnostics first so a later success cannot expose a
+        # stale error/meta payload from a previous failed call.
+        self.last_meta = {}
+        self.last_error = ""
+        if not (self.root / "scripts" / "agent_search.py").is_file():
+            self.last_error = f"paper-search-pro 未找到：{self.root}"
+            logger.error(self.last_error)
+            return []
+
+        cmd = [
+            self.python_executable,
+            "-m",
+            self._module_name(),
+            query.terms,
+            "--per-strategy",
+            str(self.per_strategy),
+            "--limit",
+            str(query.max_results),
+        ]
+        if query.year_from is not None:
+            cmd.extend(["--year-min", str(query.year_from)])
+        if query.year_to is not None:
+            cmd.extend(["--year-max", str(query.year_to)])
+        if self.min_relevance > 0:
+            cmd.extend(["--min-relevance", str(self.min_relevance)])
+        if self.verify:
+            cmd.append("--verify")
+        if self.with_nssd is True or (self.with_nssd is None and self._is_cjk(query.terms)):
+            cmd.append("--with-nssd")
+        if self.with_yiigle:
+            cmd.append("--with-yiigle")
+        if self.primary_source:
+            cmd.extend(["--primary-source", self.primary_source])
+        if not self.journal_metric:
+            # Journal rank enrichment is useful for a deliberate ranking
+            # workflow, but it is not needed for discovery and can turn a
+            # normal search into a slow cache/network operation.
+            cmd.append("--no-journal-metric")
+
+        env = os.environ.copy()
+        prior_pythonpath = env.get("PYTHONPATH", "")
+        import_roots = [str(self.root)]
+        if self.root.name == "paper_search_pro_vendor":
+            # The package-qualified entry point needs the directory containing
+            # ``metis_academic`` on sys.path; the root itself remains useful for
+            # upstream relative asset/config lookups.
+            import_roots.append(str(self.root.parents[1]))
+        if prior_pythonpath:
+            import_roots.append(prior_pythonpath)
+        env["PYTHONPATH"] = os.pathsep.join(import_roots)
+        try:
+            completed = self._runner(
+                cmd,
+                cwd=str(self.root),
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=self.timeout,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            self.last_error = f"paper-search-pro 执行失败：{exc}"
+            logger.warning(self.last_error)
+            return []
+
+        stdout = (completed.stdout or "").strip()
+        stderr = (completed.stderr or "").strip()
+        if not stdout:
+            self.last_error = (
+                f"paper-search-pro 没有返回 JSON（exit={completed.returncode}）：{stderr[:300]}"
+            )
+            logger.warning(self.last_error)
+            return []
+        try:
+            envelope = self._parse_envelope(stdout)
+        except (TypeError, ValueError) as exc:
+            self.last_error = f"paper-search-pro 返回非法 JSON：{exc}"
+            logger.warning("%s；stdout=%s", self.last_error, stdout[:300])
+            return []
+        if not isinstance(envelope, dict):
+            self.last_error = "paper-search-pro JSON 顶层不是对象"
+            logger.warning(self.last_error)
+            return []
+        self.last_meta = envelope.get("meta") if isinstance(envelope.get("meta"), dict) else {}
+        if not envelope.get("ok"):
+            error = envelope.get("error") if isinstance(envelope.get("error"), dict) else {}
+            self.last_error = (
+                f"paper-search-pro 搜索失败：{error.get('code', 'unknown')} "
+                f"{error.get('message', '')}"
+            ).strip()
+            logger.warning(self.last_error)
+            return []
+        data = envelope.get("data")
+        if not isinstance(data, list):
+            self.last_error = "paper-search-pro 成功响应缺少 data 列表"
+            logger.warning(self.last_error)
+            return []
+        records = [rec for item in data if (rec := self._record_from_paper(item)) is not None]
+        if stderr:
+            logger.info("paper-search-pro stderr: %s", stderr[:500])
+        if completed.returncode != 0:
+            logger.warning(
+                "paper-search-pro exit=%s，但已解析到 %d 条记录",
+                completed.returncode,
+                len(records),
+            )
+        return records
+
+
 class FixtureSource(SourceAdapter):
     """测试/离线夹具源：从 JSON 文件读取记录。
 
@@ -235,6 +522,7 @@ def get_source(source_id: str, **kw) -> SourceAdapter:
         "paper.edu.cn": PaperEduSource,
         "scholar": ScholarSource,
         "web": WebFallbackSource,
+        "paper-search-pro": PaperSearchProSource,
         "fixture": FixtureSource,
     }
     cls = registry.get(source_id)
@@ -368,7 +656,21 @@ def verify_doi(rec: LiteratureRecord, timeout: int = 15) -> LiteratureRecord:
         return _set_verification(
             rec, "crossref-doi", "unreachable", evidence=f"HTTP {resp.status_code}"
         )
-    msg = resp.json().get("message", {})
+    try:
+        payload = resp.json()
+    except (TypeError, ValueError) as exc:
+        return _set_verification(
+            rec, "crossref-doi", "unreachable", evidence=f"invalid JSON: {exc}"
+        )
+    if not isinstance(payload, dict):
+        return _set_verification(
+            rec, "crossref-doi", "unreachable", evidence="resolver response is not an object"
+        )
+    msg = payload.get("message", {})
+    if not isinstance(msg, dict):
+        return _set_verification(
+            rec, "crossref-doi", "unreachable", evidence="resolver message is not an object"
+        )
     cr_title = (msg.get("title") or [""])[0]
     sim = _title_similar(rec.title, cr_title) if cr_title else 0.0
     cr_year = None

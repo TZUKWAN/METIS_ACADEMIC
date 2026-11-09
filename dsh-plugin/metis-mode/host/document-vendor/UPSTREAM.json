@@ -1,0 +1,11 @@
+{
+  "repository": "https://github.com/Suren-ViLL/dsh-plugin-doc-review",
+  "commit": "643a948d79218c0b897c70998845f7eeb7049bf1",
+  "version": "1.0.0",
+  "license": "MIT",
+  "used": "Run-diff paragraph text replacement helpers only; upstream CLI is not executed.",
+  "files": {
+    "doc_apply_text.py": "ee595be850d4e0c20e1201ac3e3ce56af199a1250824fe0a02bfa2351b95c39b",
+    "LICENSE": "170f576f5083c9ebd404d154242871cd5d9acfaf2a6a555cb83b6bcbb0d0f627"
+  }
+}

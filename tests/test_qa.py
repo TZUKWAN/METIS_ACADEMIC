@@ -66,6 +66,17 @@ def test_qa_citation_checks(ws):
     assert "citation_format" in rep2.checks
 
 
+def test_qa_blocks_lieflat_style_markers(ws):
+    _bib(ws)
+    md = ws.root / "manuscript"
+    md.mkdir(exist_ok=True)
+    (md / "draft.md").write_text("答案其实很简单——专注。\n", encoding="utf-8")
+    rep = GlobalQA(ws).run_all()
+    assert "manuscript_hygiene" in rep.checks
+    assert any("揭晓式破折号" in issue for issue in rep.checks["manuscript_hygiene"])
+    assert any(k == "manuscript_hygiene" for k, _ in GlobalQA(ws).blocking_errors(rep))
+
+
 def test_qa_duplicate_bib_entries(ws):
     (ws.root / "literature" / "references.bib").write_text(
         "@misc{a2020x,\n}\n@misc{a2020x,\n}\n", encoding="utf-8"
@@ -152,3 +163,11 @@ def test_qa_report_file_written(ws):
     GlobalQA(ws).run_all()
     p = ws.root / "reviews" / "global-qa-report.md"
     assert p.is_file()
+
+
+def test_qa_reports_corrupt_machine_files_without_raising(ws):
+    (ws.root / "literature" / "records.jsonl").write_text("{bad json}\n", encoding="utf-8")
+    (ws.root / "results" / "summary.json").write_text("[not-an-object]", encoding="utf-8")
+    rep = GlobalQA(ws).run_all()
+    assert "references" in rep.checks
+    assert "results_consistency" not in rep.checks  # no manuscript means no consistency pass to run

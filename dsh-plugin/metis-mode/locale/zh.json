@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "METIS 学术模式",
+    "description": "METIS ACADEMIC 界面模式：学术纸墨配色层、METIS 项目仪表盘（侧栏入口 + 主面板）、输入区 METIS 模式条。扫描含 .metis/ 的工作空间，经 metis-academic 引擎 CLI 读取项目状态。"
+  }
+}

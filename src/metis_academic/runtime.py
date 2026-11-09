@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 import yaml
 
 from .adapters.base import Choice
+from .config import load_settings
 from .data import DataManager
 from .design import DesignManager
 from .engines import (
@@ -32,7 +33,7 @@ from .errors import MetisError, TaskExecutionError
 from .executor import ActionRegistry, ExecutionContext
 from .generators import DraftAssembler, FundGenerator, JournalGenerator, ThesisGenerator
 from .literature import LiteratureManager, SearchQuery
-from .model_backend import ModelRequest, get_model_backend
+from .model_backend import ModelResponse, get_model_backend
 from .models import ProjectConfig, Task
 from .ppt import PPTBuilder
 from .qa import GlobalQA
@@ -40,6 +41,14 @@ from .state import StateManager
 from .topics import TopicCandidate, TopicManager
 from .word_engine import WordEngine
 from .workspace import WorkspaceManager
+from .writing import (
+    WritingPromptSpec,
+    build_writing_request,
+    citation_surface_issues,
+    hygiene_issues,
+    response_text,
+    write_sidecar,
+)
 
 
 def _now() -> str:
@@ -135,13 +144,21 @@ def _build_actions(ctx: RuntimeContext) -> dict:
     actions["audit.materials"] = audit_materials
 
     # ---- 文献（S2） ----
+    def literature_sources() -> list[str]:
+        """Resolve the configured discovery source for this workspace."""
+        if "fixture" in ctx.lit_kwargs:
+            return ["fixture"]
+        settings = load_settings(ws.root)
+        return list(settings.search_sources or SearchQuery().sources)
+
     def literature_plan(task, c):
+        sources = literature_sources()
         return [
             _write(
                 "literature/search_logs/plan.md",
                 "# 检索策略\n\n"
                 f"- 主题词：{_topic_title(ctx)}\n"
-                f"- 来源：{', '.join(ctx.lit_kwargs.keys()) or '默认'}\n"
+                f"- 来源：{', '.join(sources)}\n"
                 f"- 时间窗：近 10 年\n- at: {_now()}\n",
                 ctx,
             )
@@ -151,20 +168,31 @@ def _build_actions(ctx: RuntimeContext) -> dict:
         plan = task.procedure_params.get("query") or _topic_title(ctx)
         q = SearchQuery(
             terms=plan,
-            sources=["fixture"] if "fixture" in ctx.lit_kwargs else list(SearchQuery().sources),
+            sources=literature_sources(),
             max_results=20,
         )
         ctx.lit.search(q)
+        if ctx.lit.last_search_found == 0:
+            details = "; ".join(
+                f"{source}: {error}" for source, error in ctx.lit.last_search_errors.items()
+            )
+            suffix = f"；来源诊断：{details}" if details else ""
+            raise TaskExecutionError(
+                f"文献检索未返回任何记录，请检查网络、API 配置或调整检索词{suffix}"
+            )
         return list(task.expected_outputs)
 
     def literature_verify(task, c):
-        ctx.lit.write_index()
+        stats = ctx.lit.verify_all_online()
         n_ok = len(ctx.lit.verified_records())
         n_bad = len(ctx.lit.unverified_records())
         return [
             _write(
                 "literature/search_logs/verify.md",
-                f"# 核验\n\n- verified: {n_ok}\n- unverified(禁入参考文献): {n_bad}\n",
+                "# 核验\n\n"
+                f"- verified: {n_ok}\n"
+                f"- unverified(禁入参考文献): {n_bad}\n"
+                f"- resolver_stats: {json.dumps(stats, ensure_ascii=False, sort_keys=True)}\n",
                 ctx,
             )
         ]
@@ -811,6 +839,9 @@ def _build_actions(ctx: RuntimeContext) -> dict:
         return ["analysis/theoretical/literature_genealogy.md"]
 
     def th_claims(task, c):
+        records = ctx.lit.verified_records()
+        if not records:
+            raise TaskExecutionError("th.extract_claims 需要至少一条已核验文献；请先完成文献核验")
         eng = th_engine()
         title = _topic_title(ctx)
         eng.add_concept(
@@ -825,7 +856,8 @@ def _build_actions(ctx: RuntimeContext) -> dict:
         eng.add_evidence(
             Evidence(
                 id="E-001",
-                text=f"文献支撑：{ctx.lit.verified_records()[0].title if ctx.lit.verified_records() else '待补充'}",
+                text=f"文献支撑：{records[0].title}",
+                source=records[0].record_id,
             )
         )
         eng.add_edge(ArgumentEdge(frm="E-001", to="S-001", relation="evidence_for"))
@@ -989,50 +1021,116 @@ def _build_actions(ctx: RuntimeContext) -> dict:
     def writing_section(task, c):
         out = list(task.expected_outputs)
         section = task.procedure_params.get("section", task.section)
-        body = [f"（{section}：依据 research/ 与 analysis/ 产出撰写）"]
-        results = asm.results_files()
-        themes = asm.read_if_exists("analysis/qualitative/themes.md")
-        interp = asm.read_if_exists("analysis/quantitative/interpretation.md")
-        if section in ("摘要", "Abstract"):
-            body = [f"本研究围绕{_topic_title(ctx)}展开，核心发现见 results/ 与 analysis/。"]
-        elif "文献" in section:
-            cites = list(asm.verified_citations())
-            body = [f"核心文献 [bib:{k}]。" for k in cites[:3]] or [
-                "文献索引见 literature/literature_index.md。"
-            ]
-        elif "实证" in section or "结果" in section or "案例" in section:
-            body = []
-            for name, text in results.items():
-                body.append(f"来源 results/{name}：")
-                body += text.splitlines()[:4]
-            if interp:
-                body.append(interp.splitlines()[0])
-            if themes:
-                body.append("定性主题见 analysis/qualitative/themes.md。")
-        elif "结论" in section:
-            body = [
-                "结论呼应研究问题（RQ1–RQ3）。RQ1、RQ2、RQ3 均已回应。",
-                f"创新点：{_topic_title(ctx)} 的机制识别。",
-            ]
         backend = _require_backend("writing.section")
-        resp = backend.generate(
-            ModelRequest(
-                task_type="writing.section",
-                prompt=f"撰写章节「{task.procedure_params.get('section', task.section)}」",
-                context={"topic": _topic_title(ctx), "task_id": task.id},
-            )
+        spec = WritingPromptSpec(
+            section=section,
+            artifact_type=ctx.cfg.artifact_type.value,
+            paradigm=ctx.paradigm,
+            language=ctx.cfg.language.value,
+            topic=_topic_title(ctx),
+            task_id=task.id,
         )
-        generated = resp.text.strip()
-        import re as _re
-
-        rq_ids = _re.findall(r"RQ\d", asm.read_if_exists("research/research_questions.md"))
-        if rq_ids:
-            body.append("本研究回应研究问题：" + "、".join(rq_ids) + "。")
+        active_skills = getattr(c, "extra", {}).get("active_skills", {})
+        request = build_writing_request(
+            asm,
+            spec,
+            skill_instructions=active_skills.get("academic-writing"),
+            style_instructions=active_skills.get("lieflat-less-ai-tone"),
+        )
+        resp = backend.generate(request)
+        if not isinstance(resp, ModelResponse):
+            raise TaskExecutionError("writing.section 宿主模型返回了非法响应对象")
+        generated = response_text(resp)
+        citation_keys = set(asm.verified_citations())
+        issues = hygiene_issues(generated, citation_keys=citation_keys)
+        if not isinstance(resp.structured, dict):
+            issues.append("模型未返回结构化 claim-evidence-citation 映射")
+        else:
+            for field in ("text", "claims", "citations"):
+                if field not in resp.structured:
+                    issues.append(f"结构化响应缺少字段：{field}")
+            citations_value = resp.structured.get("citations")
+            if not isinstance(citations_value, list) or any(
+                not isinstance(key, str) or not key.strip() for key in citations_value
+            ):
+                issues.append("结构化响应 citations 必须是字符串列表")
+                citations_value = []
+            used = set(citations_value)
+            unknown = sorted(used - citation_keys)
+            issues.extend(f"结构化响应含未核验引用：{key}" for key in unknown)
+            issues.extend(
+                citation_surface_issues(
+                    generated,
+                    used,
+                    request.context.get("evidence", {}).get("citations", []),
+                )
+            )
+            claims = resp.structured.get("claims")
+            if not isinstance(claims, list):
+                issues.append("结构化响应 claims 必须是列表")
+                claims = []
+            elif not claims:
+                issues.append("结构化响应 claims 不能为空")
+            known_evidence = {"research", "results", "figures"}
+            known_evidence.update(
+                (request.context.get("evidence", {}).get("research") or {}).keys()
+            )
+            known_evidence.update((request.context.get("evidence", {}).get("results") or {}).keys())
+            known_evidence.update(request.context.get("evidence", {}).get("figures") or [])
+            for idx, claim in enumerate(claims, start=1):
+                if not isinstance(claim, dict) or not str(claim.get("claim", "")).strip():
+                    issues.append(f"结构化响应第 {idx} 条论断缺少 claim")
+                    continue
+                evidence = claim.get("evidence")
+                claim_citations = claim.get("citations")
+                if not isinstance(evidence, list) or any(
+                    not isinstance(item, str) or not item.strip() for item in (evidence or [])
+                ):
+                    issues.append(f"结构化响应第 {idx} 条论断 evidence 必须是字符串列表")
+                    evidence = []
+                if not isinstance(claim_citations, list) or any(
+                    not isinstance(key, str) or not key.strip() for key in (claim_citations or [])
+                ):
+                    issues.append(f"结构化响应第 {idx} 条论断 citations 必须是字符串列表")
+                    claim_citations = []
+                claim_cites = set(claim_citations)
+                if not evidence and not claim_cites:
+                    issues.append(f"结构化响应第 {idx} 条论断缺少证据或引用")
+                issues.extend(
+                    f"结构化响应第 {idx} 条论断引用未列入顶层 citations：{key}"
+                    for key in sorted(claim_cites - used)
+                )
+                for evidence_item in evidence:
+                    if str(evidence_item) not in known_evidence:
+                        issues.append(f"结构化响应第 {idx} 条论断含未知证据项：{evidence_item}")
+                issues.extend(
+                    f"结构化响应第 {idx} 条论断含未核验引用：{key}"
+                    for key in sorted(claim_cites - citation_keys)
+                )
+        if not generated:
+            write_sidecar(
+                ws.root / ".metis" / "logs" / "writing" / f"{task.id}.json",
+                spec=spec,
+                response=resp,
+                issues=["模型未返回正文"],
+                evidence=request.context.get("evidence"),
+            )
+            raise TaskExecutionError("writing.section 模型未返回正文")
+        sidecar = ws.root / ".metis" / "logs" / "writing" / f"{task.id}.json"
+        write_sidecar(
+            sidecar,
+            spec=spec,
+            response=resp,
+            issues=issues,
+            evidence=request.context.get("evidence"),
+        )
+        if issues:
+            raise TaskExecutionError("写作模型输出未通过正文卫生检查：" + "；".join(issues[:6]))
         p = ws.resolve(out[0]) if out else None
         if p is None:
             raise TaskExecutionError("章节任务缺期望输出")
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(f"# {section}\n\n{generated}\n\n" + "\n".join(body) + "\n", encoding="utf-8")
+        p.write_text(f"# {section}\n\n{generated}\n", encoding="utf-8")
         return out
 
     def writing_draft(task, c):
@@ -1043,16 +1141,46 @@ def _build_actions(ctx: RuntimeContext) -> dict:
                 parts.append(f.read_text(encoding="utf-8"))
         if not parts:
             draft = asm.read_if_exists("manuscript/draft.md")
-            parts = [draft] if draft else ["# 草稿\n\n（由生成器组装）\n"]
+            if draft:
+                parts = [draft]
+            else:
+                raise TaskExecutionError("writing.draft 缺少已生成的章节正文")
         return [_write("manuscript/draft.md", "\n\n".join(parts), ctx)]
 
     def writing_insert_evidence(task, c):
         draft = asm.read_if_exists("manuscript/draft.md")
-        figs = asm.figures_available()
-        lines = [draft]
-        for fig in figs:
-            lines.append(f"图注：{fig}（来源 figures/{fig}，由 run_all.py 生成）")
-        return [_write("manuscript/draft.md", "\n".join(lines) + "\n", ctx)]
+        if not draft.strip():
+            raise TaskExecutionError("writing.insert_evidence 找不到非空稿件")
+        # 证据映射是控制平面产物，永远不拼入正文。
+        sidecar = ws.root / ".metis" / "logs" / "writing" / "evidence-links.json"
+        sidecar.parent.mkdir(parents=True, exist_ok=True)
+        sidecar.write_text(
+            json.dumps(
+                {
+                    "figures": asm.figures_available(),
+                    "results": sorted(asm.results_files()),
+                    "verified_citations": sorted(asm.verified_citations()),
+                    "manuscript": "manuscript/draft.md",
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        return [_write("manuscript/draft.md", draft.rstrip() + "\n", ctx)]
+
+    def _require_semantic_draft(task_type: str) -> str:
+        """成品任务只能收束已由语义写作生成的正文，禁止回退到模板拼接。"""
+        draft = asm.read_if_exists("manuscript/draft.md")
+        if not draft.strip():
+            raise TaskExecutionError(
+                f"{task_type} 缺少语义写作生成的 manuscript/draft.md；请先完成章节写作任务"
+            )
+        issues = hygiene_issues(draft, citation_keys=set(asm.verified_citations()))
+        if issues:
+            raise TaskExecutionError(f"{task_type} 检测到正文卫生问题：" + "；".join(issues[:6]))
+        return draft
 
     actions["writing.section"] = writing_section
     actions["writing.draft"] = writing_draft
@@ -1154,16 +1282,27 @@ def _build_actions(ctx: RuntimeContext) -> dict:
         ("fund.foundation", "feasibility"),
         ("fund.feasibility", "feasibility"),
     ):
-        actions[proc] = lambda t, c, _s=sec: [
-            _write(
-                f"research/fund/{_s}.md",
-                f"# {_s}\n\n（依 research/ 与 topics 产出组装，见 draft）\n",
-                ctx,
-            )
-        ]
+
+        def fund_design_material(task, c, _s=sec):
+            sources = {
+                "basis": ["research/selected_topic.md", "research/research_questions.md"],
+                "content": ["research/research_questions.md", "research/framework.md"],
+                "method": ["research/methods.md"],
+                "innovation": ["research/framework.md"],
+                "feasibility": ["research/methods.md"],
+            }.get(_s, [])
+            chunks = [
+                ws.root.joinpath(rel).read_text(encoding="utf-8")
+                for rel in sources
+                if ws.root.joinpath(rel).is_file()
+            ]
+            body = "\n\n".join(chunks).strip()
+            return [_write(f"research/fund/{_s}.md", f"# {_s}\n\n{body}\n", ctx)]
+
+        actions[proc] = fund_design_material
     actions["fund.references"] = lambda t, c: ["literature/references.bib"]
     actions["fund.draft"] = fund_generic(
-        lambda g, tpl, t: g.build_draft(tpl) and ["manuscript/draft.md"]
+        lambda g, tpl, t: _require_semantic_draft("fund.draft") and ["manuscript/draft.md"]
     )
     actions["fund.formal_check"] = fund_generic(lambda g, tpl, t: g.formal_check(tpl) and [] or [])
 
@@ -1180,9 +1319,16 @@ def _build_actions(ctx: RuntimeContext) -> dict:
         return ["reviews/fund-revision-list.md", "reviews/mock-review.md"]
 
     actions["fund.mock_review"] = fund_mock_review
-    actions["fund.revise"] = fund_generic(
-        lambda g, tpl, t: g.revise(tpl, g.mock_review(tpl)) and ["manuscript/draft.md"]
-    )
+
+    def fund_revise(task, c):
+        g = FundGenerator(ws, cfg, ctx.lit)
+        tpl = g.load_template()
+        review = g.mock_review(tpl)
+        _require_semantic_draft("fund.revise")
+        g.revision_list(review)
+        return ["reviews/fund-revision-list.md"]
+
+    actions["fund.revise"] = fund_revise
 
     def journal_rules(task, c):
         from .generators import JournalGenerator
@@ -1207,15 +1353,18 @@ def _build_actions(ctx: RuntimeContext) -> dict:
     actions["journal.references_check"] = lambda t, c: ["literature/references.bib"]
     actions["journal.figures_check"] = lambda t, c: [_log_action(t, ctx, "图表检查")]
     actions["journal.anonymize_check"] = lambda t, c: [_log_action(t, ctx, "匿名化检查")]
-    actions["journal.submission_version"] = lambda t, c: (
-        lambda g: (
-            (g.load_rules(), g.build_manuscript(), g.anonymize(enabled=True), g.export_submission())
-            and ["deliverables/manuscript.docx"]
-        )
-    )(JournalGenerator(ws, cfg, ctx.lit))
+
+    def journal_submission_version(task, c):
+        g = JournalGenerator(ws, cfg, ctx.lit)
+        g.load_rules()
+        _require_semantic_draft("journal.submission_version")
+        g.anonymize(enabled=True)
+        g.export_submission()
+        return ["deliverables/manuscript.docx"]
+
+    actions["journal.submission_version"] = journal_submission_version
 
     def thesis_parse(task, c):
-        from .generators import ThesisGenerator
 
         ThesisGenerator(ws, cfg, ctx.lit).load_rules()
         return ["templates/thesis/template-spec.yaml"]
@@ -1242,9 +1391,12 @@ def _build_actions(ctx: RuntimeContext) -> dict:
     actions["thesis.midterm"] = lambda t, c: [
         _write("reviews/midterm.md", "# 中期检查\n\n对照 research/tasks.md 进度。\n", ctx)
     ]
-    actions["thesis.body"] = lambda t, c: (
-        lambda g: (g.load_rules(), g.build_body()) and ["manuscript/draft.md"]
-    )(ThesisGenerator(ws, cfg, ctx.lit))
+
+    def thesis_body(task, c):
+        _require_semantic_draft("thesis.body")
+        return ["manuscript/draft.md"]
+
+    actions["thesis.body"] = thesis_body
     actions["thesis.consistency_check"] = lambda t, c: (
         lambda g: (g.load_rules(), g.consistency_checks()) and [".metis/logs/tasks/" + t.id + ".md"]
     )(thesis_gen(ctx))
@@ -1273,7 +1425,6 @@ def _build_actions(ctx: RuntimeContext) -> dict:
 
 
 def thesis_gen(ctx):
-    from .generators import ThesisGenerator
 
     return ThesisGenerator(ctx.ws, ctx.cfg, ctx.lit)
 
@@ -1297,6 +1448,9 @@ def seed_tasks(ws: WorkspaceManager, cfg: ProjectConfig) -> int:
     sm = StateManager(ws)
     n = 0
     for rule in wf.task_rules:
+        required_skills = []
+        if rule.procedure == "writing.section":
+            required_skills = ["academic-writing", "lieflat-less-ai-tone"]
         task = Task(
             id=rule.id,
             stage=rule.stage,
@@ -1305,6 +1459,7 @@ def seed_tasks(ws: WorkspaceManager, cfg: ProjectConfig) -> int:
             objective=rule.objective or rule.title,
             inputs=list(rule.inputs),
             dependencies=list(rule.depends_on),
+            required_skills=required_skills,
             procedure=rule.procedure,
             procedure_params=dict(rule.procedure_params),
             expected_outputs=list(rule.expected_outputs) or [f".metis/logs/tasks/{rule.id}.md"],

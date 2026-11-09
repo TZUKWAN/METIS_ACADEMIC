@@ -99,6 +99,22 @@ def test_outputs_written(ws):
     assert genealogy.index("2019") < genealogy.index("2022") < genealogy.index("2023")
 
 
+def test_optional_source_and_reply_are_not_rendered_as_placeholders(ws):
+    eng = TheoreticalEngine(ws)
+    eng.add_concept(Concept(name="概念", definition="定义"))
+    eng.add_counter(CounterArgument(id="CA-1", target_claim="S-1", text="替代解释"))
+    eng.concept_map()
+    eng.counter_arguments()
+    concept_text = (ws.root / "analysis" / "theoretical" / "concept_map.md").read_text(
+        encoding="utf-8"
+    )
+    counter_text = (ws.root / "analysis" / "theoretical" / "counter_arguments.md").read_text(
+        encoding="utf-8"
+    )
+    assert "待补" not in concept_text
+    assert "待回应" not in counter_text
+
+
 def test_checks_pass_on_sound_chain(ws):
     eng = TheoreticalEngine(ws)
     _build_chain(eng)

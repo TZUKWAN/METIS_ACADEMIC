@@ -59,7 +59,7 @@ def test_logging_idempotent(tmp_path):
 def test_settings_defaults():
     st = mconfig.load_settings()
     assert st.log_level == "INFO"
-    assert "arxiv" in st.search_sources
+    assert st.search_sources == ["paper-search-pro"]
     assert isinstance(st.offline, bool)
 
 

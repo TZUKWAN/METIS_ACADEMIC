@@ -70,6 +70,13 @@ def test_markdown_roundtrip(ws):
         TopicCandidate.from_markdown("# 残缺文件")
 
 
+def test_empty_reference_sections_are_explicitly_empty(ws):
+    text = TopicCandidate(id="topic_empty", title="空参考选题").to_markdown()
+    assert "无已核验记录" in text
+    assert "无参考网页" in text
+    assert "待补充" not in text
+
+
 def test_confirm_creates_selected_and_lock(ws, lm):
     tm = TopicManager(ws, lm)
     (cands := tm.generate_candidates(count=2, theme="数字劳动"))

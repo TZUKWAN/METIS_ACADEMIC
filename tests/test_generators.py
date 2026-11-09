@@ -84,6 +84,9 @@ def ws(tmp_path):
         "# 理论框架\n\n- 初步命题：算法控制重塑劳动过程\n", encoding="utf-8"
     )
     (w.root / "research" / "methods.md").write_text("# 研究方法\n\n案例+访谈\n", encoding="utf-8")
+    (w.root / "research" / "abstract_en.md").write_text(
+        "This study examines algorithmic control in platform labor.", encoding="utf-8"
+    )
     return w
 
 
@@ -112,7 +115,8 @@ class TestFund:
         tpl = g.load_template()
         draft = g.build_draft(tpl)
         assert "选题依据" in draft and "平台经济下的劳动过程控制" in draft
-        assert "[bib:" in draft  # 真实引用
+        assert "[bib:" not in draft
+        assert "算法与劳动控制" in draft
         review = g.mock_review(tpl)
         # H15-001：无固定数值分；rubric 项均有 evidence
         assert not hasattr(review, "scores") or not review.scores
@@ -140,7 +144,8 @@ class TestJournal:
         assert m["keywords"] and m["abstract"]
         assert "实证结果" in str(m["sections"])
         draft = (ws.root / "manuscript" / "draft.md").read_text(encoding="utf-8")
-        assert "[bib:" in draft
+        assert "[bib:" not in draft
+        assert "算法与劳动控制" in draft
 
     def test_checks_and_submission(self, ws):
         cfg = _cfg(ArtifactType.JOURNAL)
@@ -169,7 +174,8 @@ class TestThesis:
         text = g.build_body()
         for ch in ("摘要", "第一章 绪论", "参考文献", "致谢"):
             assert ch in text
-        assert "[bib:" in text
+        assert "[bib:" not in text
+        assert "算法与劳动控制" in text
         # 图编号按章重排
         (ws.root / "manuscript" / "draft.md").write_text(
             "# 第三章 研究设计\n\n图 图1 示意\n", encoding="utf-8"

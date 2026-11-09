@@ -174,6 +174,30 @@ class WorkflowComposer:
             rules.setdefault("artifact_policy", {})["fund_design_only"] = True
             rules["artifact_policy"]["disabled_s5_rules"] = dropped
 
+        # 全局 QA 必须在最终稿件生产任务之后运行。不同成果类型的专用成文
+        # 任务与 common 片段分开定义，若只按 id 排序，QA 会提前读取旧草稿。
+        by_id = {r.id: r for r in task_rules}
+        qa = by_id.get("C-S9-001")
+        if qa is not None:
+            for dep in ("C-S7-002",):
+                if dep in by_id and dep not in qa.depends_on:
+                    qa.depends_on.append(dep)
+            artifact_tail = {
+                ArtifactType.FUND: "F23",
+                ArtifactType.THESIS: "T12",
+            }.get(cfg.artifact_type)
+            if artifact_tail in by_id and artifact_tail not in qa.depends_on:
+                qa.depends_on.append(artifact_tail)
+        # 学位论文专用成文任务只负责在通用语义章节完成后做收束，
+        # 不能提前用模板骨架覆盖模型生成的正文。
+        thesis_body = by_id.get("T12")
+        if thesis_body and "C-S7-002" in by_id and "C-S7-002" not in thesis_body.depends_on:
+            thesis_body.depends_on.append("C-S7-002")
+        if cfg.artifact_type is ArtifactType.FUND:
+            fund_draft = by_id.get("F23")
+            if fund_draft and "C-S7-002" in by_id and "C-S7-002" not in fund_draft.depends_on:
+                fund_draft.depends_on.append("C-S7-002")
+
         wf = WorkflowDefinition(
             composed_from=[n for n, _ in fragments],
             artifact_type=cfg.artifact_type.value if cfg.artifact_type else None,

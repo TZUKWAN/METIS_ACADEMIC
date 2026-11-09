@@ -8,8 +8,8 @@ stages:
   - {id: S4, name: RESEARCH_DESIGN, skills: [research-design], tools: [fs.read]}
   - {id: S5, name: RESEARCH_EXECUTION, skills: [], tools: [py.exec, data.query]}
   - {id: S6, name: STAGE_VALIDATION, skills: [], tools: [fs.read]}
-  - {id: S7, name: WRITING, skills: [academic-writing], tools: [fs.read, fs.write]}
-  - {id: S8, name: FORMAT_ADAPTATION, skills: [word-export], tools: [office.docx]}
+  - {id: S7, name: WRITING, skills: [academic-writing, lieflat-less-ai-tone], tools: [fs.read, fs.write]}
+  - {id: S8, name: FORMAT_ADAPTATION, skills: [word-export, lieflat-less-ai-tone], tools: [office.docx]}
   - {id: S9, name: GLOBAL_QA, skills: [global-qa], tools: [scholar.verify, fs.read]}
   - {id: S10, name: DELIVERY, skills: [delivery], tools: [fs.write, office.pptx]}
 task_rules:

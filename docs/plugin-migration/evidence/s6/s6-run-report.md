@@ -2,7 +2,7 @@
 
 - 日期：2026-09-26
 - 执行者：METIS 插件执行子智能体（验收用户）
-- 场景文件：`D:\METIS超级合并\tests\scenarios\S6-figure-redraw.md`（逐字执行）
+- 场景文件：`<project-root>\tests\scenarios\S6-figure-redraw.md`（逐字执行）
 - 项目目录：`D:/METIS_s6_loop/proj`（先删旧目录再 init：`--artifact journal --paradigm quantitative --lang zh-CN`，经 `metis_academic.engine_cli.run_engine_cli`）
 - Runner：`D:/METIS_loop_runners/run_s6.py`
 - 入口：`from metis_academic.submission import FigureRedraw`；基础版本按约定直接追加 `<ws>/.metis/figure-versions.jsonl`（sha256 用 `metis_academic.workspace.file_sha256` 计算）；`redraw(name, instruction)` 前修改图文件内容使 sha 变化

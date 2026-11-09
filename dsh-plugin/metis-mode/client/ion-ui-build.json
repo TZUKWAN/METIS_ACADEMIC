@@ -1,0 +1,10 @@
+{
+  "themeSha256": "0c47f825222ac507332f2061c63294edaad91040997ef7ecd397d8262c91fc64",
+  "bytes": 66169,
+  "sources": {
+    "client.js": "1dcdc13890813f8fa8cb11204bb5184ba4e06b7053c1376f3f145af85e54f9ae",
+    "composer.js": "d4ba73190950be7aae045e52169985b9f38d3b9a29f30160a0588029c50b3f9e",
+    "documents.js": "a5880052d1144bacd3a32725c102797adab4f1738cf9432ba3d5078cf6ea3b30"
+  },
+  "browserLoading": "self-contained assets; no new resource endpoint"
+}

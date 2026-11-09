@@ -63,6 +63,12 @@ DEFAULT_SKILLS: list[SkillMetadata] = [
         triggers=["stage:S7", "stage:S8"],
     ),
     SkillMetadata(
+        id="lieflat-less-ai-tone",
+        path="skills/lieflat-less-ai-tone",
+        description="白名单式去 AI 味成稿清理",
+        triggers=["stage:S7", "stage:S8"],
+    ),
+    SkillMetadata(
         id="word-export",
         path="skills/word-export",
         description="Word 生成",

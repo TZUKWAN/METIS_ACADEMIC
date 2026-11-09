@@ -1,0 +1,14 @@
+{
+  "name": "marked",
+  "version": "18.1.3",
+  "repository": {
+    "url": "git+https://github.com/markedjs/marked.git",
+    "type": "git"
+  },
+  "license": "MIT",
+  "integrity": "sha512-9ChMH8EVVgjgID49nsL6IWxWk5c6GtAsq/xw7U1ggkjkU5AGuv68oLTVlFRtvcUYZtpbNyjyvGo3YDu0fGapiw==",
+  "files": {
+    "marked.esm.js": "e76f3b37046a5d294159872002e5f6fcda8ed232e1be45ff76b3863f2919dae3",
+    "MARKED-LICENSE.md": "8e3a3f82f59a60958f56ca08f445647c32a4733dc7ca6c2c46f6eb898471ab9c"
+  }
+}

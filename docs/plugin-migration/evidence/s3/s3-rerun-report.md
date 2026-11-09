@@ -1,7 +1,7 @@
 # S3 复测报告：中断恢复 + 并行执行（s3-rerun-report，并发缺陷修复后重跑）
 
 - 日期：2026-09-26
-- 引擎：`python -m metis_academic.cli`（D:\METIS超级合并，ENGINE_CONTRACT v1）
+- 引擎：`python -m metis_academic.cli`（<project-root>，ENGINE_CONTRACT v1）
 - 工作区：`D:/METIS_s3b_loop/proj`（先删旧目录后全新 init）
 - 修复项：task-state 变更现持跨进程锁（`src/metis_academic/state/task_store.py` `_mutation_lock` → `workspace/locking.py file_lock`）；exec 锁拒绝/迁移被拒不再回写状态（`src/metis_academic/engine_cli.py` cmd_exec L351 注释「锁拒绝/迁移被拒时不回写状态」）
 - init 输出：`{"project_id": "metis-20260926-8028fc", "stage": "S1", "composed_from": ["common", "paradigm/qualitative", "artifact/journal", "language/zh-CN"], "task_rules": 50, "tasks_seeded": 50, "workspace": "D:\\METIS_s3b_loop\\proj"}`，退出码 0
@@ -163,7 +163,7 @@ Round 2/3 复核 `tasks --json`：两工作区 C-S2-001/002 终态均 COMPLETE�
 
 ## 附录：环境与命令
 
-- 平台：win32（Git Bash），Python 3.13.2（miniconda）；引擎以源码方式从 D:\METIS超级合并 导入
+- 平台：win32（Git Bash），Python 3.13.2（miniconda）；引擎以源码方式从 <project-root> 导入
 - 全程未直接写 .metis/ 状态文件；任务 ready 置位用引擎库 `StateManager(WorkspaceManager(ws)).tasks.set_status(...)`；占锁/崩溃模拟用外部 holder 子进程 + `taskkill /F`（纪律允许项）
 - 辅助脚本：`D:/METIS_s3b_loop/holder.py`（占锁挂起）、`parallel_exec.py`（并行双开）、`double_open.py`（同任务双开）
 - 残留物：`D:/METIS_s3b_loop/`（proj/round2/round3 工作区、round1/double1 输出、辅助脚本、holder.pid）

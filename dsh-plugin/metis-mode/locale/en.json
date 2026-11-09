@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "METIS Academic Mode",
+    "description": "METIS ACADEMIC interface mode: academic palette override layer, METIS project dashboard (sidebar entry + main panel), and an in-session METIS mode strip on the composer dock. Scans workspaces containing .metis/ and reads project state through the metis-academic engine CLI."
+  }
+}

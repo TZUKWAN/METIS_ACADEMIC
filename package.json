@@ -1,0 +1,79 @@
+{
+  "name": "metis-academic-preset",
+  "version": "1.6.1",
+  "private": false,
+  "description": "METIS：与 AI 共建研究流程，可视化跟踪执行，逐步调用科研技能，在同一工作台审阅和修改成果。",
+  "license": "MIT",
+  "icon": "./assets/icon.png",
+  "exports": {
+    ".": "./dsh-plugin/metis-unified/index.mjs",
+    "./runtime": "./dsh-plugin/metis-unified/runtime.mjs",
+    "./workbench": "./dsh-plugin/metis-unified/workbench.mjs",
+    "./step-skills": "./dsh-plugin/metis-unified/host/steps-6556c911330ef33c7c9e34f9c5e5d30138036bb51ec2aa0c57c688e3531a7f48.mjs",
+    "./client": "./dsh-plugin/metis-unified/client.js",
+    "./locale/*.json": "./dsh-plugin/metis-unified/locale/*.json",
+    "./icon": "./dsh-plugin/metis-mode/icon.svg",
+    "./cordis.patch.yml": "./dsh-plugin/metis-unified/cordis.patch.yml",
+    "./package.json": "./package.json",
+    "./composer-agent": "./dsh-plugin/metis-unified/host/composerAgent-5aa243164f92b21f87e700c2cf381702944a0dadd73526739b121402b01e0acc.mjs"
+  },
+  "files": [
+    "dsh-plugin/metis-unified/",
+    "dsh-plugin/metis-academic/",
+    "dsh-plugin/metis-mode/",
+    "dsh-plugin/metis-preset/",
+    "src/metis_academic/",
+    "pyproject.toml",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "assets/"
+  ],
+  "scripts": {
+    "build": "python dsh-plugin/metis-unified/prepare-ui.py && node dsh-plugin/metis-unified/prepare-ion.mjs && node dsh-plugin/metis-unified/prepare-host.mjs && python dsh-plugin/metis-unified/prepare-client.py",
+    "test": "node --test dsh-plugin/metis-mode/tests/research-network.test.mjs dsh-plugin/metis-mode/tests/circuit-model.test.mjs dsh-plugin/metis-mode/tests/project-scene.test.mjs dsh-plugin/metis-preset/tests/step-activity.test.mjs"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./dsh-plugin/metis-unified/cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-api-session-controller",
+        "@deepseek-ai/dsh-client-ui-session",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ],
+      "external": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "three": "0.187.0"
+  },
+  "author": "TZUKWAN",
+  "homepage": "https://github.com/TZUKWAN/METIS_ACADEMIC#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TZUKWAN/METIS_ACADEMIC.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TZUKWAN/METIS_ACADEMIC/issues"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh-plugin",
+    "metis",
+    "research",
+    "academic",
+    "workflow",
+    "skills",
+    "research-assistant"
+  ],
+  "engines": {
+    "dsh": ">=0.2.2-rc.1 <0.2.3-0 || >=0.2.2 <0.3.0-0",
+    "node": ">=24"
+  }
+}

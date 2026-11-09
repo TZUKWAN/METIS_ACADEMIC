@@ -15,6 +15,13 @@ dependencies = [
     "pandas>=2.0",
     "numpy>=1.24",
     "tabulate>=0.9",
+    # paper-search-pro headless search providers (the deterministic helper
+    # source is vendored under metis_academic.paper_search_pro_vendor).
+    "pyalex>=0.21",
+    "semanticscholar>=0.10",
+    "biopython>=1.85",
+    "arxiv>=2.1",
+    "jinja2>=3.1",
 ]
 
 [project.optional-dependencies]
@@ -32,8 +39,14 @@ where = ["src"]
 [tool.setuptools.package-data]
 metis_academic = [
     "workflows/**/*.yaml",
+    "data/*.yaml",
     "skill_defs/*/SKILL.yaml",
     "skill_defs/*/INSTRUCTIONS.md",
+    "skill_defs/*/UPSTREAM.md",
+    "skill_defs/*/LICENSE.txt",
+    "paper_search_pro_vendor/**/*.yaml",
+    "paper_search_pro_vendor/**/*.txt",
+    "paper_search_pro_vendor/**/*.md",
 ]
 
 [tool.pytest.ini_options]
@@ -42,6 +55,7 @@ addopts = "-q"
 markers = ["online: 需要真实联网的测试，默认跳过"]
 
 [tool.ruff]
+extend-exclude = ["src/metis_academic/paper_search_pro_vendor"]
 line-length = 100
 src = ["src", "tests"]
 

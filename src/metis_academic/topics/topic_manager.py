@@ -96,8 +96,8 @@ class TopicCandidate:
             "可能方法": self.methods,
             "可能数据": self.data,
             "初步框架": self.framework,
-            "参考文献": "\n".join(f"- {r}" for r in self.references) or "- （待补充）",
-            "参考网页": "\n".join(f"- {w}" for w in self.webpages) or "- （待补充）",
+            "参考文献": "\n".join(f"- {r}" for r in self.references) or "- 无已核验记录",
+            "参考网页": "\n".join(f"- {w}" for w in self.webpages) or "- 无参考网页",
             "潜在风险": self.risks,
             "创新空间": self.innovation,
         }
@@ -186,8 +186,8 @@ class TopicManager:
             ] or []
             theme_txt = theme or (existing[0] if existing else "待定主题")
             gap = (
-                f"现有研究（见参考文献）对「{theme_txt}」的机制解释仍以单一层面为主，"
-                "缺乏跨层次整合与因果边界条件的讨论。"
+                f"待核验缺口：现有材料对「{theme_txt}」的解释是否集中于单一层面，"
+                "以及不同解释之间是否存在可检验的边界条件。"
             )
             cand = TopicCandidate(
                 id=self._next_id(),
@@ -195,7 +195,7 @@ class TopicManager:
                 research_question=(
                     f"{theme_txt}中的{self._angle(i)}是如何发生的？其边界条件与作用机制是什么？"
                 ),
-                value=f"理论：回应{gap[:40]}…；现实：为相关政策与实践提供依据。",
+                value=f"理论价值（候选）：检验{gap}；现实价值需结合实际材料与利益相关者确认。",
                 theory=f"以{self._theory(i)}为分析视角整合既有解释。",
                 methods=METHODS_BY_PARADIGM.get(paradigm, METHODS_BY_PARADIGM["qualitative"]),
                 data=DATA_BY_PARADIGM.get(paradigm, DATA_BY_PARADIGM["qualitative"]),
@@ -205,8 +205,8 @@ class TopicManager:
                 ),
                 references=refs,
                 webpages=[web_background] if web_background else [],
-                risks="数据可得性不足；概念操作化争议；因果识别困难。",
-                innovation=f"将{self._angle(i)}纳入统一框架并给出可检验机制。",
+                risks="材料可得性、概念操作化与识别边界均待在研究设计阶段核验。",
+                innovation=f"候选推进：将{self._angle(i)}纳入分析框架；是否构成创新须经文献对比和证据检验。",
             )
             cand.to_markdown()
             (self.topics_dir / f"{cand.id}.md").write_text(cand.to_markdown(), encoding="utf-8")

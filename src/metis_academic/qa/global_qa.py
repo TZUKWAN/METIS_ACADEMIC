@@ -16,6 +16,7 @@ import yaml
 from ..logging_setup import get_logger
 from ..state import StateManager
 from ..workspace import WorkspaceManager
+from ..writing import citation_surface_issues, hygiene_issues
 
 logger = get_logger("qa")
 
@@ -66,6 +67,8 @@ class GlobalQA:
         rep = QaReport()
         self.check_tasks(rep)  # Y001–Y003
         self.check_references(rep)  # Y004–Y007
+        self.check_writing_provenance(rep)  # Y007b
+        self.check_reference_surface(rep)  # Y007c
         self.check_variables(rep)  # Y008
         self.check_data_sources(rep)  # Y009
         self.check_results_consistency(rep)  # Y010/Y011
@@ -74,6 +77,7 @@ class GlobalQA:
         self.check_theory_concepts(rep)  # Y014
         self.check_research_questions(rep)  # Y015
         self.check_template(rep)  # Y016
+        self.check_manuscript_hygiene(rep)  # Y017/Y018
         (self.ws.root / "reviews").mkdir(parents=True, exist_ok=True)
         (self.ws.root / "reviews" / "global-qa-report.md").write_text(
             rep.to_markdown(), encoding="utf-8"
@@ -119,7 +123,11 @@ class GlobalQA:
             for line in records_file.read_text(encoding="utf-8").splitlines():
                 if not line.strip():
                     continue
-                rec = LiteratureRecord.from_dict(_json.loads(line))
+                try:
+                    rec = LiteratureRecord.from_dict(_json.loads(line))
+                except (TypeError, ValueError, KeyError) as exc:
+                    rep.add("references", f"文献记录格式非法：{exc}")
+                    continue
                 if (
                     rec.verification is VerificationStatus.VERIFIED
                     and rec.verification_info.resolver
@@ -148,12 +156,137 @@ class GlobalQA:
             if not re.search(r"\d{4}", mkey):
                 rep.add("citation_format", f"引用键缺年份: {mkey}")
 
+    def check_writing_provenance(self, rep: QaReport) -> None:
+        """校验结构化写作响应中的 citation key 与 claim 证据映射。"""
+        log_dir = self.ws.root / ".metis" / "logs" / "writing"
+        if not log_dir.is_dir():
+            return
+        verified: set[str] = set()
+        records = self.ws.root / "literature" / "records.jsonl"
+        if records.is_file():
+            from ..literature.models import LiteratureRecord, VerificationStatus
+
+            for line in records.read_text(encoding="utf-8").splitlines():
+                if not line.strip():
+                    continue
+                try:
+                    rec = LiteratureRecord.from_dict(json.loads(line))
+                except (TypeError, ValueError, KeyError) as exc:
+                    rep.add("citation_provenance", f"文献记录格式非法：{exc}")
+                    continue
+                if rec.verification is VerificationStatus.VERIFIED:
+                    verified.add(rec.record_id)
+        for path in log_dir.glob("*.json"):
+            if path.name == "evidence-links.json":
+                continue
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as exc:
+                rep.add("citation_provenance", f"{path.name} 不是合法 JSON：{exc}")
+                continue
+            if not isinstance(data, dict):
+                rep.add("citation_provenance", f"{path.name} 顶层必须是 JSON 对象")
+                continue
+            response = data.get("response") or {}
+            if not isinstance(response, dict):
+                rep.add("citation_provenance", f"{path.name} response 必须是 JSON 对象")
+                continue
+            if data.get("issues"):
+                rep.add("citation_provenance", f"{path.name} 写作响应存在拒绝项：{data['issues']}")
+            if not all(field in response for field in ("text", "claims", "citations")):
+                rep.add(
+                    "citation_provenance", f"{path.name} response 缺少 text/claims/citations 字段"
+                )
+            citations = response.get("citations") or []
+            if not isinstance(citations, list) or any(not isinstance(x, str) for x in citations):
+                rep.add("citation_provenance", f"{path.name} citations 必须是字符串列表")
+                citations = []
+            used = set(citations)
+            unknown = sorted(used - verified)
+            for key in unknown:
+                rep.add("citation_provenance", f"{path.name} 使用未核验引用：{key}")
+            text = response.get("text") if isinstance(response.get("text"), str) else ""
+            evidence_citations = []
+            if isinstance(data.get("evidence"), dict):
+                evidence_citations = data["evidence"].get("citations") or []
+            rep_citation_issues = citation_surface_issues(text, used, evidence_citations)
+            for issue in rep_citation_issues:
+                rep.add("citation_provenance", f"{path.name}：{issue}")
+            claims = response.get("claims") or []
+            if not isinstance(claims, list):
+                rep.add("citation_provenance", f"{path.name} claims 必须是列表")
+                claims = []
+            elif not claims:
+                rep.add("citation_provenance", f"{path.name} claims 不能为空")
+            for idx, claim in enumerate(claims, start=1):
+                if not isinstance(claim, dict):
+                    rep.add("citation_provenance", f"{path.name} 第 {idx} 条论断结构非法")
+                    continue
+                if not (claim.get("evidence") or claim.get("citations")):
+                    rep.add("citation_provenance", f"{path.name} 第 {idx} 条论断缺少证据映射")
+                claim_citations = claim.get("citations") or []
+                if isinstance(claim_citations, list):
+                    for key in sorted(set(claim_citations) - used):
+                        rep.add(
+                            "citation_provenance",
+                            f"{path.name} 第 {idx} 条论断引用未列入顶层 citations：{key}",
+                        )
+
+    def check_reference_surface(self, rep: QaReport) -> None:
+        """参考文献栏目中的每一条必须能对应已核验记录的题名或规范引文。"""
+        records = self.ws.root / "literature" / "records.jsonl"
+        if not records.is_file():
+            return
+        from ..literature.models import LiteratureRecord, VerificationStatus
+
+        known: list[str] = []
+        for line in records.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                rec = LiteratureRecord.from_dict(json.loads(line))
+            except (TypeError, ValueError, KeyError) as exc:
+                rep.add("citation_surface", f"文献记录格式非法：{exc}")
+                continue
+            if rec.verification is VerificationStatus.VERIFIED:
+                known.extend(x for x in (rec.title, rec.citation_gbt7714, rec.citation_apa) if x)
+        if not known:
+            return
+        for path in (self.ws.root / "manuscript").rglob("*.md"):
+            lines = path.read_text(encoding="utf-8").splitlines()
+            for idx, line in enumerate(lines):
+                if not re.match(r"^#{1,3}\s*参考文献\s*$", line.strip()):
+                    continue
+                items_found = 0
+                for body in lines[idx + 1 :]:
+                    if re.match(r"^#{1,3}\s+", body):
+                        break
+                    item = body.strip().lstrip("- ")
+                    if item and not any(value in item for value in known):
+                        rep.add(
+                            "citation_surface",
+                            f"{path.relative_to(self.ws.root)}：参考文献条目无法对应已核验记录：{item[:80]}",
+                        )
+                    if item:
+                        items_found += 1
+                if items_found == 0:
+                    rep.add(
+                        "citation_surface", f"{path.relative_to(self.ws.root)}：参考文献栏目为空"
+                    )
+
     # ---------- Y008/Y009 变量与数据源 ----------
     def check_variables(self, rep: QaReport) -> None:
         vfile = self.ws.root / "analysis" / "quantitative" / "variables.yaml"
         if not vfile.is_file():
             return
-        data = yaml.safe_load(vfile.read_text(encoding="utf-8")) or {}
+        try:
+            data = yaml.safe_load(vfile.read_text(encoding="utf-8")) or {}
+        except yaml.YAMLError as exc:
+            rep.add("variables", f"变量文件 YAML 非法：{exc}")
+            return
+        if not isinstance(data, dict):
+            rep.add("variables", "变量文件顶层必须是对象")
+            return
         names = [data.get("dv"), data.get("iv"), *data.get("controls", [])]
         available: set[str] = set()
         for f in (self.ws.root / "data" / "metadata").glob("data_dictionary.*.yaml"):
@@ -184,7 +317,14 @@ class GlobalQA:
         summary = self.ws.root / "results" / "summary.json"
         manuscript = self._manuscript_text()
         if summary.is_file() and manuscript:
-            data = json.loads(summary.read_text(encoding="utf-8"))
+            try:
+                data = json.loads(summary.read_text(encoding="utf-8"))
+            except (TypeError, ValueError) as exc:
+                rep.add("results_consistency", f"结果摘要 JSON 非法：{exc}")
+                return
+            if not isinstance(data, dict):
+                rep.add("results_consistency", "结果摘要顶层必须是 JSON 对象")
+                return
             r2 = data.get("baseline", {}).get("r2")
             if r2 is not None:
                 m = re.search(r"R²\s*[=＝]\s*([\d.]+)", manuscript)
@@ -241,7 +381,14 @@ class GlobalQA:
     def check_theory_concepts(self, rep: QaReport) -> None:
         checks = self.ws.root / "analysis" / "theoretical" / "checks.yaml"
         if checks.is_file():
-            data = yaml.safe_load(checks.read_text(encoding="utf-8")) or {}
+            try:
+                data = yaml.safe_load(checks.read_text(encoding="utf-8")) or {}
+            except yaml.YAMLError as exc:
+                rep.add("theory_concepts", f"理论检查 YAML 非法：{exc}")
+                return
+            if not isinstance(data, dict):
+                rep.add("theory_concepts", "理论检查顶层必须是对象")
+                return
             for k, v in data.items():
                 if v:
                     rep.add("theory_concepts", f"理论检查 {k}: {v}")
@@ -271,6 +418,24 @@ class GlobalQA:
         if not (spec.is_file() or tspec.is_file()):
             rep.add("template", "有成文但缺少 template-spec.yaml（S8 未执行？）")
 
+    def check_manuscript_hygiene(self, rep: QaReport) -> None:
+        """稿件平面不得泄漏控制平面，也不得出现高置信度元话语。"""
+        md = self.ws.root / "manuscript"
+        if not md.is_dir():
+            return
+        paradigm = self.cfg_paradigm()
+        for path in md.rglob("*.md"):
+            text = path.read_text(encoding="utf-8")
+            for issue in hygiene_issues(text):
+                rep.add("manuscript_hygiene", f"{path.relative_to(self.ws.root)}：{issue}")
+            if paradigm == "quantitative":
+                for marker in ("任务树", "工作流", "执行日志", "产物", "阶段 S7", "阶段 S8"):
+                    if marker in text:
+                        rep.add(
+                            "genre_style",
+                            f"{path.relative_to(self.ws.root)}：实证正文含工程化词汇『{marker}』",
+                        )
+
     # ---------- 工具 ----------
     def _manuscript_text(self) -> str:
         md = self.ws.root / "manuscript"
@@ -295,6 +460,10 @@ class GlobalQA:
             "references",
             "results_consistency",
             "figure_consistency",
+            "manuscript_hygiene",
+            "genre_style",
+            "citation_provenance",
+            "citation_surface",
         }
         return [(k, i) for k, v in rep.checks.items() if k in blocking for i in v]
 

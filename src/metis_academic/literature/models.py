@@ -249,5 +249,19 @@ class SearchQuery(Serializable):
                 raise ValueError(f"未知数据源: {s}；允许 {sorted(ALL_SOURCES)}")
 
 
-DEFAULT_SOURCES = ("ncpssd", "chinaxiv", "sinoxiv", "paper.edu.cn", "arxiv", "scholar", "web")
-ALL_SOURCES = set(DEFAULT_SOURCES) | {"fixture"}
+# METIS uses paper-search-pro as its default discovery engine.  The older
+# adapters remain available for explicit, narrowly scoped calls and for
+# backwards-compatible integrations, but they are no longer silently fanned
+# out for every search.
+DEFAULT_SOURCES = ("paper-search-pro",)
+ALL_SOURCES = {
+    "paper-search-pro",
+    "ncpssd",
+    "chinaxiv",
+    "sinoxiv",
+    "paper.edu.cn",
+    "arxiv",
+    "scholar",
+    "web",
+    "fixture",
+}

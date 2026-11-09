@@ -1,7 +1,7 @@
 # S1 验收运行报告（Acceptance Run Report）
 
 - 日期：2026-09-26
-- 执行目录：D:\METIS超级合并
+- 执行目录：<project-root>
 - 项目目录：D:\METIS_s1_loop\proj（执行前已删除旧目录并新建空目录）
 - 引擎调用方式：`python -m metis_academic.cli <子命令>`
 
@@ -162,7 +162,7 @@ EXIT_CODE=0
 | A5 | status --json：stage=S1、project_name="平台劳动研究"、tasks.total=11 | PASS | `"project_name": "平台劳动研究", "stage": "S1"`；`"tasks": {"total": 11, ...}` |
 | A6 | 重复 init 退出码 1 且报错含「已存在」 | PASS | `[METIS] 项目已存在（D:\METIS_s1_loop\proj）。恢复用 status/advance；重建加 --force。`，`EXIT_CODE=1` |
 | A7 | plan 两次输出完全一致（幂等） | PASS | `diff /tmp/plan_run1.json /tmp/plan_run2.json` → `DIFF: IDENTICAL`；stderr 亦 `STDERR: IDENTICAL`；两次退出码均为 0 |
-| A8 | 状态文件只在 .metis/ 内 | PASS | project.yaml / workflow.yaml / task-state.json / evidence.jsonl（及 state.yaml、mcp-registry.yaml、skill-registry.yaml、logs/）全部位于 proj/.metis/ 内；D:/METIS_s1_loop 下仅有 proj（失败的 proj2 未创建）；D:\METIS超级合并 根目录未出现 .metis/task-state.json/evidence.jsonl/workflow.yaml/project.yaml |
+| A8 | 状态文件只在 .metis/ 内 | PASS | project.yaml / workflow.yaml / task-state.json / evidence.jsonl（及 state.yaml、mcp-registry.yaml、skill-registry.yaml、logs/）全部位于 proj/.metis/ 内；D:/METIS_s1_loop 下仅有 proj（失败的 proj2 未创建）；<project-root> 根目录未出现 .metis/task-state.json/evidence.jsonl/workflow.yaml/project.yaml |
 | A9 | 缺 --level 时退出码 1、中文报错、无 traceback | PASS | `[METIS] 毕业论文必须指定 --level bachelor|master|phd`，`EXIT_CODE=1`，输出仅一行可读错误、无 traceback |
 
 附加项：`python -m pytest tests/plugin/test_plugin_structure.py tests/plugin/test_engine_cli.py` → `18 passed in 24.76s`，退出码 0。

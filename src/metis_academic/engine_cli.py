@@ -432,3 +432,5 @@ def run_engine_cli(argv: list[str]) -> int:
         return _fail(str(e))
     except (ValueError, FileNotFoundError) as e:
         return _fail(str(e))
+    except Exception as e:  # noqa: BLE001 — CLI 必须把损坏输入转成可读失败
+        return _fail(f"未预期的错误：{e}")

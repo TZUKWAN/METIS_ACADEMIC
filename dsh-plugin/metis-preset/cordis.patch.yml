@@ -1,0 +1,4 @@
+# METIS native DSH preset catalog; toolbox is retained in base-plugins.json.
+- insert:
+    - id: preset-metis
+      name: metis-academic-preset

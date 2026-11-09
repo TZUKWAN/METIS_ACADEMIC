@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 import numpy as np
 import pandas as pd
@@ -68,13 +69,39 @@ LIT_FIXTURE = [
 def _host_delegate(task_type: str, prompt: str, context: dict):
     """测试用宿主模型代理：按任务类型产出确定性文本（代表 Harness 模型）。"""
     if task_type == "writing.section":
-        section = context.get("topic", "章节")
-        body = (
-            f"本节围绕{section}展开。"
-            "依据 research/ 与 analysis/ 的真实产出陈述本节内容，"
-            "所有事实性表述均引用已核验文献或结果文件。"
-        )
-        return body, None
+        section = context.get("section", "章节")
+        citations = context.get("evidence", {}).get("citations", [])
+        keys = [citations[0]["key"]] if citations else []
+        if "参考文献" in section:
+            body = "\n".join(c.get("citation", "") for c in citations if c.get("citation"))
+        else:
+            body = f"本节围绕{section}展开，并根据已提供材料组织论证。"
+            if citations:
+                first = citations[0]
+                authors = first.get("authors") or []
+                author = authors[0] if authors else "佚名"
+                body += f"（{author}，{first.get('year') or 'n.d.'}）"
+        rq_text = context.get("evidence", {}).get("research", {}).get("research_questions", "")
+        rq_ids = re.findall(r"RQ\d+", rq_text)
+        if rq_ids and ("引言" in section or "结论" in section):
+            body += "研究问题包括" + "、".join(dict.fromkeys(rq_ids)) + "。"
+        if (
+            rq_ids
+            and context.get("artifact_type") == "fund"
+            and ("选题依据" in section or "研究内容" in section)
+        ):
+            body += "本申请围绕" + "、".join(dict.fromkeys(rq_ids)) + "展开。"
+        return body, {
+            "text": body,
+            "claims": [
+                {
+                    "claim": body,
+                    "evidence": ["research"],
+                    "citations": keys,
+                }
+            ],
+            "citations": keys,
+        }
     raise AssertionError(f"未预期的语义任务 {task_type}")
 
 
@@ -193,6 +220,12 @@ def test_full_pipeline_e2e(artifact, paradigm, tmp_path):
     rep = GlobalQA(ws).run_all()
     assert "unfinished_tasks" not in rep.checks, rep.checks.get("unfinished_tasks")
     assert "failed_tasks" not in rep.checks
+    manuscript = (ws.root / "manuscript" / "draft.md").read_text(encoding="utf-8")
+    assert "research/" not in manuscript
+    assert "[bib:" not in manuscript
+    # 最终专用任务只能收束通用语义写作结果，不能用模板拼接覆盖正文。
+    assert "本节围绕" in manuscript
+    assert (ws.root / ".metis" / "logs" / "writing" / "evidence-links.json").is_file()
 
     if paradigm == "quantitative" and artifact != "fund":
         summary = json.loads((ws.root / "results" / "summary.json").read_text(encoding="utf-8"))

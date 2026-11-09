@@ -2,7 +2,7 @@
 
 - 日期：2026-09-26
 - 执行者：METIS 插件执行子智能体（验收用户）
-- MCP 服务器：`D:\METIS超级合并\metis\mcp\metis-server.py`（stdio，workspace=`D:/METIS_s4_loop/proj`）
+- MCP 服务器：`<project-root>\metis\mcp\metis-server.py`（stdio，workspace=`D:/METIS_s4_loop/proj`）
 - Driver：`D:/METIS_s4_loop/driver.py`（mcp ClientSession stdio 连接；环境准备 = engine_cli init + fixture 写入，等价用户手工准备；此后链路全部经 MCP 工具）
 
 ## D1 literature_search（fixture 源） — PASS

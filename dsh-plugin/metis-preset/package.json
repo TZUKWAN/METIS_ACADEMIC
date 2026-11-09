@@ -1,0 +1,51 @@
+{
+  "name": "metis-academic-preset",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./step-skills": "./step-skills.js",
+    "./package.json": "./package.json",
+    "./composer-agent": "./composer-agent.js"
+  },
+  "files": [
+    "index.js",
+    "native-preset-runtime.js",
+    "catalog-startup.js",
+    "tool-runtime-compat.js",
+    "modes.js",
+    "profiles.js",
+    "configuration.js",
+    "skill-packages.js",
+    "skill-library.js",
+    "progressive-skills.js",
+    "native-skill-execution.js",
+    "draft-merge.js",
+    "step-goals.js",
+    "step-activity.js",
+    "research-projects.js",
+    "project-revisions.js",
+    "project-message-context.js",
+    "goal-review.js",
+    "user-evidence.js",
+    "library",
+    "scripts/build-library.py",
+    "workspace-edits.js",
+    "session-versions.js",
+    "session-routing.js",
+    "step-skills.js",
+    "base-plugins.json",
+    "cordis.patch.yml",
+    "README.md",
+    "composer-agent.js",
+    "composer-definition.js",
+    "composer-workspaces.js",
+    "composer-operations.js"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

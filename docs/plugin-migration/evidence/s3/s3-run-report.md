@@ -1,7 +1,7 @@
 # S3 验收报告：中断恢复 + 并行执行（s3-run-report）
 
 - 日期：2026-09-26
-- 引擎：`python -m metis_academic.cli`（D:\METIS超级合并，ENGINE_CONTRACT v1）
+- 引擎：`python -m metis_academic.cli`（<project-root>，ENGINE_CONTRACT v1）
 - 工作区：`D:/METIS_s3_loop/proj`（先删旧目录后全新 init）
 - init 输出：`{"project_id": "metis-20260926-521043", "stage": "S1", "composed_from": ["common", "paradigm/qualitative", "artifact/journal", "language/zh-CN"], "task_rules": 50, "tasks_seeded": 50, "workspace": "D:\\METIS_s3_loop\\proj"}`，退出码 0
 
@@ -177,6 +177,6 @@ C-S2-003 COMPLETE  文献去重与核验
 
 ## 附录 B：环境与命令
 
-- 平台：win32（Git Bash），Python 经 miniconda；引擎以源码方式从 D:\METIS超级合并 导入
+- 平台：win32（Git Bash），Python 经 miniconda；引擎以源码方式从 <project-root> 导入
 - 全程未直接写 .metis/ 状态文件；任务 ready 置位用引擎库 `StateManager(...).tasks.set_status(...)`，占锁/杀进程用外部子进程 + `taskkill /F`
 - 残留物：`D:/METIS_s3_loop/`（proj 工作区、holder.py、p1/p2/d1/d2.json、holder.pid）

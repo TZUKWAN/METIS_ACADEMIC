@@ -2,7 +2,7 @@
 
 - 日期：2026-09-26
 - 执行者：验收用户（全新会话）；执行环节按 `metis/skills/metis/SKILL.md` + `metis/agents/metis-executor.md` 纪律进行
-- 引擎命令运行目录：`D:\METIS超级合并`
+- 引擎命令运行目录：`<project-root>`
 - 项目目录：`D:/METIS_gate/s2/proj`（先删旧：`rm -rf` 后由 init 重建）
 - 建项命令（按场景指定参数）：
 

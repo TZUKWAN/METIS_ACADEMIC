@@ -2,7 +2,7 @@
 
 - 日期：2026-09-26
 - 执行者：METIS 插件执行子智能体（验收用户）
-- 工作目录：D:\METIS超级合并（引擎 CLI 运行目录）
+- 工作目录：<project-root>（引擎 CLI 运行目录）
 - Workspace：D:/METIS_s2_loop/proj（project_id: metis-20260926-ca8217）
 
 ---
@@ -93,7 +93,7 @@ grep "C-S1-001" D:/METIS_s2_loop/proj/.metis/evidence.jsonl 输出（2 行，均
 
 ## B6 未直接写 .metis/ 的声明 — PASS
 
-声明：本会话中我（执行子智能体）对 .metis/ 目录的全部状态变更均经由引擎 CLI（`metis_academic.cli init` / `exec`）或引擎库（`StateManager.tasks.set_status`，仅 READY 化一处）完成。我未使用任何写文件工具（Write/Edit）写过 D:/METIS_s2_loop/proj/.metis/ 下的任何内容；对 .metis/ 下文件仅执行过只读操作（stat / head / grep）。本会话唯一一次 Write 工具调用即本报告文件本身，路径位于 D:\METIS超级合并\docs\plugin-migration\evidence\s2\，不在任何 .metis/ 目录内。会话工具调用序列：TodoWrite、Bash（rm / python CLI / python -c 引擎库 / stat / head / grep）、Write（仅本报告）。
+声明：本会话中我（执行子智能体）对 .metis/ 目录的全部状态变更均经由引擎 CLI（`metis_academic.cli init` / `exec`）或引擎库（`StateManager.tasks.set_status`，仅 READY 化一处）完成。我未使用任何写文件工具（Write/Edit）写过 D:/METIS_s2_loop/proj/.metis/ 下的任何内容；对 .metis/ 下文件仅执行过只读操作（stat / head / grep）。本会话唯一一次 Write 工具调用即本报告文件本身，路径位于 <project-root>\docs\plugin-migration\evidence\s2\，不在任何 .metis/ 目录内。会话工具调用序列：TodoWrite、Bash（rm / python CLI / python -c 引擎库 / stat / head / grep）、Write（仅本报告）。
 
 ---
 

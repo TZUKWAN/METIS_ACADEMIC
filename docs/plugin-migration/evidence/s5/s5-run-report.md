@@ -2,7 +2,7 @@
 
 - 日期：2026-09-26
 - 执行者：METIS 插件执行子智能体（验收用户）
-- 场景文件：`D:\METIS超级合并\tests\scenarios\S5-ppt-delivery.md`（逐字执行）
+- 场景文件：`<project-root>\tests\scenarios\S5-ppt-delivery.md`（逐字执行）
 - 项目目录：`D:/METIS_s5_loop/proj`（先删旧目录再 init：`--artifact thesis --paradigm quantitative --lang zh-CN --level master`，经 `metis_academic.engine_cli.run_engine_cli`）
 - Runner：`D:/METIS_loop_runners/run_s5.py`
 - 入口：`from metis_academic.submission import PptBuildService`；`svc.build("平台劳动研究", slides=[...], template_slug="academic")`；探针 `PptBuildService.verify_pptx(path, expected_texts)`

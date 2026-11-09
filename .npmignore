@@ -1,0 +1,9 @@
+**/tests/
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/.env
+**/.env.*
+**/node_modules/
+**/.dsh/
+**/library/bundles/

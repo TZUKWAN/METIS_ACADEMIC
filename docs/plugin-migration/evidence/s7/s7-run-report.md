@@ -2,7 +2,7 @@
 
 - 执行日期：2026-09-26
 - 执行者：METIS 执行子智能体（验收用户）
-- 场景文件：D:\METIS超级合并\tests\scenarios\S7-data-link.md
+- 场景文件：<project-root>\tests\scenarios\S7-data-link.md
 - 项目工作区：D:\METIS_s7_loop\proj（已删除旧目录后全新 init）
 - project_id：metis-20260927-9d2d03（init 返回，composed_from: common + paradigm/quantitative + artifact/journal + language/zh-CN，task_rules=61, tasks_seeded=61）
 

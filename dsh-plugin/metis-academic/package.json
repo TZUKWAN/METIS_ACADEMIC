@@ -1,0 +1,28 @@
+{
+  "name": "metis-academic",
+  "version": "0.1.0",
+  "private": true,
+  "description": "METIS ACADEMIC —— 哲学社会科学研究工作流（七阶段纪律 + 真实性闸门）DeepSeek Harness bundle：runtime skill + 引擎 MCP 工具面",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "locale/",
+    "assets/",
+    "skills/"
+  ],
+  "engines": {
+    "dsh": ">=0.2"
+  },
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

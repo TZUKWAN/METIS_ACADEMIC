@@ -1,0 +1,24 @@
+# One selected bundle owns every METIS host row and the browser client.
+# IDs remain stable; only the former standalone modules use package subpaths.
+- insert:
+    - id: metis-academic
+      name: metis-academic-preset/runtime
+      config:
+        bundledEngine: true
+    - id: metis-mcp
+      name: '@deepseek-ai/dsh-mcp-client'
+      inject: [metisAcademicEnvironment]
+      config:
+        serverName: metis
+        transport: stdio
+        command: !!js ctx.metisAcademicEnvironment.python
+        args:
+          - '-m'
+          - metis_academic.mcp_server
+        env:
+          PYTHONPATH: !!js ctx.metisAcademicEnvironment.pythonPath
+        failOnStartupError: false
+    - id: metis-academic-mode
+      name: metis-academic-preset/workbench
+    - id: preset-metis
+      name: metis-academic-preset

@@ -13,6 +13,7 @@ from ..logging_setup import get_logger
 from ..models import Language, ProjectConfig
 from ..word_engine import WordEngine
 from ..workspace import WorkspaceManager
+from ..writing import hygiene_issues
 from .base import DraftAssembler
 
 logger = get_logger("journal")
@@ -23,7 +24,7 @@ DEFAULT_JOURNAL_RULES: dict = {
     "abstract_words": 300,
     "keywords_n": 5,
     "citation_style": "gb-t7714",
-    "structure": ["摘要", "引言", "文献综述", "研究设计", "实证结果", "结论"],
+    "structure": ["摘要", "引言", "文献综述", "研究设计", "实证结果", "结论", "参考文献"],
     "anonymous": False,
     "figure_format": "png",
 }
@@ -94,6 +95,12 @@ class JournalGenerator:
             "sections": sections,
             "outline_found": bool(outline),
         }
+        assembled = "\n".join(
+            [manuscript["abstract"]] + [line for _, body in sections for line in body]
+        )
+        issues = hygiene_issues(assembled, citation_keys=set(self.asm.verified_citations()))
+        if issues:
+            raise GenerationError("期刊正文未通过卫生检查：" + "；".join(issues[:6]))
         self._write_markdown(manuscript)
         return manuscript
 
@@ -103,7 +110,7 @@ class JournalGenerator:
 
     def _make_abstract(self, title: str, src: str) -> str:
         head = [ln.strip("- #\n") for ln in src.splitlines() if ln.strip()][:4]
-        body = "；".join(h for h in head if h) or f"本文研究{title}的机制与效应。"
+        body = "；".join(h for h in head if h) or f"研究主题为“{title}”。"
         return body[: self.rules.get("abstract_words", 300)]
 
     def _make_keywords(self, topic_md: str) -> list[str]:
@@ -119,21 +126,40 @@ class JournalGenerator:
 
     def _body_blocks(self, rules: dict) -> list[tuple[str, list[str]]]:
         blocks = []
-        citations = list(self.asm.verified_citations())
-        for sec_title in rules.get("structure", [])[1:]:
-            lines: list[str] = [f"（{sec_title}章节内容依 research/ 与 analysis/ 产出撰写）"]
-            if sec_title in ("文献综述", "实证结果"):
-                if sec_title == "实证结果":
-                    for name, text in self.asm.results_files().items():
-                        lines.append(f"结果来源 results/{name}：")
-                        lines.extend([ln for ln in text.splitlines()[:6]])
-                    for fig in self.asm.figures_available():
-                        lines.append(f"图注：{fig}（来自 figures/{fig}，由 run_all.py 生成）")
-                else:
-                    if citations:
-                        lines.append(f"核心文献 [bib:{citations[0]}]。")
-                    for k in citations[1:4]:
-                        lines.append(f"[bib:{k}]")
+        citation_records = self.asm.citation_records()
+        inputs = self.asm.research_inputs()
+        results = self.asm.results_files()
+        interpretation = self.asm.read_if_exists("analysis/quantitative/interpretation.md")
+        themes = self.asm.read_if_exists("analysis/qualitative/themes.md")
+        contribution = self.asm.read_if_exists("analysis/theoretical/contribution.md")
+        structure = list(rules.get("structure", []))[1:]
+        if "参考文献" not in structure:
+            structure.append("参考文献")
+        for sec_title in structure:
+            lines: list[str] = []
+            if sec_title == "引言":
+                lines.extend(
+                    (
+                        inputs.get("selected_topic", "") or inputs.get("research_questions", "")
+                    ).splitlines()[:6]
+                )
+            elif sec_title == "文献综述":
+                lines = [f"- {item['citation']}" for item in citation_records[:8]]
+            elif sec_title == "研究设计":
+                lines = inputs.get("methods", "").splitlines()
+            elif sec_title in ("实证结果", "案例分析", "研究结果"):
+                for text in results.values():
+                    lines.extend(text.splitlines()[:10])
+                if interpretation:
+                    lines.extend(interpretation.splitlines()[:8])
+                if themes:
+                    lines.extend(themes.splitlines()[:8])
+            elif sec_title == "结论":
+                lines.extend((contribution or interpretation).splitlines()[:10])
+            elif sec_title == "参考文献":
+                lines = [
+                    f"{idx}. {item['citation']}" for idx, item in enumerate(citation_records, 1)
+                ]
             blocks.append((sec_title, lines))
         return blocks
 
@@ -172,8 +198,8 @@ class JournalGenerator:
                     if len(words) > 45:
                         checks.issues.append(f"过长英文句（{len(words)} 词）：{sent[:60]}…")
             checks.issues.append("英文五项检查需人工复核（terminology/tense/style 等）")
-        if self.rules.get("citation_style") == "gb-t7714" and "[" in draft:
-            pass
+        issues = hygiene_issues(draft, citation_keys=set(self.asm.verified_citations()))
+        checks.issues.extend(issues)
         checks.ok = not checks.issues
         return checks
 

@@ -5,6 +5,7 @@ from .models import LiteratureRecord, SearchQuery
 from .sources import (
     ArxivSource,
     FixtureSource,
+    PaperSearchProSource,
     SourceAdapter,
     format_apa,
     format_bibtex,
@@ -18,6 +19,7 @@ __all__ = [
     "SearchQuery",
     "SourceAdapter",
     "ArxivSource",
+    "PaperSearchProSource",
     "FixtureSource",
     "get_source",
     "format_gbt7714",

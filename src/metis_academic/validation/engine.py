@@ -344,12 +344,16 @@ def _rule_citations_consistent(ws: WorkspaceManager, task: Task | None, params: 
         if ln.startswith("@"):
             bib_keys.add(ln.split("{", 1)[1].split(",", 1)[0])
     missing = []
+    internal = []
     for md in (ws.root / "manuscript").rglob("*.md"):
         for ln in md.read_text(encoding="utf-8").splitlines():
             if "[bib:" in ln:
                 key = ln.split("[bib:", 1)[1].split("]", 1)[0]
+                internal.append(key)
                 if key not in bib_keys:
                     missing.append(key)
+    if internal:
+        return False, f"正文含内部引用标记 [bib:]：{sorted(set(internal))}"
     return (not missing, f"正文引用不在文献库: {sorted(set(missing))}" if missing else "引用一致")
 
 
@@ -424,10 +428,28 @@ def _rule_evidence_linked(ws: WorkspaceManager, task: Task | None, params: dict)
     if not d.is_file():
         return False, "draft.md 缺失"
     text = d.read_text(encoding="utf-8")
-    has_evidence = (
-        "results/" in text or "analysis/" in text or "figures/" in text or "[bib:" in text
+    sidecar = ws.root / ".metis" / "logs" / "writing" / "evidence-links.json"
+    if sidecar.is_file():
+        try:
+            data = json.loads(sidecar.read_text(encoding="utf-8"))
+            if data.get("manuscript") == "manuscript/draft.md":
+                return True, "证据映射已记录在控制平面 sidecar"
+        except json.JSONDecodeError:
+            return False, "证据映射 sidecar 不是合法 JSON"
+    # 生成器直写模式没有 section sidecar 时，至少要出现研究材料本身或
+    # 已核验参考文献格式，而不能靠内部路径制造“证据指针”。
+    from metis_academic.generators import DraftAssembler
+
+    try:
+        cfg = ws.read_project()
+        asm = DraftAssembler(ws, cfg, getattr(ws, "_lit", None))
+        citations = [x["citation"] for x in asm.citation_records() if x.get("citation")]
+    except Exception:  # noqa: BLE001
+        citations = []
+    has_evidence = any(cite in text for cite in citations) or any(
+        token in text for token in ("研究问题", "研究方法", "研究设计", "材料", "样本")
     )
-    return (has_evidence, "草稿含真实证据指针" if has_evidence else "草稿无任何真实证据指针")
+    return (has_evidence, "正文含可识别证据内容" if has_evidence else "正文无可识别证据内容")
 
 
 def _rule_qa_no_errors(ws: WorkspaceManager, task: Task | None, params: dict):
@@ -486,6 +508,14 @@ _PLACEHOLDER_PATTERNS = (
     "示意性内容",
     "由生成器组装",
     "（章节内容依",
+    "research/",
+    "analysis/",
+    "results/",
+    "run_all.py",
+    "[bib:",
+    "[CITE:",
+    "expected_outputs",
+    "procedure_params",
 )
 
 

@@ -93,20 +93,28 @@ class DesignManager:
 
     def _research_questions(self, t: TopicCandidate, para: str) -> str:
         rq = t.research_question or f"{t.title}的机制是什么？"
+        if para == "quantitative":
+            q2 = f"{t.title}与关键结果之间的关联模式及其可能机制是什么？"
+        elif para == "theoretical":
+            q2 = f"哪些概念关系和理论命题能够解释{t.title}？"
+        else:
+            q2 = f"围绕{t.title}可以从哪些材料中识别其过程、机制与差异？"
         return "\n".join(
             [
                 f"# 研究问题（{t.title}）",
+                "",
+                "> 以下问题是基于当前选题的研究设计草案，须在材料与用户确认后定稿。",
                 "",
                 f"总问题：{rq}",
                 "",
                 "子问题：",
                 f"1. RQ1：{t.title}的现状与关键特征是什么？",
-                f"2. RQ2：{'哪些因素通过何种机制影响' if para != 'theoretical' else '何种理论逻辑能够解释'}{t.title}？",
-                f"3. RQ3：上述{'效应/机制' if para != 'theoretical' else '解释'}的边界条件是什么？",
+                f"2. RQ2：{q2}",
+                "3. RQ3：上述问题的解释边界、替代解释或反例是什么？",
                 "",
                 "研究目标：",
-                f"- 回答 RQ1–RQ3；形成关于{t.title}的系统证据/理论阐释；",
-                "- 给出政策或理论含义。",
+                "- 围绕 RQ1–RQ3 形成与证据类型相匹配的回答；",
+                "- 仅在证据支持时提出政策或理论含义。",
                 "",
                 f"> 理论视角（来自选题）：{t.theory}",
                 "",
@@ -131,14 +139,19 @@ class DesignManager:
         )
 
     def _methods(self, t: TopicCandidate, para: str) -> str:
+        strategy = {
+            "quantitative": "描述统计与关联估计；报告识别假设、诊断、不确定性与稳健性；不把非实验关联写成因果证明。",
+            "qualitative": "说明材料选择、编码单元、主题形成、负例和替代解释；区分材料陈述与研究者解释。",
+            "theoretical": "界定概念、梳理文献谱系、提出命题并展开反论证；说明命题适用边界，不虚构经验验证。",
+        }.get(para, "根据证据类型选择分析策略并说明边界。")
         return "\n".join(
             [
                 "# 研究方法",
                 "",
                 f"- 方法组合：{t.methods}",
                 f"- 数据来源：{t.data}",
-                "- 分析策略：先描述后解释；稳健性与替代解释检查；",
-                "- 伦理与数据管理：原始数据只读（data/raw），引用可溯源。",
+                f"- 分析策略：{strategy}",
+                "- 伦理与数据管理：记录材料来源、处理权限和引用链；具体方案待项目确认。",
                 "",
             ]
         )
@@ -149,7 +162,7 @@ class DesignManager:
         lines = [f"# 大纲（{kind}）", ""]
         for i, (title, prefix) in enumerate(sections, 1):
             lines.append(f"{i}. {title}（{prefix}）")
-        lines += ["", "> 每章任务拆解见 research/tasks.md 与 .metis/task-state.json"]
+        lines += ["", "> 每章任务拆解在项目任务计划中维护。"]
         return "\n".join(lines) + "\n"
 
     # ---------- L007–L012 任务树 ----------
@@ -194,7 +207,7 @@ class DesignManager:
                             "literature/literature_index.md",
                         ],
                         dependencies=deps,
-                        required_skills=["academic-writing"],
+                        required_skills=["academic-writing", "lieflat-less-ai-tone"],
                         required_tools=["fs.read", "fs.write"],
                         procedure="writing.section",
                         procedure_params={"section": title, "prefix": prefix, "part": i},

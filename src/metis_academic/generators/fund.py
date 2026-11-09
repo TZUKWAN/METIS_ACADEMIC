@@ -16,6 +16,7 @@ from ..logging_setup import get_logger
 from ..models import ProjectConfig
 from ..word_engine import WordEngine
 from ..workspace import WorkspaceManager
+from ..writing import hygiene_issues
 from .base import DraftAssembler
 
 logger = get_logger("fund")
@@ -114,37 +115,41 @@ class FundGenerator:
     def build_draft(self, template: dict) -> str:
         inputs = self.asm.research_inputs()
         topic_title = self._topic_title()
-        citations = list(self.asm.verified_citations())[:5]
+        citations = self.asm.citation_records()[:5]
+        data_sources = self.asm.read_if_exists("data/metadata/data_sources.md")
         bodies: dict[str, list[str]] = {
             "basis": [
-                f"选题「{topic_title}」源于现实与理论的双重需要。",
-                inputs.get("research_questions", "研究问题见 research/research_questions.md"),
-                f"国内外研究现状与文献谱系整理见 literature/literature_index.md"
-                f"（当前共 {self._count_lit()} 条，引用均经核验）。",
+                f"研究主题：{topic_title}。",
+                inputs.get("research_questions", ""),
+                *(
+                    [f"现有研究涉及 {self._count_lit()} 条已核验文献。"]
+                    if self._count_lit()
+                    else []
+                ),
             ],
             "content": [
-                inputs.get("framework", "总体框架见 research/framework.md"),
-                "研究目标与内容设计详见 research/research_questions.md 的 RQ1–RQ3。",
+                inputs.get("framework", ""),
+                inputs.get("research_questions", ""),
             ],
             "method": [
-                inputs.get("methods", "研究方法见 research/methods.md"),
-                "技术路线：概念界定 → 框架构建 → 资料收集 → 分析检验 → 结论讨论。",
+                inputs.get("methods", ""),
             ],
-            "innovation": [
-                f"本研究的主要推进在于：{self._innovation()}",
-            ],
+            "innovation": ([f"{self._innovation()}"] if self._innovation() else []),
             "feasibility": [
-                "研究基础：团队已完成相关文献综述与预调研；",
-                "数据与材料可得性：见 data/metadata/data_sources.md；",
-                "进度安排按 research/tasks.md 任务树推进。",
+                *([data_sources] if data_sources else []),
             ],
-            "references": [f"[bib:{k}]" for k in citations] or ["（暂无已核验引用）"],
+            "references": [item["citation"] for item in citations],
         }
         sections = []
         for sec in template.get("sections", []):
             sid = sec["id"]
-            sections.append((sec["title"], bodies.get(sid, ["（待撰写）"])))
+            if sid not in bodies:
+                raise GenerationError(f"基金模板栏目没有内容映射：{sid}")
+            sections.append((sec["title"], bodies[sid]))
         draft = self.asm.assemble(sections)
+        issues = hygiene_issues(draft, citation_keys=set(self.asm.verified_citations()))
+        if issues:
+            raise GenerationError("基金正文未通过卫生检查：" + "；".join(issues[:6]))
         out = self.ws.root / "manuscript" / "draft.md"
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(draft, encoding="utf-8")
@@ -167,7 +172,7 @@ class FundGenerator:
         for ln in t.splitlines():
             if "初步命题" in ln or "创新" in ln:
                 return ln.strip("- ").strip()
-        return "机制识别与跨层次整合（详见 research/framework.md）"
+        return ""
 
     def _count_lit(self) -> int:
         idx = self.ws.root / "literature" / "literature_index.md"

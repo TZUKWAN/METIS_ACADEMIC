@@ -1,0 +1,18 @@
+# METIS ACADEMIC bundle 补丁
+# ① 宿主插件：注册 metis runtime skill（Python 引擎不在 Node 进程内，纪律在技能正文）
+# ② MCP 桥：以 stdio 拉起 metis_academic.mcp_server（引擎已 pip install -e，路径无关；
+#    每个工具逐次调用都接受 workspace 参数，failOnStartupError=false 避免无 Python 环境时阻断档案启动）
+- insert:
+    - id: metis-academic
+      name: metis-academic
+      config: {}
+    - id: metis-mcp
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: metis
+        transport: stdio
+        command: python
+        args:
+          - '-m'
+          - metis_academic.mcp_server
+        failOnStartupError: false

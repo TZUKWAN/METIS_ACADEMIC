@@ -7,7 +7,7 @@
 
 ## 前置条件
 
-同 S2（journal × qualitative 项目，工作目录 `D:\METIS超级合并`）。
+同 S2（journal × qualitative 项目，工作目录 `<project-root>`）。
 
 ## 用户输入序列
 

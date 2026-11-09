@@ -14,13 +14,7 @@ from pathlib import Path
 
 import yaml
 
-CATALOG_PATH = (
-    Path(__file__).resolve().parents[3]
-    / "docs"
-    / "plugin-migration"
-    / "adopted"
-    / "metis-data-providers.catalog.yaml"
-)
+CATALOG_PATH = Path(__file__).with_name("providers.catalog.yaml")
 
 
 @dataclass

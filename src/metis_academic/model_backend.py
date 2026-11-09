@@ -75,7 +75,12 @@ class HarnessModelBackend(ModelBackend):
 
         req_hash = hashlib.sha256(
             json.dumps(
-                {"t": request.task_type, "p": request.prompt, "c": request.context},
+                {
+                    "t": request.task_type,
+                    "p": request.prompt,
+                    "c": request.context,
+                    "s": request.schema,
+                },
                 ensure_ascii=False,
                 sort_keys=True,
             ).encode("utf-8")

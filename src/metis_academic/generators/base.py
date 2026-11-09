@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from ..literature import LiteratureManager
+from ..literature import LiteratureManager, format_gbt7714
 from ..models import ProjectConfig
 from ..workspace import WorkspaceManager
 
@@ -29,6 +29,26 @@ class DraftAssembler:
             for rec in self.lit.verified_records():
                 pool[rec.record_id] = rec.title
         return pool
+
+    def citation_records(self) -> list[dict[str, str]]:
+        """返回可直接进入参考文献表的已核验条目。
+
+        生成器只使用同一可信池，避免把 bib 文件中的孤立 key 或未核验记录
+        重新拼进正文。
+        """
+        if self.lit is None:
+            return []
+        records = []
+        for rec in self.lit.verified_records():
+            records.append(
+                {
+                    "key": rec.record_id,
+                    "citation": rec.citation_gbt7714 or format_gbt7714(rec),
+                    "title": rec.title,
+                    "year": str(rec.year or ""),
+                }
+            )
+        return records
 
     # ---------- 真实材料摘要 ----------
     def read_if_exists(self, rel: str) -> str:

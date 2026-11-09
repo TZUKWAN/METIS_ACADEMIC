@@ -13,6 +13,7 @@ from ..logging_setup import get_logger
 from ..models import Language, ProjectConfig, ThesisLevel
 from ..word_engine import WordEngine
 from ..workspace import WorkspaceManager
+from ..writing import hygiene_issues
 from .base import DraftAssembler
 
 logger = get_logger("thesis")
@@ -112,25 +113,32 @@ class ThesisGenerator:
         zh_abs = self._abstract(abstract_src, title)
         sections.append(("摘要", [zh_abs]))
         if self.cfg.language is Language.ZH_CN and rules["abstract"].get("en", True):
-            sections.append(("Abstract", ["(English abstract to be finalized.)"]))
+            english_source = self.asm.read_if_exists("research/abstract_en.md")
+            if not english_source.strip():
+                raise GenerationError(
+                    "模板要求英文摘要，但工作区缺少 research/abstract_en.md；"
+                    "不能用占位句冒充英文摘要"
+                )
+            sections.append(("Abstract", [english_source.strip()]))
         # 章节
         chapters = [t for t in rules["toc"] if t.startswith("第")]
         body_map = self._chapter_bodies()
         for ch in chapters:
             key = next((k for k in body_map if k in ch), None)
-            sections.append(
-                (ch, body_map.get(key or "", ["（依 research/ 与 analysis/ 产出撰写）"]))
-            )
+            sections.append((ch, body_map.get(key or "", [])))
         # 参考文献
-        refs = [f"[bib:{k}]" for k in list(self.asm.verified_citations())[:8]]
-        sections.append(("参考文献", refs or ["（暂无已核验引用）"]))
-        sections.append(("致谢", ["（由作者完成）"]))
+        refs = [item["citation"] for item in self.asm.citation_records()[:8]]
+        sections.append(("参考文献", refs))
+        sections.append(("致谢", []))
 
         lines = ["# " + title, ""]
         for t, body in sections:
             lines += [f"# {t}", ""]
             lines += body + [""]
         text = self._renumber_figures("\n".join(lines))
+        issues = hygiene_issues(text, citation_keys=set(self.asm.verified_citations()))
+        if issues:
+            raise GenerationError("学位论文正文未通过卫生检查：" + "；".join(issues[:6]))
         out = self.ws.root / "manuscript" / "draft.md"
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(text, encoding="utf-8")
@@ -149,32 +157,25 @@ class ThesisGenerator:
         fw = self.asm.read_if_exists("research/framework.md")
         methods = self.asm.read_if_exists("research/methods.md")
         results = ""
-        for name, text in self.asm.results_files().items():
-            results += f"\n（results/{name}）\n" + "\n".join(text.splitlines()[:4]) + "\n"
+        for _name, text in self.asm.results_files().items():
+            results += "\n" + "\n".join(text.splitlines()[:8]) + "\n"
         themes = self.asm.read_if_exists("analysis/qualitative/themes.md")
         theory = self.asm.read_if_exists("analysis/theoretical/contribution.md")
-        citations = list(self.asm.verified_citations())
         return {
             "绪论": [
-                f"研究背景与问题：{rq.splitlines()[0] if rq else '见 research/research_questions.md'}",
-                f"理论视角概要：{(fw.splitlines()[0] if fw else '')}",
+                *([rq.splitlines()[0]] if rq else []),
+                *([fw.splitlines()[0]] if fw else []),
             ],
-            "文献综述": [
-                f"文献索引见 literature/literature_index.md；核心文献 [bib:{citations[0]}]。"
-                if citations
-                else "文献索引见 literature/literature_index.md。"
-            ],
-            "研究设计": [methods or "见 research/methods.md"],
+            "文献综述": [item["citation"] for item in self.asm.citation_records()[:8]],
+            "研究设计": methods.splitlines() if methods else [],
             "实证": [
-                results or "见 results/ 与 figures/",
-                f"定性主题见 analysis/qualitative/themes.md（{len(themes.splitlines())} 行）"
-                if themes
-                else "",
+                *([results] if results else []),
+                *(themes.splitlines()[:8] if themes else []),
             ],
-            "案例": [results or "见 results/ 与 figures/"],
+            "案例": [results] if results else [],
             "结论": [
-                theory or "结论与讨论依 analysis/ 产出撰写。",
-                f"创新点回顾：{self._innovation(fw)}",
+                *(theory.splitlines()[:10] if theory else []),
+                *([f"创新点回顾：{self._innovation(fw)}"] if self._innovation(fw) else []),
             ],
         }
 
@@ -183,7 +184,7 @@ class ThesisGenerator:
         for ln in fw.splitlines():
             if "初步命题" in ln:
                 return ln.strip("- ").strip()
-        return "见 research/framework.md"
+        return ""
 
     _CN_NUM = {"一": 1, "二": 2, "三": 3, "四": 4, "五": 5, "六": 6}
 
@@ -201,7 +202,7 @@ class ThesisGenerator:
             m = re.match(r"^图\s*(图?\d*)\s*(.*)$", ln)
             if m and chapter:
                 counter += 1
-                ln = f"图注：图 {chapter}-{counter} {m.group(2)}（来源见 figures/）"
+                ln = f"图注：图 {chapter}-{counter} {m.group(2)}"
             out.append(ln)
         return "\n".join(out)
 
@@ -229,13 +230,8 @@ class ThesisGenerator:
                 if draft.count(rqid) < 2:
                     checks.issues.append(f"{rqid} 未在绪论+结论两处呼应")
         # V014 创新点证据
-        if (
-            "创新" in draft
-            and "figures/" not in draft
-            and "results/" not in draft
-            and "analysis/" not in draft
-        ):
-            checks.issues.append("创新点缺少证据指针（results/figures/analysis）")
+        hygiene = hygiene_issues(draft, citation_keys=set(self.asm.verified_citations()))
+        checks.issues.extend(hygiene)
         # 字数
         min_words = rules["level_requirements"]["min_words"]
         n = self.asm.word_count(draft)
@@ -255,7 +251,7 @@ class ThesisGenerator:
             "sections": [
                 {"title": "研究问题与意义", "bullets": ["RQ1–RQ3", "理论与现实价值"]},
                 {"title": "研究设计", "bullets": ["数据与方法", "技术路线"]},
-                {"title": "主要发现", "bullets": ["核心结果见 results/summary.json 与 themes.md"]},
+                {"title": "主要发现", "bullets": ["核心结果与主题分析"]},
                 {"title": "贡献与局限", "bullets": ["创新点与证据", "边界条件"]},
             ],
             "figures": self.asm.figures_available(),

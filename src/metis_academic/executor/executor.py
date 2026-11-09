@@ -169,7 +169,11 @@ class TaskExecutor:
         # 执行
         self.sm.tasks.set_status(task_id, "running")
         self.sm.set_task(task_id)
-        ctx = ExecutionContext(ws=self.ws, sm=self.sm)
+        ctx = ExecutionContext(
+            ws=self.ws,
+            sm=self.sm,
+            extra={"active_skills": self.skills.active_contents()},
+        )
         try:
             fn = self.actions.get(task.procedure)
             outputs = fn(task, ctx) or list(task.expected_outputs)

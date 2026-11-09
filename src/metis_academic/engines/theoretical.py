@@ -115,7 +115,8 @@ class TheoreticalEngine:
     def concept_map(self) -> Path:
         lines = ["# 概念地图", ""]
         for c in self.concepts:
-            lines.append(f"- **{c.name}**：{c.definition}（来源：{c.source or '待补'}）")
+            source = f"（来源：{c.source}）" if c.source else ""
+            lines.append(f"- **{c.name}**：{c.definition}{source}")
         out = self.tdir / "concept_map.md"
         out.write_text("\n".join(lines) + "\n", encoding="utf-8")
         self._dump_yaml("concept_map.yaml", {"concepts": [c.__dict__ for c in self.concepts]})
@@ -180,7 +181,8 @@ class TheoreticalEngine:
         lines = ["# 反论证与回应", ""]
         for c in self.counters:
             lines.append(f"- [{c.id}] 针对 {c.target_claim}：{c.text}")
-            lines.append(f"  - 回应：{c.reply or '（待回应）'}")
+            if c.reply:
+                lines.append(f"  - 回应：{c.reply}")
         out = self.tdir / "counter_arguments.md"
         out.write_text("\n".join(lines) + "\n", encoding="utf-8")
         return out

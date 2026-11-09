@@ -33,16 +33,7 @@ class Settings:
     max_retries: int = 2  # 任务失败默认重试次数
     context_budget: int = 8  # Skill Router 上下文预算（可同时活跃技能数）
     data_sources: list[str] = field(default_factory=list)  # 额外文献源 URL
-    search_sources: list[str] = field(
-        default_factory=lambda: [
-            "ncpssd",
-            "chinaxiv",
-            "sinoxiv",
-            "paper.edu.cn",
-            "arxiv",
-            "scholar",
-        ]
-    )
+    search_sources: list[str] = field(default_factory=lambda: ["paper-search-pro"])
     extra: dict = field(default_factory=dict)  # 未识别字段的兜底存放
 
     def to_dict(self) -> dict:

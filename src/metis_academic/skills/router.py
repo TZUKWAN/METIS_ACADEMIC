@@ -161,3 +161,15 @@ class SkillRouter:
 
     def active_ids(self) -> list[str]:
         return sorted(self.loaded)
+
+    def active_contents(self) -> dict[str, str]:
+        """返回当前已加载技能的指令正文，供语义任务编译请求使用。
+
+        仅调用 adapter.load_skill 并不能让宿主模型看到技能内容；这里提供
+        明确的运行时接口，避免技能“已加载”与“已注入”混为一谈。
+        """
+        return {
+            sid: content.instructions
+            for sid, content in self.loaded.items()
+            if content.instructions
+        }

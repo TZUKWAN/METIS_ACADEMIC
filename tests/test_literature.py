@@ -6,9 +6,11 @@
 from __future__ import annotations
 
 import json
+import subprocess
 
 import pytest
 
+from metis_academic.errors import LiteratureError
 from metis_academic.literature import (
     FixtureSource,
     LiteratureManager,
@@ -19,6 +21,7 @@ from metis_academic.literature import (
     format_gbt7714,
 )
 from metis_academic.literature.models import VerificationStatus
+from metis_academic.literature.sources import PaperSearchProSource
 from metis_academic.workspace import WorkspaceManager
 
 
@@ -27,6 +30,124 @@ def ws(tmp_path):
     w = WorkspaceManager(tmp_path / "ws")
     w.create()
     return w
+
+
+def test_paper_search_pro_adapter_maps_envelope_without_verifying(tmp_path):
+    root = tmp_path / "paper-search-pro"
+    (root / "scripts").mkdir(parents=True)
+    (root / "scripts" / "agent_search.py").write_text("# test marker\n", encoding="utf-8")
+    seen = {}
+
+    def fake_runner(cmd, **kwargs):
+        seen["cmd"] = cmd
+        seen["kwargs"] = kwargs
+        envelope = {
+            "ok": True,
+            "schema_version": "1.0",
+            "data": [
+                {
+                    "title": "A federated paper",
+                    "authors": [{"name": "Ada Lovelace"}, {"name": "Grace Hopper"}],
+                    "year": 2024,
+                    "doi": "https://doi.org/10.1000/ABC",
+                    "abstract": "Evidence bounded abstract.",
+                    "doi_url": "https://doi.org/10.1000/abc",
+                    "openalex_url": "https://openalex.org/W1",
+                    "keywords": ["methods"],
+                    "type": "article",
+                    "relevance": {"score": 0.91},
+                    "verify": {"exists": True},
+                }
+            ],
+            "meta": {"source_used": "openalex", "counts": {"returned": 1}},
+        }
+        return subprocess.CompletedProcess(cmd, 0, json.dumps(envelope), "")
+
+    src = PaperSearchProSource(root=root, runner=fake_runner)
+    out = src.search(SearchQuery(terms="平台治理", sources=["paper-search-pro"], max_results=7))
+    assert len(out) == 1
+    rec = out[0]
+    assert rec.source == "paper-search-pro"
+    assert rec.doi == "10.1000/abc"
+    assert rec.url == "https://doi.org/10.1000/abc"
+    assert rec.authors == ["Ada Lovelace", "Grace Hopper"]
+    assert rec.verification is VerificationStatus.UNVERIFIED
+    assert src.last_meta["counts"]["returned"] == 1
+    assert "--limit" in seen["cmd"] and "7" in seen["cmd"]
+    assert "--no-journal-metric" in seen["cmd"]
+    assert seen["kwargs"]["cwd"] == str(root.resolve())
+
+
+def test_paper_search_pro_adapter_rejects_malformed_envelope(tmp_path):
+    root = tmp_path / "paper-search-pro"
+    (root / "scripts").mkdir(parents=True)
+    (root / "scripts" / "agent_search.py").write_text("# test marker\n", encoding="utf-8")
+
+    def fake_runner(cmd, **kwargs):
+        return subprocess.CompletedProcess(cmd, 0, "not-json", "")
+
+    src = PaperSearchProSource(root=root, runner=fake_runner)
+    assert src.search(SearchQuery(terms="x", sources=["paper-search-pro"])) == []
+    assert "非法 JSON" in src.last_error
+
+
+def test_paper_search_pro_clears_diagnostics_and_maps_doi_url(tmp_path):
+    root = tmp_path / "paper-search-pro"
+    (root / "scripts").mkdir(parents=True)
+    (root / "scripts" / "agent_search.py").write_text("# test marker\n", encoding="utf-8")
+    calls = 0
+
+    def fake_runner(cmd, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return subprocess.CompletedProcess(cmd, 0, "not-json", "")
+        return subprocess.CompletedProcess(
+            cmd,
+            0,
+            json.dumps(
+                {
+                    "ok": True,
+                    "data": [
+                        {
+                            "title": "DOI URL only",
+                            "doi_url": "https://doi.org/10.1000/URL-ONLY?tracking=1",
+                        }
+                    ],
+                    "meta": {"counts": {"returned": 1}},
+                }
+            ),
+            "",
+        )
+
+    src = PaperSearchProSource(root=root, runner=fake_runner)
+    query = SearchQuery(terms="x", sources=["paper-search-pro"])
+    assert src.search(query) == []
+    assert src.last_error
+    records = src.search(query)
+    assert records[0].doi == "10.1000/url-only"
+    assert src.last_error == ""
+    assert src.last_meta == {"counts": {"returned": 1}}
+
+
+def test_paper_search_pro_accepts_upstream_stdout_preamble(tmp_path):
+    root = tmp_path / "paper-search-pro"
+    (root / "scripts").mkdir(parents=True)
+    (root / "scripts" / "agent_search.py").write_text("# test marker\n", encoding="utf-8")
+
+    def fake_runner(cmd, **kwargs):
+        envelope = {"ok": True, "data": [{"title": "Preamble-safe"}], "meta": {}}
+        return subprocess.CompletedProcess(
+            cmd, 0, "[paper-search-pro] config permissions tightened\n" + json.dumps(envelope), ""
+        )
+
+    src = PaperSearchProSource(root=root, runner=fake_runner)
+    records = src.search(SearchQuery(terms="x", sources=["paper-search-pro"]))
+    assert [r.title for r in records] == ["Preamble-safe"]
+
+
+def test_paper_search_pro_is_default_discovery_source():
+    assert SearchQuery().sources == ["paper-search-pro"]
 
 
 def _rec(title="深度学习在社会科学中的应用", doi="10.1234/abc", **kw) -> LiteratureRecord:
@@ -61,6 +182,13 @@ def test_record_roundtrip_and_validation():
         _rec(year=1800).validate()
     with pytest.raises(ValueError):
         LiteratureRecord(title="", source="x").validate()
+
+
+def test_malformed_persisted_records_raise_readable_literature_error(ws):
+    records = ws.root / "literature" / "records.jsonl"
+    records.write_text("not-json\n", encoding="utf-8")
+    with pytest.raises(LiteratureError, match="文献记录文件第 1 行格式非法"):
+        LiteratureManager(ws)
 
 
 def test_verification_states_roundtrip():
@@ -184,6 +312,40 @@ def test_fixture_search_and_manager_ingest(ws, tmp_path):
     assert lm.verified_records().__len__() == 2
     titles = [r.title for r in lm.verified_records()]
     assert "无法核验的劳动文献" not in titles
+
+
+def test_manager_records_search_counts_and_source_errors(ws, tmp_path):
+    root = tmp_path / "paper-search-pro"
+    (root / "scripts").mkdir(parents=True)
+    (root / "scripts" / "agent_search.py").write_text("# test marker\n", encoding="utf-8")
+
+    def fake_runner(cmd, **kwargs):
+        return subprocess.CompletedProcess(cmd, 0, "", "provider unavailable")
+
+    lm = LiteratureManager(
+        ws,
+        source_kwargs={"paper-search-pro": {"root": root, "runner": fake_runner}},
+    )
+    assert lm.search(SearchQuery(terms="劳动", sources=["paper-search-pro"])) == []
+    assert lm.last_search_found == 0
+    assert lm.last_search_source_counts == {"paper-search-pro": 0}
+    assert "没有返回 JSON" in lm.last_search_errors["paper-search-pro"]
+
+
+def test_manager_online_verification_updates_unverified_records(ws, monkeypatch):
+    rec = _rec(doi="10.1000/example")
+    lm = LiteratureManager(ws, load_persisted=False)
+    lm._ingest([rec])
+
+    def fake_verify(record):
+        record.verification = VerificationStatus.VERIFIED
+        record.verification_info.resolver = "test-resolver"
+        return record
+
+    monkeypatch.setattr("metis_academic.literature.sources.verify_doi", fake_verify)
+    stats = lm.verify_all_online()
+    assert stats == {"verified": 1}
+    assert len(lm.verified_records()) == 1
 
 
 def test_records_persist_and_reload(ws, tmp_path):
@@ -311,6 +473,20 @@ def test_offline_resolver_unreachable(ws, monkeypatch):
     monkeypatch.setattr(_rq, "get", boom)
     r = _rec(doi="10.1234/offline")
     out = verify_doi(r)
+    assert out.verification is VerificationStatus.UNREACHABLE
+
+
+def test_malformed_resolver_json_is_unreachable(ws, monkeypatch):
+    from metis_academic.literature.sources import verify_doi
+
+    class Response:
+        status_code = 200
+
+        def json(self):
+            raise ValueError("bad payload")
+
+    monkeypatch.setattr("requests.get", lambda *args, **kwargs: Response())
+    out = verify_doi(_rec(doi="10.1234/bad-json"))
     assert out.verification is VerificationStatus.UNREACHABLE
 
 

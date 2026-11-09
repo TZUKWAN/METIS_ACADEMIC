@@ -8,6 +8,7 @@ from pathlib import Path
 
 import yaml
 
+from ..errors import LiteratureError
 from ..logging_setup import get_logger
 from ..workspace import WorkspaceManager
 from .models import LiteratureRecord, SearchQuery, VerificationStatus
@@ -36,6 +37,10 @@ class LiteratureManager:
         self.ws = ws
         self._source_kwargs = source_kwargs or {}
         self.records: dict[str, LiteratureRecord] = {}  # key: dedupe 标题键
+        self.last_search_found = 0
+        self.last_search_added = 0
+        self.last_search_source_counts: dict[str, int] = {}
+        self.last_search_errors: dict[str, str] = {}
         if load_persisted:
             self.load_records()  # H2-002：重启自动恢复
         self._assign_record_ids()
@@ -59,25 +64,42 @@ class LiteratureManager:
     # ---------- 检索 ----------
     def search(self, query: SearchQuery) -> list[LiteratureRecord]:
         query.validate()
+        self.last_search_found = 0
+        self.last_search_added = 0
+        self.last_search_source_counts = {}
+        self.last_search_errors = {}
         collected: list[LiteratureRecord] = []
         per_source_counts: dict[str, int] = {}
+        source_details: dict[str, dict] = {}
         for sid in query.sources:
             try:
                 src = get_source(sid, **self._source_kwargs.get(sid, {}))
             except Exception as e:  # noqa: BLE001 — 单源失败不阻断
                 logger.warning("数据源 %s 初始化失败: %s", sid, e)
                 per_source_counts[sid] = 0
+                self.last_search_errors[sid] = f"初始化失败：{e}"
                 continue
             try:
                 found = src.search(query)
             except Exception as e:  # noqa: BLE001
                 logger.warning("数据源 %s 检索失败: %s", sid, e)
                 found = []
+                self.last_search_errors[sid] = f"检索失败：{e}"
             found = found[: query.max_results]
             per_source_counts[sid] = len(found)
+            details = getattr(src, "last_meta", None)
+            if isinstance(details, dict) and details:
+                source_details[sid] = details
+            source_error = getattr(src, "last_error", "")
+            if source_error:
+                source_details.setdefault(sid, {})["error"] = source_error
+                self.last_search_errors[sid] = source_error
             collected.extend(found)
+        self.last_search_found = len(collected)
+        self.last_search_source_counts = dict(per_source_counts)
         added = self._ingest(collected)
-        self._write_search_log(query, per_source_counts, len(added))
+        self.last_search_added = len(added)
+        self._write_search_log(query, per_source_counts, len(added), source_details)
         self.write_index()
         logger.info("检索 %r：新增 %d 条（累计 %d）", query.terms, len(added), len(self.records))
         return added
@@ -193,16 +215,25 @@ class LiteratureManager:
         if not f.is_file():
             return 0
         n = 0
-        for line in f.read_text(encoding="utf-8").splitlines():
+        for line_no, line in enumerate(f.read_text(encoding="utf-8").splitlines(), start=1):
             line = line.strip()
             if not line:
                 continue
-            rec = LiteratureRecord.from_dict(json.loads(line))
+            try:
+                rec = LiteratureRecord.from_dict(json.loads(line))
+            except (TypeError, ValueError, KeyError) as exc:
+                raise LiteratureError(f"文献记录文件第 {line_no} 行格式非法：{exc}") from exc
             self.records[LiteratureRecord.normalize_title(rec.title)] = rec
             n += 1
         return n
 
-    def _write_search_log(self, query: SearchQuery, counts: dict[str, int], added: int) -> None:
+    def _write_search_log(
+        self,
+        query: SearchQuery,
+        counts: dict[str, int],
+        added: int,
+        source_details: dict[str, dict] | None = None,
+    ) -> None:
         log_dir = self._literature_dir() / "search_logs"
         log_dir.mkdir(parents=True, exist_ok=True)
         safe = "".join(c if c.isalnum() or c in "-_" else "_" for c in query.terms)[:40]
@@ -214,6 +245,8 @@ class LiteratureManager:
             "added": added,
             "total_in_library": len(self.records),
         }
+        if source_details:
+            payload["source_details"] = source_details
         (log_dir / f"{safe}.yaml").write_text(
             yaml.safe_dump(payload, allow_unicode=True, sort_keys=False), encoding="utf-8"
         )

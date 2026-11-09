@@ -8,7 +8,7 @@
 ## 前置条件
 
 1. 已按 S1 前置建好项目：journal × qualitative × zh-CN（`tests/plugin/test_engine_cli.py`
-   的 init 路径），工作目录 `D:\METIS超级合并`。
+   的 init 路径），工作目录 `<project-root>`。
 2. 子智能体只拿到：`metis/skills/metis/SKILL.md`、`metis/agents/metis-executor.md` 正文。
 
 ## 用户输入序列
