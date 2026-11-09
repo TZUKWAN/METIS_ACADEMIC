@@ -1,0 +1,57 @@
+{
+  "format": 1,
+  "title": {
+    "en": "METIS Research Workbench",
+    "zh": "METIS 科研工作台"
+  },
+  "description": {
+    "en": "METIS releases for DeepSeek Harness.",
+    "zh": "METIS 官方发布索引。"
+  },
+  "metadata": {
+    "categories": {
+      "workflow": {
+        "title": {
+          "en": "Research workflows",
+          "zh": "研究工作流"
+        }
+      }
+    }
+  },
+  "plugins": [
+    {
+      "name": "metis-academic-preset",
+      "title": {
+        "en": "METIS",
+        "zh": "METIS"
+      },
+      "description": {
+        "en": "Build research workflows with AI, follow real execution and review project documents.",
+        "zh": "与 AI 共建研究流程，跟踪实际执行并审阅项目文档。"
+      },
+      "icon": "https://raw.githubusercontent.com/TZUKWAN/METIS_ACADEMIC/main/assets/icon.png",
+      "author": "TZUKWAN",
+      "homepage": "https://github.com/TZUKWAN/METIS_ACADEMIC#readme",
+      "repository": {
+        "url": "https://github.com/TZUKWAN/METIS_ACADEMIC"
+      },
+      "metadata": {
+        "category": "workflow"
+      },
+      "versions": [
+        {
+          "version": "1.6.1",
+          "publishTimestamp": 1794212684,
+          "engines": {
+            "dsh": ">=0.2.2-rc.1 <0.2.3-0 || >=0.2.2 <0.3.0-0"
+          },
+          "source": {
+            "type": "git",
+            "url": "https://github.com/TZUKWAN/METIS_ACADEMIC",
+            "commit": "00cfbc7c94dfc0396f1cc6a5b34de381adbc888d"
+          }
+        }
+      ]
+    }
+  ]
+}
