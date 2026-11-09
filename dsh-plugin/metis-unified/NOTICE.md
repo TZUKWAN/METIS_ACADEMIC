@@ -1,6 +1,6 @@
 # METIS 统一包的许可与依赖
 
-METIS 原创代码按仓库根目录的 MIT 许可证开源。第三方组件保留各自许可，完整范围见根目录 `THIRD_PARTY_NOTICES.md`。
+METIS 自 1.6.2 起的原创代码发行按仓库根目录 Apache License 2.0 提供，旧版 MIT 授权与第三方许可不追溯改变。第三方组件保留各自许可，完整范围见根目录 `THIRD_PARTY_NOTICES.md`。
 
 - `dsh-plugin/metis-academic`、`dsh-plugin/metis-mode` 保留各自清单中的原许可与作者信息；原有代码未因统一打包而重新授权。
 - `dsh-plugin/metis-preset`、`src/metis_academic/skill_defs` 保留原项目的使用与授权范围。

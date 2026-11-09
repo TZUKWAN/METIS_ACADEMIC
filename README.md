@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/TZUKWAN/METIS_ACADEMIC/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/TZUKWAN/METIS_ACADEMIC?color=dca06b&label=METIS"></a>
-  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-8bcdb8"></a>
+  <a href="LICENSE"><img alt="License: Apache 2.0" src="https://img.shields.io/badge/License-Apache%202.0-8bcdb8"></a>
   <img alt="DeepSeek Harness plugin" src="https://img.shields.io/badge/DeepSeek%20Harness-Plugin-bb9bce">
 </p>
 
@@ -122,4 +122,4 @@ dsh plugin --profile web add https://github.com/TZUKWAN/METIS_ACADEMIC/releases/
 
 欢迎反馈使用问题、改进流程设计和贡献兼容修正。请在 [Issues](https://github.com/TZUKWAN/METIS_ACADEMIC/issues) 描述你使用的 DSH 版本、操作与实际结果，提交日志前移除密钥和私人资料。
 
-METIS 原创代码采用 [MIT](LICENSE) 许可。第三方组件和技能各自保留原许可，见 [第三方说明](THIRD_PARTY_NOTICES.md)。构建和贡献方式见 [开发说明](CONTRIBUTING.md)。
+METIS 自 1.6.2 起的原创代码发行采用 [Apache License 2.0](LICENSE)，允许商用、修改和分发，需遵守其版权、许可及声明保留等条件。旧版 MIT 授权不追溯变更，见 [许可历史](LICENSE_HISTORY.md)。第三方组件和技能各自保留原许可，见 [第三方说明](THIRD_PARTY_NOTICES.md)。构建和贡献方式见 [开发说明](CONTRIBUTING.md)。

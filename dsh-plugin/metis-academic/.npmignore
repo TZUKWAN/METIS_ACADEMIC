@@ -1,0 +1,6 @@
+
+# Generated interpreter caches are never distributed.
+__pycache__/
+**/__pycache__/
+*.pyc
+**/*.pyc

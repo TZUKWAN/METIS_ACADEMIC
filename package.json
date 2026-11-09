@@ -1,9 +1,9 @@
 {
   "name": "metis-academic-preset",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "private": false,
   "description": "METIS：与 AI 共建研究流程，可视化跟踪执行，逐步调用科研技能，在同一工作台审阅和修改成果。",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "icon": "./assets/icon.png",
   "exports": {
     ".": "./dsh-plugin/metis-unified/index.mjs",
@@ -26,7 +26,10 @@
     "pyproject.toml",
     "LICENSE",
     "THIRD_PARTY_NOTICES.md",
-    "assets/"
+    "assets/",
+    "NOTICE",
+    "LICENSE_HISTORY.md",
+    "licenses/"
   ],
   "scripts": {
     "build": "python dsh-plugin/metis-unified/prepare-ui.py && node dsh-plugin/metis-unified/prepare-ion.mjs && node dsh-plugin/metis-unified/prepare-host.mjs && python dsh-plugin/metis-unified/prepare-client.py",

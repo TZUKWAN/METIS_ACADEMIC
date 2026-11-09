@@ -3,7 +3,7 @@
   "version": "0.2.1",
   "description": "METIS ACADEMIC mode for DeepSeek Harness: academic palette override layer, METIS research cockpit panel (sidebar entry + main slot, seven-stage rail, task details), and an in-session METIS mode strip. 续作 opens the project root with the metis agent preset — no /metis needed. Backed by the metis-academic engine CLI.",
   "type": "module",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": "TZUKWAN",
   "exports": {
     ".": "./host/index.js",

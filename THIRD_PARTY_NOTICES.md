@@ -1,6 +1,6 @@
 # Third-party notices
 
-METIS-authored code is licensed under the MIT License in `LICENSE`. The following components keep their original licenses and notices; the project license does not relicense them.
+METIS-authored releases from v1.6.2 use Apache License 2.0 in `LICENSE`. Pre-existing MIT copyright and permission notices are retained in `licenses/MIT-through-1.6.1.txt`; see `LICENSE_HISTORY.md`. The following components keep their original licenses and notices; the project license does not relicense them.
 
 | Component | License | Provenance and retained notice |
 |---|---|---|
