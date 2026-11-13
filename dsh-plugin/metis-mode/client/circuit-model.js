@@ -15,7 +15,7 @@ export function modeCircuitModel(mode,profile,skillEntries=[],selectedId=null,{d
 
 export function projectCircuitModel(project,selectedId=null){
   const actual=researchSceneState(project,selectedId);
-  const model={...actual,key:'project:'+project.id,kind:'project',editable:false,currentStepId:project.currentStepId,nodes:actual.nodes.map(node=>{
+  const model={...actual,running:project.execution?.running===true,live:project.live||null,runtime:project.runtime||null,availableRuntime:project.availableRuntime||null,cost:project.cost||null,blockedReason:project.blockedReason||null,recordedAt:project.recordedAt,pulseRevision:project.pulseRevision||0,key:'project:'+project.id,kind:'project',editable:false,currentStepId:project.currentStepId,nodes:actual.nodes.map(node=>{
     const recorded=project.steps.find(step=>step.id===node.id);
     return{...node,skills:Array.isArray(recorded.skillBindings)?recorded.skillBindings:null,executionBrief:recorded.executionBrief||null,prohibitions:recorded.prohibitions||'',loopCriteria:recorded.loopCriteria||'',artifacts:(node.delivery?.artifacts||[]).map((file,index)=>({...file,index,stepId:node.id})),output:node.index===actual.nodes.length-1?project.output||null:null};
   })};

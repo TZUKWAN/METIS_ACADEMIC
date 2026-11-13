@@ -1,0 +1,7 @@
+id: literature-search
+path: skills/literature-search
+description: 文献检索与去重
+triggers:
+- stage:S2
+persistent: false
+budget_cost: 1

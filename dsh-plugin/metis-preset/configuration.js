@@ -110,7 +110,7 @@ export function readConfiguration(){
   try{
     if(existsSync(file))return validateConfiguration(JSON.parse(readFileSync(file,'utf8')));
     const legacy=join(configurationHome(),'metis-mode-profiles.json');
-    if(!existsSync(legacy))return {...emptyConfiguration(),deletedModes:bundledModes.map(mode=>mode.id)};
+    if(!existsSync(legacy))return emptyConfiguration();
     const old=JSON.parse(readFileSync(legacy,'utf8'));if(old.version!==1||!old.profiles||Array.isArray(old.profiles))throw new Error('旧配置格式无效');
     return validateConfiguration(emptyConfiguration(old.profiles));
   }catch(error){throw new ConfigurationError('读取METIS配置失败：'+error.message,503);}

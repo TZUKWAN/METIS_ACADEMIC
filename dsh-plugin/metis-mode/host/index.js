@@ -176,7 +176,7 @@ function buildRoutes(ctx) {
 
 	return [
 		{kind:'exact',path:'/metis/api/v1/research-projects',handler:guard((request,response)=>projectResponse(response,async()=>{
-			if(request.method==='GET')return {...await researchProjects().list(),projectApiRevision:5,documentClientRevision:createHash('sha256').update(readFileSync(new URL('../client/documents.js',import.meta.url))).digest('hex').slice(0,16),displayClientRevision:createHash('sha256').update(readFileSync(new URL('../client/project-scene.js',import.meta.url))).digest('hex').slice(0,16),displayRendererRevision:createHash('sha256').update(readFileSync(new URL('../client/ion-world.bundle.js',import.meta.url))).digest('hex').slice(0,16)};
+			if(request.method==='GET')return {...await researchProjects().list(),projectApiRevision:6,documentClientRevision:createHash('sha256').update(readFileSync(new URL('../client/documents.js',import.meta.url))).digest('hex').slice(0,16),displayClientRevision:createHash('sha256').update(readFileSync(new URL('../client/project-scene.js',import.meta.url))).digest('hex').slice(0,16),displayRendererRevision:createHash('sha256').update(readFileSync(new URL('../client/ion-world.bundle.js',import.meta.url))).digest('hex').slice(0,16)};
 			if(request.method==='POST')return {project:await researchProjects().create(await readJsonBody(request))};
 			throw Object.assign(new Error('不支持此项目请求方法'),{status:405});
 		}))},
@@ -184,9 +184,28 @@ function buildRoutes(ctx) {
 			if(request.method!=='GET')throw Object.assign(new Error('仅支持读取项目'),{status:405});
 			return {project:await researchProjects().detail(new URL(request.url,'http://localhost').searchParams.get('id'))};
 		}))},
+		{kind:'exact',path:'/metis/api/v1/research-project/live',handler:guard((request,response)=>projectResponse(response,async()=>{
+			if(request.method!=='GET')throw Object.assign(new Error('仅支持读取实时状态'),{status:405});
+			const query=new URL(request.url,'http://localhost').searchParams,number=key=>/^\d{1,16}$/.test(query.get(key)||'')?Number(query.get(key)):0;
+			return researchProjects().live(query.get('id'),{sinceRevision:number('sinceRevision'),sinceSeq:number('sinceSeq'),instanceId:(query.get('instanceId')||'').slice(0,100)});
+		}))},
 		{kind:'exact',path:'/metis/api/v1/research-project/continue',handler:guard((request,response)=>projectResponse(response,async()=>{
 			if(request.method!=='POST')throw Object.assign(new Error('仅支持继续项目'),{status:405});
 			const body=await readJsonBody(request);return {project:await researchProjects().resume(body.id)};
+		}))},
+		{kind:'exact',path:'/metis/api/v1/research-project/sync-workflow',handler:guard((request,response)=>projectResponse(response,async()=>{
+			if(request.method!=='POST')throw Object.assign(new Error('仅支持接续项目模式'),{status:405});
+			return researchProjects().syncWorkflow(await readJsonBody(request));
+		}))},
+		{kind:'exact',path:'/metis/api/v1/research-project/workflow',handler:guard((request,response)=>projectResponse(response,async()=>{
+			if(request.method!=='GET')throw Object.assign(new Error('仅支持读取项目模式'),{status:405});
+			const query=new URL(request.url,'http://localhost').searchParams;
+			return researchProjects().readWorkflow(query.get('id'),{action:query.get('action')||'status',source:query.get('source')||'latest',...(query.get('stepId')?{stepId:query.get('stepId')}:{}),messageIndex:Number(query.get('messageIndex')||0),offset:Number(query.get('offset')||0),maxChars:Number(query.get('maxChars')||6000)});
+		}))},
+		{kind:'exact',path:'/metis/api/v1/research-project/delete',handler:guard((request,response)=>projectResponse(response,async()=>{
+			if(request.method!=='POST')throw Object.assign(new Error('仅支持删除项目记录'),{status:405});
+			const service=researchProjects();if(typeof service.remove!=='function')throw Object.assign(new Error('项目删除服务尚未加载，请完成 METIS 更新'),{status:503});
+			return service.remove(await readJsonBody(request));
 		}))},
 		{kind:'exact',path:'/metis/api/v1/research-project/revise',handler:guard((request,response)=>projectResponse(response,async()=>{
 			if(request.method!=='POST')throw Object.assign(new Error('仅支持提交返修意见'),{status:405});

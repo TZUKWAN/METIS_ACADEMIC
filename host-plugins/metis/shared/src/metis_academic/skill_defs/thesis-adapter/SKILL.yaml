@@ -1,0 +1,8 @@
+id: thesis-adapter
+path: skills/thesis-adapter
+description: 学位论文适配
+triggers:
+- artifact:thesis
+- stage:S8
+persistent: false
+budget_cost: 1

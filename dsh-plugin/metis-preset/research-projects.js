@@ -4,6 +4,8 @@ import {randomUUID,createHash} from 'node:crypto';
 import {configurationHome,ConfigurationError} from './configuration.js';
 import {createProjectRevisionStore} from './project-revisions.js';
 import {recordMessageStep} from './project-message-context.js';
+import {systemRuntime} from './system-runtime.js';
+import {createProjectModeUpdates} from './project-mode-updates.js';
 
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
@@ -22,8 +24,9 @@ function records(){return existsSync(home())?readdirSync(home()).filter(name=>/^
 function writeRecord(record){const target=projectPath(record.id),temporary=target+'.'+randomUUID()+'.tmp';try{writeFileSync(temporary,JSON.stringify(record,null,2)+'\n',{flag:'wx',mode:0o600});renameSync(temporary,target);}finally{if(existsSync(temporary))unlinkSync(temporary);}}
 function executionBrief(step){if(!step)return null;const text=typeof step.prompt==='string'?step.prompt:[step.systemPrompt,step.executionPrompt,step.reviewPrompt].filter(value=>typeof value==='string').join('\n\n');return text?{excerpt:text.slice(0,320),characters:text.length}:null;}
 
-export function createResearchProjects({chooseVersion,getVersion,createSession,continueSession,readProgress,revisionTarget,promptRevision,cancelSession,runState}){
-  const history=createProjectRevisionStore(),revising=new Set();
+export function createResearchProjects({chooseVersion,getVersion,getLatestVersion,refreshLatest,captureSessionSettings,applySessionSettings,forwardUserRequest,createSession,continueSession,readProgress,readLive,revisionTarget,promptRevision,cancelSession,runState}){
+  const history=createProjectRevisionStore(),revising=new Set(),creating=new Set();
+  const modeUpdates=getLatestVersion?createProjectModeUpdates({records,readRecord,writeRecord,getVersion,getLatestVersion,refreshLatest,captureSessionSettings,applySessionSettings,forwardUserRequest,runState,getTarget:revisionTarget,createSession,readProgress,revising}):null;
   function versionFor(record){const version=getVersion(record.versionId);if(version.hash!==record.versionHash||version.payload.modeId!==record.modeId)throw failure('项目固定流程不一致，未使用当前模式替代',409);return version;}
   function description(record,progress){return {id:record.id,name:record.name,root:record.root,modeId:record.modeId,modeName:record.modeName,versionId:record.versionId,createdAt:record.createdAt,sessionId:record.sessionId,status:record.status,total:progress?.total??null,submitted:progress?.submitted??null,percent:progress?.total?Math.round(progress.submitted/progress.total*100):null,currentStepId:progress?.currentStepId??null,currentStepTitle:progress?.currentStepTitle??'',runStatus:progress?.status||'not_started',recordedAt:progress?.recordedAt||null};}
   async function detail(id,{deliveries=true}={}){
@@ -32,13 +35,13 @@ export function createResearchProjects({chooseVersion,getVersion,createSession,c
     const progress=await readProgress(record.sessionId,{includeDeliveries:deliveries});
     if(!progress||progress.versionId!==record.versionId||progress.modeId!==record.modeId)throw failure('项目会话与固定流程不一致，未更换已有会话配置',409);
     const row=version.payload.plugins.find(plugin=>plugin.name==='metis-academic-preset/step-skills'),frozenSteps=new Map(row.config.profile.steps.map(step=>[step.id,step])),frozenSkills=new Map((row.config.skills||[]).map(skill=>[skill.id,skill]));
-    return {...description(record,progress),...(deliveries?{revision:progress.revision||null,activity:progress.activity||[],execution:runState(record.sessionId)}:{}),output:row.config.profile.output||{format:'auto'},steps:deliveries?progress.steps.map(step=>({...step,executionBrief:executionBrief(frozenSteps.get(step.id)),prohibitions:frozenSteps.get(step.id)?.prohibitions||'',skillBindings:(frozenSteps.get(step.id)?.skills||[]).map(id=>({id,name:frozenSkills.get(id)?.name||id})),loopCriteria:frozenSteps.get(step.id)?.loop?.criteria||'',delivery:step.delivery?{...step.delivery,artifacts:step.delivery.artifacts.map(artifact=>{
+    return {...description(record,progress),...(deliveries?{workflowUpdate:modeUpdates?.describe(record)||null,revision:progress.revision||null,activity:progress.activity||[],live:progress.live||null,execution:runState(record.sessionId),runtime:progress.runtime||null,availableRuntime:systemRuntime(),pulseRevision:progress.pulseRevision||0,cost:progress.cost||null,blockedReason:progress.blockedReason||null,units:progress.units||null}:{}),output:row.config.profile.output||{format:'auto'},steps:deliveries?progress.steps.map(step=>({...step,executionBrief:executionBrief(frozenSteps.get(step.id)),prohibitions:frozenSteps.get(step.id)?.prohibitions||'',skillBindings:(frozenSteps.get(step.id)?.skills||[]).map(id=>({id,name:frozenSkills.get(id)?.name||id})),loopCriteria:frozenSteps.get(step.id)?.loop?.criteria||'',delivery:step.delivery?{...step.delivery,artifacts:step.delivery.artifacts.map(artifact=>{
       let availability='missing';try{const stat=lstatSync(artifact.path);availability=stat.isSymbolicLink()?'link':stat.isFile()?'file':stat.isDirectory()?'directory':'unavailable';}catch{}
       return {...artifact,name:basename(artifact.path),availability};
     })}:null})):[]};
   }
   async function list(){
-    const items=await Promise.all(records().map(async id=>{try{return await detail(id,{deliveries:false});}catch(error){let record;try{record=readRecord(id);}catch{}return {id,name:record?.name||'记录异常的项目',root:record?.root||'',modeName:record?.modeName||'',versionId:record?.versionId||null,status:'unavailable',percent:null,total:null,submitted:null,error:error.message};}}));
+    const items=await Promise.all(records().map(async id=>{try{return await detail(id,{deliveries:false});}catch(error){let record;try{record=readRecord(id);}catch{}return {id,name:record?.name||'记录异常的项目',root:record?.root||'',modeName:record?.modeName||'',modeId:record?.modeId||null,versionId:record?.versionId||null,sessionId:record?.sessionId||null,createdAt:record?.createdAt||null,status:'unavailable',percent:null,total:null,submitted:null,error:error.message};}}));
     return items.sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
   }
   async function create(request){
@@ -54,15 +57,45 @@ export function createResearchProjects({chooseVersion,getVersion,createSession,c
     try{lock=openSync(lockPath,'wx',0o600);}catch{throw failure('另一个项目正在创建，请稍后重试',409);}
     try{
       if(existsSync(projectPath(id)))return detail(id);
-      for(const otherId of records()){const other=readRecord(otherId);if(sameRoot(other.root,root))throw failure('该目录已关联项目“'+other.name+'”，请直接继续原项目或选择其他目录',409);}
+      // The directory is shared material, not a project identity. Each request
+      // still owns a fresh native session and its own immutable workflow version.
       const record={version:1,id,requestId,status:'creating',name:request.name.trim(),root,modeId:version.payload.modeId,modeName:version.payload.name,versionId:version.id,versionHash:version.hash,createdAt:new Date().toISOString(),sessionId:'session-'+randomUUID()};
-      writeRecord(record);
-      try{const session=await createSession({sessionId:record.sessionId,cwd:root,agentPreset:version.id});if(session?.sessionId!==record.sessionId)throw new Error('原生DSH未返回此项目预定的新会话ID，未关联其他会话');record.status='ready';writeRecord(record);}
-      catch(error){record.status='failed';record.error='原生项目会话创建未完成：'+error.message;try{writeRecord(record);}catch{}throw failure(record.error+(record.sessionId?'；实际会话ID：'+record.sessionId:''),503);}
+      creating.add(id);
+      try{
+        writeRecord(record);
+        try{const session=await createSession({sessionId:record.sessionId,cwd:root,agentPreset:version.id});if(session?.sessionId!==record.sessionId)throw new Error('原生DSH未返回此项目预定的新会话ID，未关联其他会话');record.status='ready';writeRecord(record);}
+        catch(error){record.status='failed';record.error='原生项目会话创建未完成：'+error.message;try{writeRecord(record);}catch{}throw failure(record.error+(record.sessionId?'；实际会话ID：'+record.sessionId:''),503);}
+      }finally{creating.delete(id);}
       return detail(id);
     }finally{closeSync(lock);unlinkSync(lockPath);}
   }
   async function resume(id){const record=readRecord(id);versionFor(record);if(record.status!=='ready')throw failure('项目会话尚未成功创建，未新建其他会话替代',409);await continueSession(record.sessionId,record.versionId);return {id,root:record.root,sessionId:record.sessionId,versionId:record.versionId};}
+  async function live(id,options={}){const record=readRecord(id);if(record.status!=='ready')return {id,sessionId:record.sessionId,versionId:record.versionId,live:null,pulse:null,execution:runState(record.sessionId)};const value=await readLive?.(record.sessionId,options);if(value?.versionId&&value.versionId!==record.versionId)throw failure('实时会话与项目固定版本不一致',409);return {id,...(value||{live:null,pulse:null}),sessionId:record.sessionId,versionId:record.versionId,execution:runState(record.sessionId)};}
+  async function remove(request){
+    if(!request||typeof request!=='object'||Array.isArray(request)||Object.keys(request).some(key=>!['id','sessionId'].includes(key))||(request.sessionId!==null&&typeof request.sessionId!=='string'))throw failure('删除项目参数无效');
+    const path=projectPath(request.id);
+    if(creating.has(request.id)||revising.has(request.id))throw failure('项目正在提交操作，请稍后再删除',409);
+    if(!existsSync(path))return {id:request.id,removed:true,alreadyRemoved:true,filesPreserved:true,sessionPreserved:true};
+    const record=readRecord(request.id);
+    if((record.sessionId||null)!==request.sessionId)throw failure('项目会话已变化，请刷新列表后再删除',409);
+    revising.add(record.id);
+    try{
+      const running=()=>record.sessionId&&runState?.(record.sessionId)?.running;
+      if(running())throw failure('项目正在执行，请先停止研究后再删除',409);
+      // A broken workflow must still be removable. Its original DSH session,
+      // version and files remain intact; no latest-mode fallback is applied.
+      let progress;
+      if(record.status==='ready'){try{progress=await readProgress(record.sessionId,{includeDeliveries:true});}catch{}}
+      if(progress?.activity?.some(item=>['running','waiting','unverified'].includes(item.status)))throw failure('项目仍有执行中或待确认的后台任务，请先在研究对话中处理后再删除',409);
+      if(running())throw failure('项目正在执行，请先停止研究后再删除',409);
+      const latest=readRecord(record.id);
+      if(latest.sessionId!==record.sessionId||latest.versionId!==record.versionId||latest.versionHash!==record.versionHash)throw failure('项目记录已变化，请刷新列表后再删除',409);
+      // Remove only this bounded registration file. Never remove the shared
+      // directory, delivered files, session journal or frozen configuration.
+      unlinkSync(path);
+      return {id:record.id,sessionId:record.sessionId||null,removed:true,filesPreserved:true,sessionPreserved:true};
+    }finally{revising.delete(record.id);}
+  }
   async function bindMessageStep(request) {
     if(!request||typeof request!=='object'||Array.isArray(request)||Object.keys(request).some(key=>!['id','sessionId','versionId','stepId','requestId'].includes(key))||typeof request.requestId!=='string'||!uuid.test(request.requestId))throw failure('项目消息参数无效');
     const {id,sessionId,versionId,stepId,requestId}=request;
@@ -135,8 +168,8 @@ export function createResearchProjects({chooseVersion,getVersion,createSession,c
       return {revision};
     }finally{revising.delete(id);}
   }
-  function revisions(id,stepId,offset){const record=readRecord(id);versionFor(record);return history.list(record,stepId,offset);}
-  function revisionArtifact(id,revisionId,stepId,index){const record=readRecord(id);versionFor(record);return history.artifact(record,revisionId,stepId,index);}
+  function revisions(id,stepId,offset){const record=readRecord(id);versionFor(record);return history.list(modeUpdates?.historyProjects(record)||record,stepId,offset);}
+  function revisionArtifact(id,revisionId,stepId,index){const record=readRecord(id);versionFor(record);return history.artifact(modeUpdates?.historyProjects(record)||record,revisionId,stepId,index);}
   async function documentSource(id,stepId,index){
     if(!Number.isSafeInteger(index)||index<0)throw failure('交付物编号无效');
     const project=await detail(id),step=project.steps.find(item=>item.id===stepId),item=step?.delivery?.artifacts[index];
@@ -205,5 +238,7 @@ export function createResearchProjects({chooseVersion,getVersion,createSession,c
       return {accepted:true,project:await detail(record.id)};
     }finally{revising.delete(record.id);}
   }
-  return {create,list,detail,resume,control,artifact,revise,revisions,revisionArtifact,bindMessageStep,decideDownstream,documentSource,commitDocument};
+  return {create,list,detail,live,resume,remove,control,artifact,revise,revisions,revisionArtifact,bindMessageStep,decideDownstream,documentSource,commitDocument,
+    workflowBridge:modeUpdates,readWorkflow:(id,args)=>{if(!modeUpdates)throw failure('模式读取服务尚未就绪',503);return modeUpdates.read(readRecord(id).sessionId,args);},
+    syncWorkflow:async request=>{if(!modeUpdates)throw failure('模式接续服务尚未就绪',503);const result=await modeUpdates.synchronize(request);return {...result,project:await detail(request.id)};}};
 }

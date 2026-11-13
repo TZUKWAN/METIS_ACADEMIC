@@ -1,0 +1,8 @@
+id: lieflat-less-ai-tone
+path: skills/lieflat-less-ai-tone
+description: 白名单式成稿语言风格清理：去除可定位的生成痕迹，保持学术体裁、结构与信息不变
+triggers:
+- stage:S7
+- stage:S8
+persistent: false
+budget_cost: 1

@@ -21,11 +21,12 @@ test('an old process cannot appear to be running, and the activity history is bo
   assert.equal(readStepActivity(record)[0].status,'interrupted');
   assert.equal(record.activity[0].status,'running');
   interruptStepActivity(record);assert.equal(record.activity[0].status,'interrupted');
-  for(let index=0;index<110;index++){
+  for(let index=0;index<610;index++){
     const execution={callId:String(index),name:'metis_step',arguments:{action:'check'}};
     startStepActivity(record,execution,'proof');finishStepActivity(record,execution,{value:JSON.stringify({status:'needs_revision'}),isError:false});
   }
-  assert.equal(readStepActivity(record).length,96);
+  assert.equal(readStepActivity(record).length,512);
+  assert.equal(readStepActivity(record)[0].callId,'98');
   assert.ok(readStepActivity(record).every(item=>item.status==='needs_revision'));
 });
 

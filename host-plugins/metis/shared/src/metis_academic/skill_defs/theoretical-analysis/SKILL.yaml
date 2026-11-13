@@ -1,0 +1,7 @@
+id: theoretical-analysis
+path: skills/theoretical-analysis
+description: 理论阐释执行
+triggers:
+- paradigm:theoretical
+persistent: false
+budget_cost: 1

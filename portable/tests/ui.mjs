@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import {mkdtempSync,mkdirSync,writeFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join,resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
+const modules=process.env.METIS_TEST_DEPENDENCIES,browserModules=process.env.METIS_BROWSER_MODULES;
+const {Client}=await import(pathToFileURL(join(modules,'@modelcontextprotocol/sdk/dist/esm/client/index.js'))),{StdioClientTransport}=await import(pathToFileURL(join(modules,'@modelcontextprotocol/sdk/dist/esm/client/stdio.js')));
+const {chromium,expect}=await import(pathToFileURL(join(browserModules,'@playwright/test/index.mjs')));
+const home=mkdtempSync(join(tmpdir(),'metis-ui-')),folder=join(home,'research');mkdirSync(folder);
+const report={home,checks:[],pageErrors:[],screenshots:0,userDesktopControlled:false,modelInferenceRequests:0};
+const output=process.env.METIS_TEST_REPORT||join(home,'ui-proof.json');
+const save=()=>writeFileSync(output,JSON.stringify(report,null,2)+'\n'),pass=name=>{report.checks.push({name,passed:true});save();console.log('PASS '+name);};
+const transport=new StdioClientTransport({command:process.execPath,args:[resolve('host-plugins/metis/runtime/server.mjs')],env:{...process.env,METIS_DATA_HOME:home,METIS_HOST:'codex'}}),client=new Client({name:'metis-ui-test',version:'1.0.0'});
+const call=async(name,args={})=>{const result=await client.callTool({name,arguments:args});if(result.isError)throw new Error(result.content?.[0]?.text);return result.structuredContent.value;};
+let browser,page;
+try{
+  await client.connect(transport);const open=await call('metis_open');browser=await chromium.launch({headless:true,executablePath:process.env.METIS_CHROMIUM});const context=await browser.newContext({viewport:{width:1780,height:1040},colorScheme:'dark',locale:'zh-CN'});page=await context.newPage();page.on('pageerror',e=>{report.pageErrors.push(e.message);save();});
+  await page.goto(open.url,{waitUntil:'networkidle'});await page.getByRole('button',{name:'新建模式',exact:true}).click();await page.getByLabel('模式名称',{exact:true}).fill('跨宿主验证流程');await page.getByLabel('说明',{exact:true}).fill('仅用于本轮隔离集成验证');await page.getByRole('button',{name:'创建空模式',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'跨宿主验证流程',exact:true})).toBeVisible();await expect(page.locator('.ic-world')).toHaveAttribute('data-graphics','three-css3d',{timeout:15000}).catch(async()=>{const state=await page.locator('.ic-world').getAttribute('data-graphics');assert.ok(state!=='error'&&state!=='loading',state);});
+  pass('real shared ion workbench loads with no host window automation');
+  await page.getByRole('button',{name:'新增步骤',exact:true}).click();await expect(page.getByLabel('步骤名称',{exact:true})).toBeVisible();await page.getByLabel('步骤名称',{exact:true}).fill('证据整理');await page.getByLabel('主要目的',{exact:true}).fill('整理真实材料并交付 evidence.md');await page.getByLabel('交付内容',{exact:true}).fill('evidence.md');await page.getByLabel('步骤提示词',{exact:true}).fill('阅读实际资料，逐条记录来源。');await page.getByLabel('禁止事项',{exact:true}).fill('不得编造事实');await page.getByLabel('交付内容',{exact:true}).focus();await page.waitForTimeout(450);
+  const read=await call('metis_config_read'),mode=read.value.modes[0],before=await call('metis_config_read',{kind:'mode',modeId:mode.id});assert.equal(before.value.profile.steps.length,1);assert.equal(before.value.profile.steps[0].title,'证据整理');
+  await page.getByLabel('主要目的',{exact:true}).fill('用户手动保留的目标');await page.getByLabel('交付内容',{exact:true}).focus();await page.waitForTimeout(450);await call('metis_config_edit',{readToken:before.readToken,operations:[{type:'update_step',modeId:mode.id,stepId:before.value.profile.steps[0].id,patch:{instruction:'AI旧目标',deliverables:'AI新增交付内容'}}]});
+  await expect(page.getByLabel('主要目的',{exact:true})).toHaveValue('用户手动保留的目标');await expect(page.getByLabel('交付内容',{exact:true})).toHaveValue('AI新增交付内容',{timeout:5000});pass('native MCP edits and manual editor share one draft; manual fields win and other AI changes appear live');
+  await page.getByRole('button',{name:'保存并生效',exact:true}).click();await expect(page.locator('.mp-saveState')).toHaveText('已保存');pass('single save commits the actual draft');
+  await page.getByRole('button',{name:'技能库',exact:true}).click();await page.getByLabel('搜索技能').fill('academic-humanizer');await expect(page.locator('.mp-library article').first()).toBeVisible();assert.ok((await page.locator('.mp-library article').allTextContents()).some(x=>x.includes('academic-humanizer')));await page.getByRole('button',{name:'关闭技能库',exact:true}).click();pass('specific research skills are discoverable in the actual library panel');
+  await page.getByRole('button',{name:'研究项目',exact:true}).click();await page.getByRole('button',{name:'新建项目',exact:true}).click();await page.getByLabel('项目名称',{exact:true}).fill('跨宿主项目');await page.getByLabel('文件夹绝对路径',{exact:true}).fill(folder);await page.getByRole('button',{name:'创建项目',exact:true}).click();await expect(page.getByRole('heading',{name:'跨宿主项目',exact:true})).toBeVisible();
+  const projects=await call('metis_project_list'),p=projects.projects[0];await page.locator('.in-stageRoot').first().click();await expect(page.getByLabel('这一步哪里不满意？',{exact:true})).toBeVisible();await page.getByLabel('这一步哪里不满意？',{exact:true}).fill('核对每条来源');await page.getByRole('button',{name:'交给助手修改这一步',exact:true}).click();const detail=await call('metis_project_read',{projectId:p.id});assert.equal(detail.viewedStepId,detail.steps[0].id);assert.equal(detail.steps[0].feedback.at(-1).text,'核对每条来源');pass('project selection binds the viewed step to actual targeted feedback');
+  assert.deepEqual(report.pageErrors,[]);report.completedAt=new Date().toISOString();save();
+}catch(error){report.failure=error.stack;if(page)report.visibleErrors=await page.locator('[role=alert],.ic-fallback').allTextContents().catch(()=>[]);save();throw error;}finally{await browser?.close();await client.close();}

@@ -4,6 +4,10 @@ import {join,resolve,relative,isAbsolute,dirname,delimiter} from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
 import {configurationHome} from './configuration.js';
 import {executeNativeTool} from './tool-runtime-compat.js';
+import {environmentKey,preparedPythonPrefix,rewritePreparedPython} from './environment-contract.js';
+import {entryRequirements} from './entry-dependencies.js';
+import {ownerUserMessages} from './user-evidence.js';
+import {fileURLToPath} from 'node:url';
 
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const quote=value=>"'"+String(value).replaceAll("'","''")+"'";
@@ -69,9 +73,12 @@ export function boundedNativeResult(call){
 }
 export function boundedSkillExecutionResult(value){
   const text=JSON.stringify(value);if(text.length<=18000)return value;
+  const summary={};for(const key of ['skillId','stepId','title','status','iteration','error','code','noNewEvidence','noProgress','readyForNativeRun','independentReviewRequired','needsEvidence','needsUnitEvidence','next','runtime','cost'])if(Object.hasOwn(value,key))summary[key]=value[key];
+  if(value.environment)summary.environment={status:value.environment.status,runtime:value.environment.runtime,baseDir:value.environment.baseDir,jobId:value.environment.jobId};
+  if(value.review){const review=value.review,verdict=review.verdict;summary.review={protocol:review.protocol,reviewedAt:review.reviewedAt,usage:review.usage,requests:review.requests,reads:review.reads,verdict:verdict?{...verdict,checks:verdict.checks?.map(check=>({...check,criterion:check.criterion?.slice(0,300)})),feedback:verdict.feedback?.map(text=>text.slice(0,500))}:null,evidenceIndex:review.evidenceIndex?.slice(0,48),fullReceiptRequired:true};}
   let path;
-  try{const folder=ownedDirectory(join(configurationHome(),'metis-library-tool-results'));path=join(folder,randomUUID()+'.json');writeFileSync(path,text+'\n',{flag:'wx',mode:0o600});}catch(error){return {skillId:value.skillId,status:value.status,readyForNativeRun:value.readyForNativeRun,environment:value.environment?{status:value.environment.status,runtime:value.environment.runtime,baseDir:value.environment.baseDir,jobId:value.environment.jobId}:undefined,truncated:true,resultPersistenceError:error.message,preview:text.slice(-6000),next:'实际操作可能已经完成，保存结果文件失败；先查看原生工具调用记录，不要盲目重复执行。'};}
-  return {skillId:value.skillId,status:value.status,readyForNativeRun:value.readyForNativeRun,environment:value.environment?{status:value.environment.status,runtime:value.environment.runtime,baseDir:value.environment.baseDir,jobId:value.environment.jobId}:undefined,truncated:true,resultFile:path,next:'完整真实执行回执在resultFile；按需读取，不重复启动安装或任务。'};
+  try{const folder=ownedDirectory(join(configurationHome(),'metis-library-tool-results'));path=join(folder,randomUUID()+'.json');writeFileSync(path,text+'\n',{flag:'wx',mode:0o600});}catch(error){return {...summary,truncated:true,resultPersistenceError:error.message,preview:text.slice(-2000),next:value.next||'实际操作可能已经完成，保存结果文件失败；先查看原生工具调用记录，不要盲目重复执行。'};}
+  return {...summary,truncated:true,resultFile:path,next:value.next||'完整真实执行回执在resultFile；按需读取，不重复启动安装、核验或任务。'};
 }
 function pythonProbe(packages,modules,commands,strictPins=true){return `import json, importlib, importlib.metadata, shutil, os\npackages=json.loads(${JSON.stringify(JSON.stringify(packages))})\nmodules=json.loads(${JSON.stringify(JSON.stringify(modules))})\ncommands=json.loads(${JSON.stringify(JSON.stringify(commands))})\nversions={}\nmissing=[]\nfor spec in packages:\n    name=spec.split('==')[0].split('[')[0]\n    try:\n        version=importlib.metadata.version(name)\n        versions[name]=version\n        if ${strictPins?'True':'False'} and '==' in spec and version!=spec.split('==',1)[1]: missing.append(spec)\n    except importlib.metadata.PackageNotFoundError: missing.append(spec)\nmodule_status={}\nfor name in modules:\n    try:\n        importlib.import_module(name)\n        module_status[name]={'available':True}\n    except Exception as error: module_status[name]={'available':False,'error':str(error)}\ncommand_status={name:shutil.which(name) for name in commands}\nprint(json.dumps({'versions':versions,'missingPackages':missing,'modules':module_status,'commands':command_status}))\n`;}
 function pythonCode(code){return "exec(__import__('base64').b64decode('"+Buffer.from(code).toString('base64')+"'))";}
@@ -95,17 +102,31 @@ function inspectPreparation(plan,call){
   const receipt=JSON.parse(readFileSync(plan.receipt,'utf8').replace(/^\uFEFF/,''));
   if(receipt.planKey!==plan.key||receipt.attemptId!==plan.attemptId||typeof receipt.ready!=='boolean')return null;return receipt;
 }
-export async function provisionSkillEnvironment(ctx,exec,skill,resources,requirements,options={},scopeKey=''){
+export async function provisionSkillEnvironment(ctx,exec,skill,resources,requirements,options={},scopeKey='',constraints={}){
   const recipes=requirements.installRecipes||[],single=recipes.length===1?recipes[0]:null;
-  const runtime=options.runtime&&options.runtime!=='auto'?options.runtime:single?.runtime||((requirements.scriptFiles.some(path=>/\.py$/i.test(path))||requirements.environmentFiles.some(path=>/requirements.*\.txt$/i.test(path))||requirements.declaredCommands.some(name=>/^(python3?|pip3?|uvx?)$/.test(name)))?'python':requirements.environmentFiles.some(path=>/(^|\/)package\.json$/.test(path))?'node':'none');
+  const runtime=options.runtime&&options.runtime!=='auto'?options.runtime:typeof options.entry==='string'&&options.entry.endsWith('.py')?'python':single?.runtime||((requirements.scriptFiles.some(path=>/\.py$/i.test(path))||requirements.environmentFiles.some(path=>/requirements.*\.txt$/i.test(path))||requirements.declaredCommands.some(name=>/^(python3?|pip3?|uvx?)$/.test(name)))?'python':requirements.environmentFiles.some(path=>/(^|\/)package\.json$/.test(path))?'node':'none');
   if(!['none','python','node'].includes(runtime))throw new Error('自动环境准备支持python/node；其他依赖通过call派发DSH原生工具准备');
-  const packages=options.packages||single?.runtime===runtime&&single.packages||[],commands=options.commands||(single?requirements.declaredCommands.filter(name=>!['python','python3','pip','pip3','uv','uvx','node','npm','npx'].includes(name)):[]),modules=options.pythonModules||[];
+  let packages=options.packages||(runtime==='node'&&single?.runtime===runtime?single.packages:[]),modules=options.pythonModules||[];const commands=options.commands||(single?requirements.declaredCommands.filter(name=>!['python','python3','pip','pip3','uv','uvx','node','npm','npx'].includes(name)):[]);
   if(!Array.isArray(packages)||packages.length>24||packages.some(value=>typeof value!=='string'||!(runtime==='node'?/^(?:@[a-z0-9_.-]+\/)?[a-z0-9][a-z0-9_.-]*(?:@[a-z0-9_.+-]+)?$/i:/^[a-z0-9][a-z0-9_.-]*(?:\[[a-z0-9_,.-]+\])?(?:==[a-z0-9_.+-]+)?$/i).test(value)))throw new Error('依赖包名称或固定版本无效；不接受任意URL、shell片段或安装选项');
   if(!Array.isArray(commands)||commands.length>24||commands.some(value=>typeof value!=='string'||!/^[a-z0-9][a-z0-9_.-]{0,100}$/i.test(value))||!Array.isArray(modules)||modules.length>24||modules.some(value=>typeof value!=='string'||!/^[a-z_]\w*(?:\.[a-z_]\w*)*$/i.test(value)))throw new Error('依赖命令或Python模块名称无效');
   if(runtime==='none'){if(packages.length||modules.length||commands.length||options.requirementsFile)throw new Error('检查或安装依赖需要指定实际python/node运行时，不能用none跳过依赖要求');return {resources,environment:{status:'not-requested',baseDir:resources.directory,dependencyInstallation:'not-requested',nativeToolsStillRequired:requirements.declaredTools},readyForNativeRun:true};}
   if(!nativeToolSchemas(ctx,exec.agent).some(schema=>schema.name==='pwsh'))return {resources,environment:{status:'needs-native-preparation',runtime,reason:'自动隔离环境准备需要当前DSH的pwsh；请通过call使用实际可见终端准备所需运行时。'},readyForNativeRun:false};
-  const requirementSource=options.requirementsFile?sourceFile(resources,options.requirementsFile):requirements.environmentFiles.filter(path=>/(?:^|\/)requirements\.txt$/i.test(path)).map(path=>sourceFile(resources,path))[0];
-  const key=hash(JSON.stringify({scope:scopeKey,skillId:skill.id,packageHash:skill.packageHash||null,bodyHash:hash(skill.content),runtime,packages,commands,modules,requirements:requirementSource?hash(readFileSync(requirementSource)):null}));
+  // A discovered whole-repository requirements file is not an instruction to
+  // install every browser/vector/vision dependency for a Word-only entry.
+  let requirementSource=options.requirementsFile?sourceFile(resources,options.requirementsFile):null,requirementContents=null,entryPlan=null;
+  if(runtime==='python'&&options.entry){
+    const entry=sourceFile(resources,options.entry),root=resources.repositoryDirectory||resources.directory,runner=fileURLToPath(new URL('./prepared-python-runner.py',import.meta.url));
+    if(!entry.endsWith('.py'))throw new Error('Python entry需为固定来源中的真实.py脚本');
+    const probe=await dispatchNativeSkillTool(ctx,exec,'pwsh',{description:'只解析真实脚本入口依赖（不执行脚本、不安装整库）',command:"$ErrorActionPreference='Stop'\n$probePython=(Get-Command python.exe,python -CommandType Application -ErrorAction Stop | Where-Object {$_.Source -notmatch '[\\\\/]WindowsApps[\\\\/]'} | Select-Object -First 1).Source\n& $probePython "+quote(runner)+' '+quote(root)+' $probePython --probe '+quote(entry)+"\nif($LASTEXITCODE -ne 0){throw 'Entry dependency analysis failed'}",timeoutMs:30000});
+    if(probe.status!=='succeeded')return {resources,environment:{status:'needs-entry-dependencies',runtime,nativeResult:boundedNativeResult(probe)},readyForNativeRun:false};
+    const marker='METIS_ENTRY_ENVIRONMENT=',line=probe.result.value?.stdout?.text?.split(/\r?\n/).findLast(line=>line.startsWith(marker));if(!line)throw new Error('真实入口依赖解析没有返回可核对结果');entryPlan=JSON.parse(line.slice(marker.length));
+    if((constraints.forbidOfficeCom||constraints.pythonDocxOnly)&&entryPlan.officeComImports?.length)return {resources,environment:{status:'incompatible-entry',runtime,entry:options.entry,reason:'本步禁止Office COM/要求纯python-docx，但该入口声明Office COM依赖。未启动安装或脚本；请选择兼容入口。'},readyForNativeRun:false};
+    if(entryPlan.unmappedImports?.length&&!options.packages?.length)return {resources,environment:{status:'needs-entry-dependencies',runtime,entry:options.entry,modules:entryPlan.modules,unmappedModules:entryPlan.unmappedImports,reason:'入口有未映射模块；依据该技能真实安装说明提供packages，不猜分发包名，未启动安装。'},readyForNativeRun:false};
+    packages=[...new Set([...packages,...(entryPlan.allPackages||[])])];modules=[...new Set([...modules,...(entryPlan.modules||[])])];if(packages.length>24||modules.length>64)throw new Error('入口依赖超过有界准备范围，先选定实际执行入口或明确全量环境要求；未启动安装');
+    if(!requirementSource&&existsSync(join(resources.directory,'requirements.txt')))requirementSource=sourceFile(resources,'requirements.txt');
+    if(requirementSource){requirementContents=entryRequirements(packages,readFileSync(requirementSource,'utf8'));requirementSource=null;}
+  }else if(runtime==='python'&&requirementSource&&!/(?:完整环境|全量依赖|全部依赖|全套依赖|install all dependencies)/i.test(ownerUserMessages(exec.agent).at(-1)?.text||''))throw new Error('整库requirements未指定实际entry。先提供environment.entry=当前脚本相对路径，系统按其真实导入准备；未启动全库安装。');
+  const key=environmentKey({skillId:skill.id,packageHash:skill.packageHash,content:skill.content,runtime,packages,commands,modules,requirementsHash:requirementContents?hash(requirementContents):requirementSource?hash(readFileSync(requirementSource)):null});
   const root=ownedDirectory(join(configurationHome(),'metis-skill-environments',key)),project=within(root,join(root,'project')),source=resources.repositoryDirectory||resources.directory;
   const plan={key,root,runtime,packages,commands,modules,project,baseDir:within(project,join(project,relative(source,resources.directory))),attemptId:randomUUID(),receipt:join(root,'environment.json'),python:join(root,'venv',process.platform==='win32'?'Scripts':'bin',process.platform==='win32'?'python.exe':'python')};
   if(runtime==='node'){const manifest=requirements.environmentFiles.find(path=>/(?:^|\/)package\.json$/.test(path));if(manifest)plan.project=dirname(within(project,join(project,relative(source,sourceFile(resources,manifest)))));}
@@ -121,6 +142,7 @@ export async function provisionSkillEnvironment(ctx,exec,skill,resources,require
   try{
     mirrorSource(source,project);
     if(requirementSource)plan.requirements=within(project,join(project,relative(source,requirementSource)));
+    if(requirementContents){plan.requirements=within(root,join(root,'entry-requirements.txt'));writeFileSync(plan.requirements,requirementContents,{mode:0o600});}
     const arguments_={description:'按需准备子技能 '+requirements.originalName+' 的隔离 '+runtime+' 依赖',command:preparationScript(plan),workdir:plan.project,timeoutMs:120000};
     if(options.nativeSandboxPermissions){const schema=nativeSchema(ctx,exec.agent,'pwsh');if(!schema.parameters?.properties?.sandbox_permissions?.enum?.includes(options.nativeSandboxPermissions))throw new Error('当前DSH pwsh未声明该沙箱权限选项');if(!options.justification?.trim())throw new Error('原生沙箱权限申请需要实际理由');arguments_.sandbox_permissions=options.nativeSandboxPermissions;arguments_.justification=options.justification;}
     const call=await dispatchNativeSkillTool(ctx,exec,'pwsh',arguments_);
@@ -130,12 +152,14 @@ export async function provisionSkillEnvironment(ctx,exec,skill,resources,require
   }catch(error){preparations.delete(key);throw error;}
 }
 function runToolSchema(ctx,agent){const schemas=nativeToolSchemas(ctx,agent),schema=process.platform==='win32'?schemas.find(tool=>tool.name==='pwsh')||schemas.find(tool=>tool.name==='bash'):schemas.find(tool=>tool.name==='bash')||schemas.find(tool=>tool.name==='pwsh');if(!schema)throw new Error('当前DSH没有可见原生终端');return schema;}
-export function nativeRunGuide(ctx,agent){let shell;try{shell=runToolSchema(ctx,agent).name;}catch{return {shell:null,commandStyle:'当前Agent没有可见原生终端，资源仍可供已连接的非终端工具使用；run需要实际可见的终端。'};}return {shell,commandStyle:shell==='pwsh'?'command是PowerShell代码。run会注入准备环境的PATH；运行Python脚本推荐 python "脚本路径"。直接调用带引号的绝对exe路径必须用 & "exe路径" 参数，不使用Bash的引号命令写法。需要精确返回外部程序退出码时用独立run调用，并在命令末尾显式写 ; exit $LASTEXITCODE，不用后续成功命令掩盖失败。':'command按当前bash语法编写；run会注入准备环境的PATH。',failureRecovery:'脚本或语法失败时修正命令后直接run重试；仅实际缺依赖时再prepare补齐，不重复安装无关依赖。'};}
+export function nativeRunGuide(ctx,agent){let shell;try{shell=runToolSchema(ctx,agent).name;}catch{return {shell:null,commandStyle:'当前Agent没有可见原生终端，资源仍可供已连接的非终端工具使用；run需要实际可见的终端。'};}return {shell,dependencyPolicy:'优先prepare(environment.entry=当前实际脚本相对路径)，宿主只解析该入口实际导入并保留相关版本约束。环境ready仅证明请求的配方，run会再次检查具体入口；不要为Word清理调用setup_emarx或全量requirements，未知模块查真实说明，不猜包名。',commandStyle:shell==='pwsh'?'command是PowerShell代码。run会注入准备环境的PATH；运行Python脚本推荐 python "脚本路径"。直接调用带引号的绝对exe路径必须用 & "exe路径" 参数，不使用Bash的引号命令写法。需要精确返回外部程序退出码时用独立run调用，并在命令末尾显式写 ; exit $LASTEXITCODE，不用后续成功命令掩盖失败。':'command按当前bash语法编写；run会注入准备环境的PATH。',failureRecovery:'脚本或语法失败时修正命令后直接run重试；仅实际缺依赖时再prepare补齐，不重复安装无关依赖。'};}
 export async function runPreparedSkill(ctx,exec,environment,command,workdir){
   if(typeof command!=='string'||!command.trim()||command.length>100000)throw new Error('需要实际要运行的命令');
+  if(/(?:setup_emarx|emarx_env)\.py(?:\s|['"]|$)/i.test(command)&&!/(?:完整环境|全量依赖|全部依赖|全套依赖|install all dependencies)/i.test(ownerUserMessages(exec.agent).at(-1)?.text||''))throw new Error('当前研究运行不自动启动EMARX全库安装器。先prepare(entry=实际任务.py)按入口准备最小依赖，再run业务脚本；只有用户明确要求全量环境才运行setup。');
+  if((!environment?.runtime||environment.runtime==='none')&&/\bpython(?:3|\.exe)?\b|\.py(?:[\s'"]|$)/i.test(command))throw new Error('本技能当前仅导出资源，尚未准备Python入口环境；先prepare(runtime=python,entry=真实脚本相对路径)，未执行脚本。');
   const schema=runToolSchema(ctx,exec.agent);
   const bins=environment?.binPaths||[];if(process.platform==='win32'&&bins.length&&schema.name!=='pwsh')throw new Error('当前Windows隔离环境需要DSH实际的pwsh工具，未切换到路径规则不同的终端');
   let prefix=schema.name==='pwsh'?(bins.length?'$env:PATH = '+quote(bins.join(delimiter))+' + '+quote(delimiter)+' + $env:PATH\n':''):(bins.length?'export PATH='+"'"+bins.join(':').replaceAll("'","'\\''")+"':\"$PATH\"\n":'');
-  if(environment?.runtime==='python'&&environment.python){const venv=dirname(dirname(environment.python));prefix+=schema.name==='pwsh'?'$env:VIRTUAL_ENV = '+quote(venv)+"\n$env:PYTHONNOUSERSITE = '1'\n":'export VIRTUAL_ENV='+"'"+venv.replaceAll("'","'\\''")+"'\nexport PYTHONNOUSERSITE=1\n";}
-  return dispatchNativeSkillTool(ctx,exec,schema.name,{description:'执行当前步骤已加载技能的真实命令',command:prefix+command,...(workdir?{workdir}:{}),timeoutMs:120000});
+  prefix+=preparedPythonPrefix(environment,schema.name);
+  return dispatchNativeSkillTool(ctx,exec,schema.name,{description:'执行当前步骤已加载技能的真实命令',command:prefix+rewritePreparedPython(command,environment,schema.name),...((workdir||exec.agent.session?.header?.cwd)?{workdir:workdir||exec.agent.session.header.cwd}:{}),timeoutMs:120000});
 }

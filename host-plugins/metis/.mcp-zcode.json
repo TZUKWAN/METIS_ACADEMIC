@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "metis": {
+      "command": "node",
+      "args": [
+        "${ZCODE_PLUGIN_ROOT}/runtime/server.mjs"
+      ],
+      "env": {
+        "METIS_HOST": "zcode"
+      }
+    }
+  }
+}

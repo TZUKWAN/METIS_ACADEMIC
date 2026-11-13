@@ -1,6 +1,7 @@
 /** Small factual activity receipts. No model reasoning or simulated progress. */
 import {randomUUID} from 'node:crypto';
-const LIMIT = 96;
+import {readCommandOutput} from './command-output.js';
+const LIMIT = 512;
 const runtimeKey=Symbol.for('metis.activity.runtime.v1');
 const runtimeId=globalThis[runtimeKey]??=randomUUID();
 
@@ -73,10 +74,12 @@ export function finishStepActivity(record, execution, result, stepId = null) {
   const text = (result.content || []).filter(block => block.type === 'text').map(block => block.text).join('\n');
   // Skill bodies, full prompts and receipts are already available in native chat.
   // Keep only the command/output/error excerpt useful for an activity detail.
-  if (result.isError || ['command','job','tool','search','write','read'].includes(row.kind)) {
-    const output=text || (typeof data.output==='string'?data.output:'');
-    row.resultPreview = output.slice(0,1200);
-    row.resultTruncated = output.length > 1200;
+  const streams=readCommandOutput(result);
+  if (streams.length || result.isError || ['command','job','tool','search','write','read'].includes(row.kind)) {
+    const output=streams.length?streams.map(stream=>stream.text).join('\n'):text || (typeof data.output==='string'?data.output:'');
+    const limit=streams.length?4000:1200;
+    row.resultPreview = streams.length?output.slice(-limit):output.slice(0,limit);
+    row.resultTruncated = output.length > limit;
   }
   if (data.error) row.error = short(typeof data.error === 'string' ? data.error : data.error.message,240);
   if (Array.isArray(data.review?.verdict?.feedback)) row.feedback=data.review.verdict.feedback.slice(0,2).map(text=>short(text,240));

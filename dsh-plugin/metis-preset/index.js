@@ -1,6 +1,8 @@
+import {primeLibrarySkills} from './skill-library.js';
 import {isMetisPreset,isMetisVersionPreset} from './modes.js';
 import {compileProfile,compileStep,ProfileError,validateProfile} from './profiles.js';
-import {readConfiguration,writeConfiguration,configurationModes,configurationSkills,skillDocument,clone,fingerprint} from './configuration.js';
+import {readConfiguration,writeConfiguration,configurationModes,configurationSkills,skillDocument,clone,fingerprint,configurationPath} from './configuration.js';
+import {statSync} from 'node:fs';
 import {normalizeConfiguration,workspaceSnapshot,workspaceContext,withDraftProfiles,applyWorkspaceEdits,configurationChanges,readConfigurationItem} from './workspace-edits.js';
 import {createSessionVersionStore} from './session-versions.js';
 import {installSessionVersionRouting} from './session-routing.js';
@@ -12,7 +14,11 @@ import {stepGoalProgress,stepRevisionControlFor} from './step-goals.js';
 import {createResearchProjects} from './research-projects.js';
 import {nativeStandardPlugins,adaptFrozenNativePlugins,nativeComposerDefinition,inspectNativePresetTools,composerRequiredTools,nativeBaseFingerprint} from './native-preset-runtime.js';
 import {createCatalogStartup} from './catalog-startup.js';
-import {primeLibrarySkills} from './skill-library.js';
+import {systemRuntime} from './system-runtime.js';
+import {registerProjectWorkflowProvider} from './project-workflow-link.js';
+import {captureProjectSessionSettings,applyProjectSessionSettings} from './project-session-settings.js';
+import {projectExecutionState} from './project-workflow-sync.js';
+import {recordMessageStep} from './project-message-context.js';
 
 export const name='metis-academic-preset';
 export const inject=['agentPresets'];
@@ -34,7 +40,12 @@ export async function apply(ctx,config={}){
   const registry=ctx.agentPresets;
   if(typeof registry.register!=='function'||typeof registry.remoteExportList!=='function')throw new Error('METIS requires the installed DSH agentPresets registry interface');
   const disposers=new Map();
-  const pendingVersions=new Map(),progressProfiles=new Map(),versions=createSessionVersionStore();let latestVersions=new Map(),routing=null,routingError=null;
+  const pendingVersions=new Map(),progressProfiles=new Map(),progressSessions=new Map(),versions=createSessionVersionStore();let latestVersions=new Map(),latestRecords=new Map(),routing=null,routingError=null;
+  let seenProjectConfigurationStamp=null;
+  async function refreshProjectConfiguration(){
+    let stamp;try{const stat=statSync(configurationPath());stamp=[stat.mtimeMs,stat.ctimeMs,stat.size].join(':');}catch(error){if(error.code!=='ENOENT')throw error;stamp='missing';}
+    if(stamp!==seenProjectConfigurationStamp){await snapshot();seenProjectConfigurationStamp=stamp;}
+  }
   const methodSource=Symbol.for('metis.session.method-source.v1');
   const registerMember=propertyDescriptor(registry,'register')?.value||registry.register,resolveMember=propertyDescriptor(registry,'resolve')?.value||registry.resolve;
   const nativeRegister=registerMember[methodSource]?.method||registerMember,nativeResolve=resolveMember[methodSource]?.method||resolveMember;
@@ -54,7 +65,7 @@ export async function apply(ctx,config={}){
     alive=false;
     startup.stop();
     await Promise.allSettled([...pendingVersions.values()]);
-    progressProfiles.clear();
+    progressProfiles.clear();progressSessions.clear();
     routing?.dispose();
     if(Object.getOwnPropertyDescriptor(registry,'remoteExportList')?.value===filteredList){if(listOwn)Object.defineProperty(registry,'remoteExportList',listOwn);else delete registry.remoteExportList;}
     if(Object.getOwnPropertyDescriptor(registry,'defaultId')?.get===selectedDefault){if(defaultOwn)Object.defineProperty(registry,'defaultId',defaultOwn);else delete registry.defaultId;}
@@ -125,7 +136,7 @@ export async function apply(ctx,config={}){
     const active=new Set(configurationModes(configuration).map(mode=>mode.id));
     return {records,latest:new Map(records.filter(record=>active.has(record.payload.modeId)).map(record=>[record.payload.modeId,record.id]))};
   }
-  try{const firstVersions=await prepareVersions(activeConfiguration);latestVersions=firstVersions.latest;versions.published(firstVersions.records);}catch(error){notificationWarning='流程配置已读取，原生预设正在准备：'+error.message;}
+  try{const firstVersions=await prepareVersions(activeConfiguration);latestVersions=firstVersions.latest;latestRecords=new Map(firstVersions.records.map(record=>[record.id,record]));versions.published(firstVersions.records);}catch(error){notificationWarning='流程配置已读取，原生预设正在准备：'+error.message;}
   ctx.inject(['agents','sessions','sessionQuery','sessionProjections','sessionController','sessionSkillCatalog','skills'],scope=>{
     try{
       const instance=installSessionVersionRouting(scope,{registry,store:versions,ensure:ensureVersion,latest:id=>latestVersions.get(id)});routing=instance;routingError=null;
@@ -141,6 +152,7 @@ export async function apply(ctx,config={}){
     notificationWarning=null;
     activeConfiguration=persist?writeConfiguration(next,expectedRevision,warning=>{notificationWarning=warning;}):next;
     latestVersions=prepared.latest;
+    latestRecords=new Map(prepared.records.map(record=>[record.id,record]));
     try{versions.published(prepared.records);}catch(error){notificationWarning=[notificationWarning,'配置已提交，版本发布索引提示：'+error.message].filter(Boolean).join('；');}
     try{ctx.emit('settings/document-updated','agent-preset-registry');}catch(error){notificationWarning=[notificationWarning,'配置已提交，但目录刷新通知失败：'+error.message].filter(Boolean).join('；');}
     startup.invalidate();
@@ -168,7 +180,17 @@ export async function apply(ctx,config={}){
     return workspaceContext(id,profile,candidate,drafts);
   }
   const projects=createResearchProjects({
+    refreshLatest:refreshProjectConfiguration,
+    captureSessionSettings:agent=>captureProjectSessionSettings(registry,agent),
+    applySessionSettings:(agent,settings)=>applyProjectSessionSettings(registry,agent,settings),
+    forwardUserRequest:async(record,request)=>{
+      const version=versions.get(record.versionId),steps=version.payload.plugins.find(row=>row.name==='metis-academic-preset/step-skills').config.profile.steps,selected=steps.some(step=>step.id===request.stepId)?request.stepId:null;
+      recordMessageStep(record,request.requestId,selected);
+      if(request.stepId&&!selected){const {agent}=await ctx.get('sessionController').resolveAgent(record.sessionId);agent?.inject({id:globalThis.crypto.randomUUID(),role:'user',source:{kind:'notice',summary:'METIS · 原步骤已删除'},content:[{type:'text',text:'这条真实转交请求原先查看的步骤已被新版模式删除。请明确说明此变化，不擅自将请求套用到其他步骤。'}]});}
+      return ctx.get('sessionController').prompt({sessionId:record.sessionId,requestId:request.requestId,content:request.content},AbortSignal.timeout(30000));
+    },
     getVersion:id=>versions.get(id),
+    getLatestVersion:modeId=>{const id=latestVersions.get(modeId);return id?latestRecords.get(id)||versions.get(id):null;},
     chooseVersion:async(modeId,expectedVersionId)=>{
       await snapshot();findMode(modeId);await requireProtection();const id=latestVersions.get(modeId);
       if(!id||id!==expectedVersionId)throw new ProfileError('所选模式已更新，请重新选择模式后创建项目',409);
@@ -184,7 +206,8 @@ export async function apply(ctx,config={}){
       if(registry.composedPreset(result.agent.ctx)!==versionId)throw new ProfileError('项目会话的原配置不一致，未修改会话或切换模式',409);
     },
     readProgress:(id,options)=>catalog.runtimeProgress(id,options),
-    runState:id=>{const agent=ctx.get('agents')?.get(id);return {loaded:!!agent,running:agent?.status==='running'};},
+    readLive:(id,options)=>catalog.runtimeLive(id,options),
+    runState:id=>projectExecutionState(ctx.get('agents'),id),
     revisionTarget:async(sessionId,versionId,needsFocus=false)=>{
       await ensureVersion(versionId);const result=await ctx.get('sessionController').resolveAgent(sessionId),agent=result.agent;
       if(!agent||registry.composedPreset(agent.ctx)!==versionId)throw new ProfileError(result.error?.message||'项目原会话配置无法确认，未重置步骤',409);
@@ -203,7 +226,7 @@ export async function apply(ctx,config={}){
   });
   const catalog={
     list:()=>configurationModes(activeConfiguration),refresh:()=>ctx.emit('settings/document-updated','agent-preset-registry'),isMetis:isMetisPreset,
-    snapshot,commit,assistantContext:context,ensureRuntime,runtimeState:()=>({...startup.state(),compatibility:Object.fromEntries(compatibility)}),
+    snapshot,commit,assistantContext:context,ensureRuntime,runtimeState:()=>({...startup.state(),compatibility:Object.fromEntries(compatibility),systemRuntime:systemRuntime()}),
     propose:async(id,profile,raw,drafts,edits,options)=>{
       const before=context(id,profile,raw,drafts).configuration;
       const remembered=Object.values(readConfiguration().skills).map(skill=>skill.source?.kind==='local'?skill.source.path:skill.source?.kind==='github'?skill.source.repository:null).filter(value=>typeof value==='string');
@@ -218,7 +241,7 @@ export async function apply(ctx,config={}){
     bindLegacySession:async request=>{if(!routing)throw new ProfileError('会话版本接口未就绪',503);return routing.bindLegacy(request);},
     sessionVersion:id=>versions.get(id),
     sessionVersionFor:async id=>{if(!routing)throw new ProfileError('会话版本保护尚未就绪',503);return routing.describe(id);},
-    researchProjects:{...projects,list:async()=>{await snapshot();return {projects:await projects.list(),capabilities:{stepRevisions:true,deliveryHistory:true,focusedMessages:true,liveActivity:true,documentEditing:true,circuitControl:true},modes:configurationModes(activeConfiguration).map(mode=>({id:mode.id,name:mode.name,versionId:latestVersions.get(mode.id),stepCount:activeConfiguration.profiles[mode.id].profile.steps.length}))};}},
+    researchProjects:{...projects,list:async()=>{await snapshot();return {projects:await projects.list(),capabilities:{stepRevisions:true,deliveryHistory:true,focusedMessages:true,liveActivity:true,documentEditing:true,circuitControl:true,projectDeletion:true,sharedDirectories:true,liveDelta:true,systemRuntimeV2:true,workflowUpdates:true},modes:configurationModes(activeConfiguration).map(mode=>({id:mode.id,name:mode.name,versionId:latestVersions.get(mode.id),stepCount:activeConfiguration.profiles[mode.id].profile.steps.length}))};}},
     runtimeProgress:async(id,options={})=>{
       if(!routing)throw new ProfileError('会话版本保护尚未就绪',503);let binding;const live=ctx.get('agents')?.get(id);
       if(live){const preset=ctx.get('sessionProjections')?.stateOf(live.session,'agentPreset')??live.session.header.agentPreset;if(isMetisVersionPreset(preset)&&registry.composedPreset(live.ctx)===preset){const version=versions.get(preset);binding={sessionId:id,versionId:preset,modeId:version.payload.modeId,hash:version.hash};}}
@@ -229,8 +252,10 @@ export async function apply(ctx,config={}){
         else{if(!row.config.mode||!row.config.profile||!Array.isArray(row.config.resourceSkills))throw new ProfileError('本会话固定步骤声明缺失，未读取最新模式代替',409);fixed={hash:binding.hash,supported:true,mode:row.config.mode,profile:validateProfile(row.config.profile,{configuration:null,skillSnapshot:row.config.resourceSkills})};}
         progressProfiles.set(binding.versionId,fixed);
       }
+      if(fixed.supported)progressSessions.set(id,{...fixed,versionId:binding.versionId});
       return fixed.supported?{...stepGoalProgress(id,fixed.mode,fixed.profile,options),versionId:binding.versionId}:null;
     },
+    runtimeLive:(id,options={})=>{const fixed=progressSessions.get(id);if(!fixed)return {live:null,pulse:null};const live=ctx.get('agents')?.get(id);if(live&&registry.composedPreset(live.ctx)!==fixed.versionId)throw new ProfileError('实时会话与项目固定版本不同，未读取其他模式',409);return {...stepGoalProgress(id,fixed.mode,fixed.profile,{liveOnly:true,...options}),versionId:fixed.versionId};},
     save:async(id,profile,revision)=>{
       const current=await snapshot();findMode(id,current.configuration);if(current.profiles[id].revision!==revision)throw new ProfileError('模式配置已被更新',409);
       const candidate=withDraftProfiles(current.configuration,{[id]:{profile,baseRevision:revision}}),saved=await commit(candidate,current.configuration.revision);
@@ -238,6 +263,7 @@ export async function apply(ctx,config={}){
     }
   };
   ctx.provide('metisPresetCatalog',catalog);
+  if(projects.workflowBridge){const releaseProjectWorkflow=registerProjectWorkflowProvider(projects.workflowBridge);ctx.effect(()=>()=>releaseProjectWorkflow(),'metis: project workflow lookup');}
   const composer=createComposerWorkspaces(ctx,()=>catalog);
   ctx.provide('metisComposerWorkspace',composer);
   ctx.effect(()=>()=>composer.dispose(),'metis: native composer draft bridge');

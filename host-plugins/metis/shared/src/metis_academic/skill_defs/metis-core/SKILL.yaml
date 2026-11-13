@@ -1,0 +1,6 @@
+id: metis-core
+path: skills/metis-core
+description: 核心调度（常驻）
+triggers: []
+persistent: true
+budget_cost: 0

@@ -1,10 +1,14 @@
 {
-  "themeSha256": "0c47f825222ac507332f2061c63294edaad91040997ef7ecd397d8262c91fc64",
-  "bytes": 66169,
+  "themeSha256": "d6f67a27d4296b0ac68244a87f76f13d6225531229e8d27051f9f3ad564b5b92",
+  "bytes": 127122,
+  "sheets": {
+    "ion-workbench.css": "70d77e52e7482b72a24eff2e8990cf5a89c5bfe1cacff6fd6b2c05da4d300d9b",
+    "ion-refinement.css": "1b0841fe724093bb56a41544fa83bde7eff20bf24d5c889844ac9462541d00bd"
+  },
   "sources": {
-    "client.js": "1dcdc13890813f8fa8cb11204bb5184ba4e06b7053c1376f3f145af85e54f9ae",
-    "composer.js": "d4ba73190950be7aae045e52169985b9f38d3b9a29f30160a0588029c50b3f9e",
-    "documents.js": "a5880052d1144bacd3a32725c102797adab4f1738cf9432ba3d5078cf6ea3b30"
+    "client.js": "62ff204a3a6a4f5565c85396aedc465fd3a1377b69f5f441236cd2d4cb55e677",
+    "composer.js": "de5192244b012410ca6ad883d2aef37f8e0fd7e336c42080b3c984980a76ceac",
+    "documents.js": "8c070364ef7eb8a040ef34838b9806380fa75912b9adc05ce3f990aa25be7f21"
   },
   "browserLoading": "self-contained assets; no new resource endpoint"
 }

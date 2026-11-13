@@ -1,0 +1,7 @@
+id: qualitative-analysis
+path: skills/qualitative-analysis
+description: 定性实证执行
+triggers:
+- paradigm:qualitative
+persistent: false
+budget_cost: 1

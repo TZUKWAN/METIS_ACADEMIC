@@ -17,3 +17,11 @@ metis.settings.yaml
 # 系统文件
 Thumbs.db
 .DS_Store
+
+# Local build/runtime artifacts
+node_modules/
+outputs/
+*.tgz
+*.zip
+metis-portable/
+metis-composer-configuration.json

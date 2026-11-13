@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "metis": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${PLUGIN_ROOT}/runtime/server.mjs"
+      ],
+      "env": {
+        "METIS_HOST": "codex"
+      }
+    }
+  }
+}

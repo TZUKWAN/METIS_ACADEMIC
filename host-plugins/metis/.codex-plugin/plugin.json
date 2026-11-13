@@ -1,0 +1,17 @@
+{
+  "name": "metis",
+  "version": "1.7.0",
+  "description": "与 AI 共建研究流程，按步骤调用成熟技能，在离子回路现场追踪真实研究与交付。",
+  "license": "Apache-2.0",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp-codex.json",
+  "requires_local_executor": true,
+  "interface": {
+    "displayName": "METIS",
+    "shortDescription": "AI 流程编排与可视化科研工作台",
+    "brandColor": "#e9ad71",
+    "logo": "./assets/metis.svg",
+    "composerIcon": "./assets/metis.svg",
+    "defaultPrompt": "使用 METIS 打开研究工作台"
+  }
+}

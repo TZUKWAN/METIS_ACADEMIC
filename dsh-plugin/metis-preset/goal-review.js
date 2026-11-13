@@ -31,7 +31,7 @@ export function parseGoalReview(raw){
     if(!check||typeof check.criterion!=='string'||typeof check.passed!=='boolean')throw new Error('第'+(index+1)+'项核验缺少检查内容或明确判断');
     const evidenceRefs=Array.isArray(check.evidenceRefs)&&check.evidenceRefs.every(ref=>typeof ref==='string')?check.evidenceRefs.join('\n'):check.evidenceRefs;
     if(typeof evidenceRefs!=='string'||!evidenceRefs.trim())throw new Error('第'+(index+1)+'项核验缺少真实证据引用');
-    return {criterion:check.criterion,passed:check.passed,evidenceRefs};
+    return {criterion:check.criterion,passed:check.passed,evidenceRefs,...(typeof check.criterionId==='string'?{criterionId:check.criterionId}:{})};
   });
   const feedback=typeof value.feedback==='string'?[value.feedback]:value.feedback;
   if(!Array.isArray(feedback)||feedback.some(message=>typeof message!=='string'))throw new Error('核验回执缺少反馈文本');

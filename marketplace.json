@@ -1,0 +1,14 @@
+{
+  "name": "metis-local",
+  "owner": {
+    "name": "TZUKWAN"
+  },
+  "plugins": [
+    {
+      "name": "metis",
+      "source": "./host-plugins/metis",
+      "version": "1.7.0",
+      "description": "METIS 科研工作台：AI共编、渐进技能和离子回路研究现场"
+    }
+  ]
+}

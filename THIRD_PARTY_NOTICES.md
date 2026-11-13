@@ -23,3 +23,8 @@ DeepSeek Harness, LibreOffice and Python libraries are provided separately. They
 ## Visual references
 
 The ion-circuit interface is METIS's independent implementation. Agent Display was a visual/interaction reference; its code, models, assets and simulators are not included in this release.
+
+
+## Codex / ZCode 原生发行体
+
+跨宿主包内实际打包的 React、Three.js、MCP SDK、Undici 及传递依赖的逐项许可正文，见 [原生发行体许可清单](host-plugins/metis/THIRD_PARTY_NOTICES.md)。科研技能只携带目录及固定资源指针，正文和脚本按用户选择从原作者固定版本读取。

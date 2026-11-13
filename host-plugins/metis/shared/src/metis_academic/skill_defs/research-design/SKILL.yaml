@@ -1,0 +1,7 @@
+id: research-design
+path: skills/research-design
+description: 研究设计与任务树
+triggers:
+- stage:S4
+persistent: false
+budget_cost: 1

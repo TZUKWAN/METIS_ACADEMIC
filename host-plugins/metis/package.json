@@ -1,0 +1,13 @@
+{
+  "name": "metis-host-plugin",
+  "version": "1.7.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.19"
+  },
+  "scripts": {
+    "start": "node runtime/server.mjs"
+  }
+}
