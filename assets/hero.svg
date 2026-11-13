@@ -1,8 +1,43 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="420" viewBox="0 0 1440 420">
-<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#25151f"/><stop offset=".6" stop-color="#100c16"/><stop offset="1" stop-color="#19111c"/></linearGradient><linearGradient id="gold"><stop stop-color="#ffd6a5"/><stop offset="1" stop-color="#c38359"/></linearGradient><pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#6d423b" stroke-width=".5" opacity=".28"/></pattern></defs>
-<rect width="1440" height="420" rx="18" fill="url(#bg)"/><rect width="1440" height="420" rx="18" fill="url(#grid)"/><path d="M0 1H1440M0 419H1440" stroke="#ac7553" opacity=".7"/>
-<g fill="none" stroke="#a56b48" opacity=".45"><path d="M0 66H166l30 30h164M0 338h132l35-35h154M796 0v54l26 26v122M1440 350h-154l-30-30h-130M1405 0v58l-42 42h-120"/><circle cx="360" cy="96" r="4"/><circle cx="321" cy="303" r="4"/><circle cx="822" cy="202" r="4"/></g>
-<g transform="translate(56 54)"><rect width="66" height="66" rx="11" fill="#3a241e" stroke="#dca16f"/><path d="M17 47V20l16 17 16-17v27M17 20l16 30 16-30" fill="none" stroke="#ffd5a4" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></g>
-<g font-family="Segoe UI,Microsoft YaHei,Noto Sans CJK SC,sans-serif"><text x="143" y="99" fill="url(#gold)" font-size="45" font-weight="650" letter-spacing="7">METIS</text><text x="58" y="194" fill="#f3dfd1" font-size="34" font-weight="550">和 AI 一起，让研究按你的方式推进</text><text x="60" y="242" fill="#bfa6b3" font-size="19">从共同搭建流程，到每一步真实交付。</text><g font-size="14" fill="#dfb797"><rect x="58" y="282" width="123" height="34" rx="5" fill="#402820" stroke="#8b5b43"/><text x="82" y="305">流程共创</text><rect x="194" y="282" width="123" height="34" rx="5" fill="#211925" stroke="#70516f"/><text x="218" y="305">研究可视化</text><rect x="330" y="282" width="123" height="34" rx="5" fill="#182622" stroke="#4a7163"/><text x="354" y="305">文档审阅</text></g><text x="60" y="371" fill="#977981" font-family="Consolas,monospace" font-size="11" letter-spacing="3">RESEARCH, BUILT TOGETHER.</text></g>
-<g transform="translate(1000 70)" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="13"><g fill="none" stroke="#bd8257" stroke-width="1.4"><path d="M14 69h55l25 25h49M235 94h52l22-22V28M143 155v48l-29 29H62M287 125v71l30 30"/><path d="M90 266h139l24-24h64" stroke="#789b88"/></g><g fill="#241923" stroke="#966044"><rect x="0" y="28" width="92" height="64"/><rect x="143" y="70" width="113" height="86"/><rect x="267" y="0" width="92" height="56"/><rect x="0" y="232" width="92" height="56"/><rect x="267" y="219" width="92" height="56" stroke="#6b9c83"/></g><g fill="#e6c6b2"><text x="31" y="66">目标</text><text x="184" y="110">流程</text><text x="298" y="33">技能</text><text x="31" y="265">研究</text><text x="298" y="252" fill="#aad4bb">成果</text></g><g fill="#efba82"><circle cx="116" cy="94" r="3"/><circle cx="287" cy="175" r="3"/><circle cx="182" cy="266" r="3"/></g></g>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="530" viewBox="0 0 1600 530" role="img" aria-labelledby="title desc">
+<title id="title">METIS — 把你的科研思路封装成可执行的工作流</title>
+<desc id="desc">METIS 科研工作台品牌图。支持 DSH、Codex 和 ZCode，以自定义流程、按需技能和可视化研究为核心。</desc>
+<defs>
+ <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#16131d"/><stop offset=".55" stop-color="#0b101b"/><stop offset="1" stop-color="#101e2a"/></linearGradient>
+ <linearGradient id="gold" x2="1" y2=".2"><stop stop-color="#ffdfb1"/><stop offset="1" stop-color="#c68050"/></linearGradient>
+ <radialGradient id="aura"><stop stop-color="#b7774d" stop-opacity=".23"/><stop offset="1" stop-color="#b7774d" stop-opacity="0"/></radialGradient>
+ <linearGradient id="card" x2="1" y2="1"><stop stop-color="#243342"/><stop offset="1" stop-color="#121a27"/></linearGradient>
+ <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M48 0H0V48" fill="none" stroke="#7892a7" stroke-opacity=".055"/></pattern>
+ <filter id="glow"><feGaussianBlur stdDeviation="4"/></filter>
+</defs>
+<rect width="1600" height="530" rx="18" fill="url(#bg)"/>
+<rect x="1" y="1" width="1598" height="528" rx="17" fill="none" stroke="#976b4b" stroke-opacity=".55"/>
+<rect x="960" width="640" height="530" fill="url(#grid)"/>
+<ellipse cx="1250" cy="270" rx="410" ry="330" fill="url(#aura)"/>
+<g fill="none" stroke="#c78a59" stroke-opacity=".16" stroke-width="1">
+ <path d="M990 46h120l25 25h257l30-30h176M952 465h156l27-27h276l30 30h157M1038 0v94l24 24v142l-38 38v232M1518 0v142l-30 30v235l22 22v101"/>
+ <path d="M860 29h80l40 40v90l32 32M1007 514v-90l45-45M1598 96h-92l-29 29M1598 407h-54l-31-31"/>
+</g>
+<g font-family="'Segoe UI','Microsoft YaHei','Noto Sans CJK SC',sans-serif">
+ <text x="72" y="69" fill="#bb9677" font-family="Consolas,monospace" font-size="17" letter-spacing="4">RESEARCH WORKFLOW ENGINE</text>
+ <text x="67" y="174" fill="url(#gold)" font-size="91" font-weight="750" letter-spacing="12">METIS</text>
+ <text x="73" y="254" fill="#f2e9df" font-size="43" font-weight="650">把你的科研思路</text>
+ <text x="73" y="314" fill="#f2e9df" font-size="43" font-weight="650">封装成可执行的工作流</text>
+ <text x="75" y="366" fill="#b4a9a9" font-size="21">与 AI 共创方法 · 按步骤调用技能 · 看见过程与交付</text>
+ <g transform="translate(74 416)" font-size="16" fill="#e0c8b0">
+  <rect width="270" height="43" rx="7" fill="#2b252c" stroke="#8c6549"/><text x="20" y="28">DSH  /  Codex  /  ZCode</text>
+  <rect x="287" width="224" height="43" rx="7" fill="#1d2631" stroke="#455467"/><text x="305" y="28">2,194 条技能索引</text>
+  <rect x="528" width="174" height="43" rx="7" fill="#1b252b" stroke="#445a59"/><text x="547" y="28">真实项目与产物</text>
+ </g>
+</g>
+<g transform="translate(1032 107) rotate(-5 220 160)">
+ <g fill="none" stroke="#efb876" stroke-width="2"><path d="M105 76h172q18 0 18 18v57q0 18-18 18H105q-18 0-18 18v59q0 18 18 18h172"/><path d="M105 76h172q18 0 18 18v57q0 18-18 18H105q-18 0-18 18v59q0 18 18 18h172" filter="url(#glow)" opacity=".65"/></g>
+ <g font-family="Consolas,monospace" font-size="14" fill="#c0cbd3">
+  <g transform="translate(0 9)"><path d="M4 8H202l13 13v97H4Z" fill="#000" opacity=".3"/><path d="M0 0H197l13 13v96H0Z" fill="url(#card)" stroke="#b98960"/><text x="16" y="26" fill="#d9b790">01 / QUESTION</text><text x="16" y="63" fill="#eee4d9" font-size="19" font-family="'Segoe UI','Microsoft YaHei',sans-serif">定义研究问题</text><path d="M16 84h101" stroke="#57626d"/></g>
+  <g transform="translate(233 103)"><path d="M4 8H202l13 13v97H4Z" fill="#000" opacity=".3"/><path d="M0 0H197l13 13v96H0Z" fill="url(#card)" stroke="#829aa5"/><text x="16" y="26" fill="#d9b790">02 / EVIDENCE</text><text x="16" y="63" fill="#eee4d9" font-size="19" font-family="'Segoe UI','Microsoft YaHei',sans-serif">组织证据与方法</text><path d="M16 84h137" stroke="#57626d"/></g>
+  <g transform="translate(0 197)"><path d="M4 8H202l13 13v97H4Z" fill="#000" opacity=".3"/><path d="M0 0H197l13 13v96H0Z" fill="url(#card)" stroke="#829aa5"/><text x="16" y="26" fill="#d9b790">03 / ARGUMENT</text><text x="16" y="63" fill="#eee4d9" font-size="19" font-family="'Segoe UI','Microsoft YaHei',sans-serif">逐步构建论证</text><path d="M16 84h118" stroke="#57626d"/></g>
+ </g>
+ <g fill="#ffd6a0"><circle cx="220" cy="76" r="4"/><circle cx="87" cy="215" r="4"/><circle cx="266" cy="264" r="4"/></g>
+</g>
+<path d="M72 491h1456" stroke="#906948" stroke-opacity=".22"/>
+<text x="74" y="515" font-family="Consolas,monospace" font-size="12" letter-spacing="2" fill="#806e64">YOUR METHOD · YOUR MODELS · YOUR RESEARCH</text>
 </svg>
