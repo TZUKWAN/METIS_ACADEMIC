@@ -40,6 +40,18 @@
       },
       "versions": [
         {
+          "version": "1.7.1",
+          "publishTimestamp": 1794638184,
+          "engines": {
+            "dsh": ">=0.2.2-rc.1 <0.2.3-0 || >=0.2.2 <0.3.0-0"
+          },
+          "source": {
+            "type": "git",
+            "url": "https://github.com/TZUKWAN/METIS_ACADEMIC",
+            "commit": "cf0eed38777138a9f264e416a594021426abcfad"
+          }
+        },
+        {
           "version": "1.7.0",
           "publishTimestamp": 1794545773,
           "engines": {
