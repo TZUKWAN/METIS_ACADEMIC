@@ -33,13 +33,13 @@ const built=await esbuild.build({absWorkingDir:repo,entryPoints:[join(repo,'port
 const js=built.outputFiles.find(file=>file.path.endsWith('.js')).text.replace(/<\/script/gi,'<\\/script'),css=built.outputFiles.find(file=>file.path.endsWith('.css'))?.text||'';
 put('ui/index.html','<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>METIS · 离子回路研究工作台</title><style>'+css+'</style></head><body><div id="root"></div><script>/*METIS_BOOT*/</script><script>'+js+'</script></body></html>');
 const description='与 AI 共建研究流程，按步骤调用成熟技能，在离子回路现场追踪真实研究与交付。';
-put('plugin.json',{$schema:'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json',name:'metis',version:'1.7.0',description});
+put('plugin.json',{$schema:'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json',name:'metis',version:'1.7.1',description});
 const codexMcp={mcpServers:{metis:{type:'stdio',command:'node',args:['${PLUGIN_ROOT}/runtime/server.mjs'],env:{METIS_HOST:'codex'}}}};
 put('mcp.json',{$schema:'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json',...codexMcp});put('.mcp-codex.json',codexMcp);
 const zcodeMcp={mcpServers:{metis:{command:'node',args:['${ZCODE_PLUGIN_ROOT}/runtime/server.mjs'],env:{METIS_HOST:'zcode'}}}};put('.mcp-zcode.json',zcodeMcp);
-put('.codex-plugin/plugin.json',{name:'metis',version:'1.7.0',description,license:'Apache-2.0',skills:'./skills/',mcpServers:'./.mcp-codex.json',requires_local_executor:true,interface:{displayName:'METIS',shortDescription:'AI 流程编排与可视化科研工作台',brandColor:'#e9ad71',logo:'./assets/metis.svg',composerIcon:'./assets/metis.svg',defaultPrompt:'使用 METIS 打开研究工作台'}});
-put('.zcode-plugin/plugin.json',{name:'metis',version:'1.7.0',description,license:'Apache-2.0',skills:'./skills/',commands:'./commands/',mcpServers:'./.mcp-zcode.json'});
-put('package.json',{name:'metis-host-plugin',version:'1.7.0',private:true,type:'module',license:'Apache-2.0',engines:{node:'>=22.19'},scripts:{start:'node runtime/server.mjs'}});
+put('.codex-plugin/plugin.json',{name:'metis',version:'1.7.1',description,license:'Apache-2.0',skills:'./skills/',mcpServers:'./.mcp-codex.json',requires_local_executor:true,interface:{displayName:'METIS',shortDescription:'AI 流程编排与可视化科研工作台',brandColor:'#e9ad71',logo:'./assets/metis.svg',composerIcon:'./assets/metis.svg',defaultPrompt:'使用 METIS 打开研究工作台'}});
+put('.zcode-plugin/plugin.json',{name:'metis',version:'1.7.1',description,license:'Apache-2.0',skills:'./skills/',commands:'./commands/',mcpServers:'./.mcp-zcode.json'});
+put('package.json',{name:'metis-host-plugin',version:'1.7.1',private:true,type:'module',license:'Apache-2.0',engines:{node:'>=22.19'},scripts:{start:'node runtime/server.mjs'}});
 put('assets/metis.svg',readFileSync(join(repo,'dsh-plugin/metis-mode/icon.svg'),'utf8'));
 copyTree(join(repo,'portable/plugin-content'),dest);
 const notices=['# Third-party notices\n\nMETIS 自写跨宿主代码采用 Apache-2.0。现有 METIS 技能、上游目录和下载资源分别保留自身许可。下载和安装不等于获得商业或再分发授权。\n'];
@@ -59,8 +59,8 @@ for(const [name,{directory,pkg}] of [...dependencies].sort(([a],[b])=>a.localeCo
 put('THIRD_PARTY_NOTICES.md',notices.join('\n\n'));
 const marketplaceRoot=dirname(dest);mkdir(join(marketplaceRoot,'.agents/plugins'));mkdir(join(marketplaceRoot,'.zcode-plugin'));
 const market={name:'metis-local',interface:{displayName:'METIS'},plugins:[{name:'metis',source:{source:'local',path:'./metis'},policy:{installation:'AVAILABLE',authentication:'ON_USE'},category:'Productivity'}]};writeFileSync(join(marketplaceRoot,'.agents/plugins/marketplace.json'),JSON.stringify(market,null,2)+'\n');
-const zcodeMarket={name:'metis-local',owner:{name:'METIS'},metadata:{description},plugins:[{name:'metis',source:'./metis',description,version:'1.7.0'}]};
+const zcodeMarket={name:'metis-local',owner:{name:'METIS'},metadata:{description},plugins:[{name:'metis',source:'./metis',description,version:'1.7.1'}]};
 writeFileSync(join(marketplaceRoot,'.zcode-plugin/marketplace.json'),JSON.stringify(zcodeMarket,null,2)+'\n');writeFileSync(join(marketplaceRoot,'marketplace.json'),JSON.stringify(zcodeMarket,null,2)+'\n');
 const files=[];function inventory(directory){for(const entry of readdirSync(directory,{withFileTypes:true})){const path=join(directory,entry.name);if(entry.isDirectory())inventory(path);else if(path!==join(dest,'BUILD.json'))files.push({path:relative(dest,path).replaceAll('\\','/'),bytes:statSync(path).size,sha256:sha(readFileSync(path))});}}inventory(dest);
-put('BUILD.json',{version:'1.7.0',builtAt:new Date().toISOString(),catalogHash:pointer.catalogHash,catalogSkills:catalog.entries.length,dependencies:[...dependencies].map(([name,{pkg}])=>({name,license:pkg.license})),reusedDshModules:[...sources].map(file=>({path:relative(repo,file).replaceAll('\\','/'),sha256:sha(readFileSync(file))})),files});
+put('BUILD.json',{version:'1.7.1',builtAt:new Date().toISOString(),catalogHash:pointer.catalogHash,catalogSkills:catalog.entries.length,dependencies:[...dependencies].map(([name,{pkg}])=>({name,license:pkg.license})),reusedDshModules:[...sources].map(file=>({path:relative(repo,file).replaceAll('\\','/'),sha256:sha(readFileSync(file))})),files});
 console.log(JSON.stringify({directory:dest,files:files.length,bytes:files.reduce((n,f)=>n+f.bytes,0),catalogSkills:catalog.entries.length,uiBytes:Buffer.byteLength(js)+Buffer.byteLength(css),dshSourceMutations:0}));

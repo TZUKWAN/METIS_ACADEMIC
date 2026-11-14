@@ -8,7 +8,7 @@ export function spatialNodeSize(node){
   if(['artifact','delivery'].includes(node?.kind))return {w:3.8,h:2.35,depth:.38};
   return {w:4.9,h:2.85,depth:.42};
 }
-export function researchChildPosition(parent,index){const row=Math.floor(index/3),lane=index%3;return{x:parent.x+(lane-1)*5.65,y:parent.y-4.5-row*3.3,z:parent.z+7+(parent.layer==='control'||lane===1?0:.6)+row*1.2,yaw:-(lane-1)*.06};}
+export function researchChildPosition(parent,index,count=6){const row=Math.floor(index/3),lane=index%3,offset=lane-(Math.min(3,count-row*3)-1)/2;return{x:parent.x+offset*5.65,y:parent.y-6.2-row*3.3,z:parent.z+7+(parent.layer==='control'||offset===0?0:.6)+row*1.2,yaw:-offset*.06};}
 export function layoutResearchSpace(nodes){
   const s=RESEARCH_SPACE,steps=nodes.filter(node=>node.kind==='step'),columns=Math.min(Math.max(1,steps.length),Math.max(1,Math.ceil(Math.sqrt(steps.length*1.4)))),rows=Math.max(1,Math.ceil(steps.length/columns));
   const positions=new Map(),stations=[],stepGroups=new Map(steps.map(node=>[node.stepId,{stage:node,calls:[],files:[]}]));
@@ -26,7 +26,7 @@ export function layoutResearchSpace(nodes){
     const station={id:node.stepId,index,title:node.title,x,z,row,column,width:s.deckWidth,depth:s.deckDepth,levels:1,stageY,callCount:node.callCount??group.calls.length,fileCount:node.artifactCount??group.files.length};
     stations.push(station);set(node,{x,y:stageY,z,row,column,level:0,stationId:node.stepId,layer:'stage',yaw:(.5-t)*.14});
     group.calls.forEach((call,i)=>{
-      set(call,{...researchChildPosition({x,y:stageY,z,layer:'stage'},i),row,column,level:0,stationId:node.stepId,layer:'activity'});
+      set(call,{...researchChildPosition({x,y:stageY,z,layer:'stage'},i,group.calls.length),row,column,level:0,stationId:node.stepId,layer:'activity'});
     });
     group.files.forEach((file,i)=>{
       const shelf=Math.floor(i/3),lane=i%3;
@@ -35,7 +35,7 @@ export function layoutResearchSpace(nodes){
   });
   const first=stations[0]||{x:0,z:0,stageY:8},hub={x:first.x-7.7,y:first.stageY+2,z:first.z-2.5};
   for(const node of nodes.filter(node=>node.kind==='engine'))set(node,{...hub,row:rows,column:-1,level:0,stationId:null,layer:'control',yaw:.05});
-  unassigned.forEach((node,index)=>set(node,{...researchChildPosition({...hub,layer:'control'},index),row:rows,column:-1,level:0,stationId:null,layer:'activity'}));
+  unassigned.forEach((node,index)=>set(node,{...researchChildPosition({...hub,layer:'control'},index,unassigned.length),row:rows,column:-1,level:0,stationId:null,layer:'activity'}));
   for(const node of nodes.filter(node=>node.hero))set(node,{x:Math.max(...stations.map(station=>station.x),0)-1.5,y:Math.max(...stations.map(station=>station.stageY),8)+9.6,z:Math.max(...stations.map(station=>station.z),0)+10,row:-1,column:-1,level:0,stationId:node.stepId,layer:'result',yaw:-.07});
   const bounds={minX:Infinity,maxX:-Infinity,minY:Infinity,maxY:-Infinity,minZ:Infinity,maxZ:-Infinity};
   for(const node of nodes){const point=positions.get(node.id),size=spatialNodeSize(node);if(!point)throw new Error('Spatial node has no actual owner position: '+node.id);bounds.minX=Math.min(bounds.minX,point.x-size.w/2-1);bounds.maxX=Math.max(bounds.maxX,point.x+size.w/2+1);bounds.minY=Math.min(bounds.minY,point.y-size.h/2-1);bounds.maxY=Math.max(bounds.maxY,point.y+size.h/2+1);bounds.minZ=Math.min(bounds.minZ,point.z-1);bounds.maxZ=Math.max(bounds.maxZ,point.z+1);}

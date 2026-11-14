@@ -15,10 +15,13 @@ test('large histories stay in a bounded 3D family with paged children rather tha
   for(const node of graph.nodes){const size=networkEntitySize(node),p=graph.positions.get(node.id);assert.ok(size.w>0&&size.h>0);assert.ok(['x','y','z','yaw'].every(key=>Number.isFinite(p[key])));}
   for(const node of children)assert.equal(graph.positions.get(node.id).stationId,'s0');
 });
-test('appending an actual action, file or status change never moves old cards',()=>{
+test('status and files preserve positions; new actions preserve the trunk and recenter only their own row',()=>{
   const model=fixture();model.activities=[{callId:'one',stepId:'s0',tool:'read',kind:'read',status:'running'}];const a=buildResearchNetwork(model);
-  model.activities[0]={...model.activities[0],status:'succeeded',resultPreview:'真实读取回执'};model.nodes[0].artifacts=[{index:0,name:'真实文件.md',path:'D:/真实文件.md',availability:'file'}];model.activities.push({callId:'two',stepId:'s0',tool:'pwsh',kind:'command',status:'running'});
-  const b=buildResearchNetwork(model);for(const [id,position]of a.positions){const next=b.positions.get(id);for(const key of ['x','y','z','yaw','stationId','layer'])assert.equal(next[key],position[key],id+' '+key);}assert.ok(b.byId.has('call:two'));assert.equal(b.counts.calls,2);
+  model.activities[0]={...model.activities[0],status:'succeeded',resultPreview:'真实读取回执'};model.nodes[0].artifacts=[{index:0,name:'真实文件.md',path:'D:/真实文件.md',availability:'file'}];
+  const statusOnly=buildResearchNetwork(model,{expandedStepId:'s0'});for(const [id,position]of a.positions)for(const key of ['x','y','z','yaw','row','column','level','stationId','layer'])assert.equal(statusOnly.positions.get(id)[key],position[key],id+' unchanged by status/file '+key);
+  model.activities.push({callId:'two',stepId:'s0',tool:'pwsh',kind:'command',status:'running'});
+  const b=buildResearchNetwork(model);for(const [id,position]of a.positions){const next=b.positions.get(id);if(a.byId.get(id).origin!=='activity')for(const key of ['x','y','z','yaw','stationId','layer'])assert.equal(next[key],position[key],id+' '+key);else{assert.equal(next.stationId,position.stationId);assert.equal(b.byId.get(id).childIndex,a.byId.get(id).childIndex);assert.equal(b.byId.get(id).stepId,a.byId.get(id).stepId);}}assert.ok(b.byId.has('call:two'));assert.equal(b.counts.calls,2);
+  const parent=b.positions.get('step:s0'),one=b.positions.get('call:one'),two=b.positions.get('call:two');assert.ok(one.x<two.x);assert.ok(Math.abs((one.x+two.x)/2-parent.x)<1e-8);assert.ok(one.y<parent.y&&two.y<parent.y);
   assert.equal(b.byId.get('call:one').active,false);assert.equal(b.byId.get('call:two').active,true);
 });
 test('one tool call is one visible card; ownership and receipts remain inspectable',()=>{

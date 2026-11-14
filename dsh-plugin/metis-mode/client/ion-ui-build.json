@@ -1,14 +1,15 @@
 {
-  "themeSha256": "d6f67a27d4296b0ac68244a87f76f13d6225531229e8d27051f9f3ad564b5b92",
-  "bytes": 127122,
+  "themeSha256": "9dae1d2032ce41cea91dd17d4a178af670656a24a931f983ba011b71884f1425",
+  "bytes": 158545,
   "sheets": {
-    "ion-workbench.css": "70d77e52e7482b72a24eff2e8990cf5a89c5bfe1cacff6fd6b2c05da4d300d9b",
-    "ion-refinement.css": "1b0841fe724093bb56a41544fa83bde7eff20bf24d5c889844ac9462541d00bd"
+    "ion-workbench.css": "655d5f11ace16ca2a1931d8425614d2c08fd72355a7f23fa0532a8302d86df48",
+    "ion-refinement.css": "1f38e60cf15c19199b074689856a51b53ed435ebae01b5434c6b4dbfeff51c78",
+    "ion-cockpit.css": "b63ec2fd95865a7ae516fec460c8d1677b5d4897ff8a0ea64602df4782d697d7"
   },
   "sources": {
-    "client.js": "62ff204a3a6a4f5565c85396aedc465fd3a1377b69f5f441236cd2d4cb55e677",
-    "composer.js": "de5192244b012410ca6ad883d2aef37f8e0fd7e336c42080b3c984980a76ceac",
-    "documents.js": "8c070364ef7eb8a040ef34838b9806380fa75912b9adc05ce3f990aa25be7f21"
+    "client.js": "d6c132ae9cf94bea3d371ede551e88178d0172d7a086725dd44e2f50059888d3",
+    "composer.js": "dc3300b604b650aaf9f7fb0d85f5c9eb8e535aeced93b573afa817d86b445057",
+    "documents.js": "6e3f4e800bd50f561e9b19a17105a259fc0975d8cf84e1e1376b7da698f927cc"
   },
   "browserLoading": "self-contained assets; no new resource endpoint"
 }

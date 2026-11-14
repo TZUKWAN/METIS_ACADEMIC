@@ -58,7 +58,7 @@ await new Promise(resolve=>{if(address)resolve();else http.once('listening',reso
 dispatch=createDispatcher(core,{open:()=>({url:address+'/?token='+token,host:core.session,configurationHome:process.env.DSH_HOME,independentReview:{backend:'codex-native',requires:'Installed and signed-in local Codex; readonly independent check, primary host model unchanged'},message:'支持 MCP Apps 时可直接使用内嵌界面；否则打开此本机链接。原生宿主工具权限保持不变。达标核验使用本机 Codex 独立只读会话。'}),check:args=>native.check(args)});
 native=new NativeSessions(core,{tools:definitions.filter(t=>t.name!=='metis_open'),invoke:dispatch});
 
-const mcp=new Server({name:'metis',version:'1.7.0'},{capabilities:{tools:{},resources:{}}});
+const mcp=new Server({name:'metis',version:'1.7.1'},{capabilities:{tools:{},resources:{}}});
 const appTool={name:'metis_ui_request',description:'METIS 工作台专用桥接接口。',inputSchema:{type:'object',properties:{method:{type:'string'},args:{type:'object'}},required:['method'],additionalProperties:false},_meta:{ui:{resourceUri:uiUri,visibility:['app']}}};
 mcp.setRequestHandler(ListToolsRequestSchema,()=>({tools:[...definitions.map(t=>t.name==='metis_open'?{...t,_meta:{ui:{resourceUri:uiUri},'openai/outputTemplate':uiUri}}:t),appTool]}));
 mcp.setRequestHandler(CallToolRequestSchema,async({params})=>{

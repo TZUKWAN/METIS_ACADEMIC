@@ -28,7 +28,7 @@ export class CodexRpc extends EventEmitter{
     });
     const terminate=error=>{this.closed=true;for(const {reject,timer} of this.requests.values()){clearTimeout(timer);reject(error);}this.requests.clear();this.emit('closed',error);};
     this.process.once('error',error=>terminate(error));this.process.once('exit',(code)=>terminate(fail('Codex 原生连接已结束（'+code+'）'+(stderr?'：'+stderr.replace(/Bearer\s+\S+/gi,'Bearer [redacted]'):''),503)));
-    const result=await this.call('initialize',{clientInfo:{name:'metis',title:'METIS',version:'1.7.0'},capabilities:{experimentalApi:true}},15000);this.notify('initialized',{});return result;
+    const result=await this.call('initialize',{clientInfo:{name:'metis',title:'METIS',version:'1.7.1'},capabilities:{experimentalApi:true}},15000);this.notify('initialized',{});return result;
   }
   call(method,params={},timeout=45000){
     if(this.closed)return Promise.reject(fail('Codex 连接已关闭',503));const id=++this.id;

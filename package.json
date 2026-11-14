@@ -1,6 +1,6 @@
 {
   "name": "metis-academic-preset",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "private": false,
   "description": "METIS：与 AI 共建研究流程，可视化跟踪执行，逐步调用科研技能，在同一工作台审阅和修改成果。",
   "license": "Apache-2.0",
@@ -33,7 +33,7 @@
   ],
   "scripts": {
     "build": "python dsh-plugin/metis-unified/prepare-ui.py && node dsh-plugin/metis-unified/prepare-ion.mjs && node dsh-plugin/metis-unified/prepare-host.mjs && python dsh-plugin/metis-unified/prepare-client.py",
-    "test": "node --test dsh-plugin/metis-mode/tests/research-network.test.mjs dsh-plugin/metis-mode/tests/circuit-model.test.mjs dsh-plugin/metis-mode/tests/project-scene.test.mjs dsh-plugin/metis-preset/tests/step-activity.test.mjs dsh-plugin/metis-mode/client/tests/research-hierarchy.test.mjs dsh-plugin/metis-mode/client/tests/research-space.test.mjs",
+    "test": "node --test dsh-plugin/metis-mode/tests/research-network.test.mjs dsh-plugin/metis-mode/tests/circuit-model.test.mjs dsh-plugin/metis-mode/tests/project-scene.test.mjs dsh-plugin/metis-preset/tests/step-activity.test.mjs dsh-plugin/metis-mode/client/tests/research-hierarchy.test.mjs dsh-plugin/metis-mode/client/tests/research-space.test.mjs dsh-plugin/metis-mode/client/tests/research-navigation.test.mjs dsh-plugin/metis-mode/client/tests/research-cockpit.test.mjs dsh-plugin/metis-mode/client/tests/research-art-direction.test.mjs dsh-plugin/metis-mode/client/tests/research-connection-motion.test.mjs dsh-plugin/metis-mode/client/tests/research-instrumentation.test.mjs",
     "build:hosts": "node tools/build-host-plugin.mjs",
     "test:hosts": "node --test portable/tests/core.test.mjs portable/tests/protocol.test.mjs",
     "prepack": "python dsh-plugin/metis-unified/prepare-ui.py && node dsh-plugin/metis-unified/prepare-ion.mjs && node dsh-plugin/metis-unified/prepare-host.mjs && python dsh-plugin/metis-unified/prepare-client.py"

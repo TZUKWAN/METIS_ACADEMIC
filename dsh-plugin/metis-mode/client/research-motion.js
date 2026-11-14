@@ -14,7 +14,7 @@ export function researchFocusDistance(width,height,size={w:6.6,h:2.8}){
 }
 /** A fast one-way tape of new, factual text. An empty queue never loops old text. */
 export class ResearchTicker{
-  constructor(){this.reset('');}
+  constructor(maxCells=42){this.maxCells=maxCells;this.reset('');}
   reset(key){this.key=key;this.lines=[];this.sequence=0;this.seen=0;this.position=0;this.lastTime=0;this.revision=0;this.source=null;}
   append(value,source){
     if(!['stdout','stderr','log','assistant','receipt','status'].includes(source)||typeof value!=='string'||!value)return;
@@ -25,7 +25,7 @@ export class ResearchTicker{
       if(!current||current.closed){current={id:++this.sequence,text:'',source,cells:0,closed:false};this.lines.push(current);}
       if(character==='\n'){current.closed=true;continue;}
       const cells=character.codePointAt(0)>255?2:1;
-      if(current.cells+cells>42){current.closed=true;current={id:++this.sequence,text:'',source,cells:0,closed:false};this.lines.push(current);}
+      if(current.cells+cells>this.maxCells){current.closed=true;current={id:++this.sequence,text:'',source,cells:0,closed:false};this.lines.push(current);}
       current.text+=character;current.cells+=cells;
     }
     while(this.lines.length>160){this.lines.shift();this.position=Math.max(0,this.position-1);}
@@ -46,6 +46,7 @@ export class ResearchTicker{
 }
 export function researchStreamScope(summary,live){
   if(!summary)return null;
+  if(summary.callId){const root=summary.rootCallId||summary.callId;return{key:'action:'+summary.callId,matches:entry=>entry.callId===summary.callId||entry.rootCallId===root};}
   // One step is one continuous console. A shell finishing or the next model
   // attempt starting must not discard its last stdout / environment receipt.
   const stepId=summary.stepId||live?.active?.stepId;
@@ -81,4 +82,20 @@ export function researchLiveSummary(graph,model){
   if(!running&&!waiting&&call?.feedback?.length)lines.push(safe(call.feedback[0]).slice(0,240));
   if(!lines.length&&stage?.title)lines.push(stage.title);
   return {nodeId:node.id,stepId:node.stepId,title:waiting?'等待后台回执':running?(call.label||'执行中'):'研究助手执行中',status:waiting?'waiting':running?'running':'processing',lines,key:[node.id,call?.status||model?.phase,...lines].join('|')};
+}
+/** The inspected action owns its console, even while another step is running. */
+export function researchDisplaySummary(graph,model){
+  const view=graph?.presentation;if(!view?.expanded)return null;
+  if(view.level!=='action'){
+    const active=researchLiveSummary(graph,model);
+    if(!active||(active.stepId||null)!==(view.stageId||null))return null;
+    return model?.phase==='processing'&&model.live?.active?.kind==='model'?{...active,nodeId:view.stageId?'step:'+view.stageId:'engine'}:active;
+  }
+  const node=graph.byId.get(view.selectedId);if(node?.origin!=='activity')return null;
+  const call=node.call||{},lines=[];
+  if(call.resultPreview)lines.push(call.resultPreview);
+  if(call.error)lines.push(call.error);
+  if(call.feedback?.length)lines.push(...call.feedback);
+  if(!lines.length)lines.push(call.tool||node.title,call.target||'',node.statusLabel||'');
+  return{nodeId:node.id,stepId:node.stepId,callId:node.callId,rootCallId:call.rootCallId||node.callId,title:node.title,status:node.status,lines:lines.filter(Boolean),key:[node.id,node.status,...lines].join('|')};
 }

@@ -1,6 +1,7 @@
 /** Full-viewport circuit field. Camera rays retain world-space detail without a board edge. */
 import * as THREE from 'three';
 import {ionActivity} from './ion-art-direction.js';
+import {cockpitSkyShader} from './ion-cockpit-shader.js';
 const vertex=[
  'varying vec2 vUv;',
  'void main(){',
@@ -14,6 +15,9 @@ const fragment=[
  'uniform mat4 uClipToBoard;',
  'uniform float uAspect;',
  'uniform float uSpatial;',
+ 'uniform float uPanorama;',
+ 'uniform vec2 uResolution;',
+ 'uniform vec2 uHeading;',
  'uniform float uTime;',
  'uniform float uActivity;',
  'uniform vec2 uPointer;',
@@ -21,9 +25,11 @@ const fragment=[
  'uniform vec2 uPulse;',
  'uniform float uPulseAge;',
  'float hash21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}',
+ cockpitSkyShader,
  // Fade unresolved detail rather than turning every sub-pixel line fully on.
  'float rule(float distance,float width){float footprint=fwidth(distance);return (1.0-smoothstep(width,width+max(footprint,.001),distance))*(1.0-smoothstep(.08,.35,footprint));}',
  'void main(){',
+ 'if(uPanorama>.999){gl_FragColor=vec4(cockpitSky(vUv,uPointer,uTime,uAspect,uHeading),1.);return;}',
  'vec2 ndc=vUv*2.-1.;',
  'vec4 near4=uClipToBoard*vec4(ndc,-1.,1.);',
  'vec4 far4=uClipToBoard*vec4(ndc,1.,1.);',
@@ -75,21 +81,23 @@ const fragment=[
  'base+=vec3(.19,.095,.040)*halo*(.045+uActivity*.065)*mix(1.,.3,uSpatial);',
  'base+=vec3(.30,.15,.075)*pulse*(.08+etch*.9+bus*.32)*restraint;',
  'base+=grain*mix(.002,.0005,uSpatial);',
+ 'if(uPanorama>.001)base=mix(base,cockpitSky(vUv,uPointer,uTime,uAspect,uHeading),uPanorama);',
  'gl_FragColor=vec4(base,1.);',
  '}'
 ].join('\n');
 export function createIonAtmosphere({scene,board,host}){
-  const uniforms={uClipToBoard:{value:new THREE.Matrix4()},uAspect:{value:1},uSpatial:{value:0},uTime:{value:0},uActivity:{value:.08},uPointer:{value:new THREE.Vector2()},uFocus:{value:new THREE.Vector2()},uPulse:{value:new THREE.Vector2()},uPulseAge:{value:100}};
+  const uniforms={uClipToBoard:{value:new THREE.Matrix4()},uAspect:{value:1},uSpatial:{value:0},uPanorama:{value:0},uResolution:{value:new THREE.Vector2()},uHeading:{value:new THREE.Vector2()},uTime:{value:0},uActivity:{value:.08},uPointer:{value:new THREE.Vector2()},uFocus:{value:new THREE.Vector2()},uPulse:{value:new THREE.Vector2()},uPulseAge:{value:100}};
   const geometry=new THREE.PlaneGeometry(2,2),material=new THREE.ShaderMaterial({uniforms,vertexShader:vertex,fragmentShader:fragment,depthWrite:false,depthTest:false,toneMapped:false});
   const mesh=new THREE.Mesh(geometry,material);mesh.frustumCulled=false;mesh.renderOrder=-10000;scene.add(mesh);
   const boardInverse=new THREE.Matrix4();
-  let activity=.08,target=.08,pulseAt=-100,disposed=false;
-  host.dataset.atmosphere='viewport-circuit-v4';
+  const direction=new THREE.Vector3(),coarse=matchMedia('(pointer: coarse)').matches;
+  let activity=.08,target=.08,pulseAt=-100,disposed=false,panorama=0,skyTarget=0;
+  host.dataset.atmosphere='ion-flight-window-v1';
   return{
-    update(model,point){target=ionActivity(model);uniforms.uSpatial.value=model?.kind==='project'?1:0;if(point)uniforms.uFocus.value.set(point.x,uniforms.uSpatial.value?point.z:point.y);},
-    pointer(value){uniforms.uPointer.value.set(value.x,value.y);},
+    update(model,point){target=ionActivity(model);uniforms.uSpatial.value=model?.kind==='project'?1:0;skyTarget=model?.kind==='project'&&!model.network?.presentation.expanded?1:0;if(point)uniforms.uFocus.value.set(point.x,uniforms.uSpatial.value?point.z:point.y);},
+    pointer(value){uniforms.uPointer.value.set(coarse?0:value.x,coarse?0:value.y);},
     pulse(point,time){if(!point)return;uniforms.uPulse.value.set(point.x,uniforms.uSpatial.value?point.z:point.y);pulseAt=time;host.dataset.atmosphereImpulse=String(Number(host.dataset.atmosphereImpulse||0)+1);},
-    render(time,delta,reduced,camera){if(disposed)return;activity+=(target-activity)*Math.min(1,delta*3);uniforms.uActivity.value=activity;uniforms.uTime.value=reduced?0:time;uniforms.uPulseAge.value=reduced?100:time-pulseAt;uniforms.uAspect.value=camera.aspect;uniforms.uClipToBoard.value.copy(boardInverse.copy(board.matrixWorld).invert()).multiply(camera.matrixWorld).multiply(camera.projectionMatrixInverse);host.dataset.ambientMotion=String(!reduced);},
-    dispose(){if(disposed)return;disposed=true;scene.remove(mesh);geometry.dispose();material.dispose();delete host.dataset.atmosphere;delete host.dataset.atmosphereImpulse;delete host.dataset.ambientMotion;}
+    render(time,delta,reduced,camera){if(disposed)return;activity+=(target-activity)*Math.min(1,delta*3);panorama=reduced?skyTarget:panorama+(skyTarget-panorama)*Math.min(1,delta*4.5);uniforms.uPanorama.value=panorama;uniforms.uResolution.value.set(host.clientWidth,host.clientHeight);camera.getWorldDirection(direction);uniforms.uHeading.value.set(direction.x,direction.y);uniforms.uActivity.value=activity;uniforms.uTime.value=reduced?0:time;uniforms.uPulseAge.value=reduced?100:time-pulseAt;uniforms.uAspect.value=camera.aspect;uniforms.uClipToBoard.value.copy(boardInverse.copy(board.matrixWorld).invert()).multiply(camera.matrixWorld).multiply(camera.projectionMatrixInverse);host.dataset.ambientMotion=String(!reduced);host.dataset.panoramaBlend=panorama.toFixed(3);},
+    dispose(){if(disposed)return;disposed=true;scene.remove(mesh);geometry.dispose();material.dispose();delete host.dataset.atmosphere;delete host.dataset.atmosphereImpulse;delete host.dataset.ambientMotion;delete host.dataset.panoramaBlend;}
   };
 }

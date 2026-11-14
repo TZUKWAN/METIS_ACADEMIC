@@ -1,6 +1,6 @@
 {
-  "version": "1.7.0",
-  "builtAt": "2026-11-13T04:47:30.908Z",
+  "version": "1.7.1",
+  "builtAt": "2026-11-14T06:24:07.080Z",
   "catalogHash": "2c9657e47675078450995ec0adcc9a8d1ab89fceac6317e9822902650c26fdbf",
   "catalogSkills": 2194,
   "dependencies": [
@@ -91,7 +91,7 @@
     {
       "path": ".codex-plugin/plugin.json",
       "bytes": 581,
-      "sha256": "cee665669ad0cf1d8407a1db3d24b3144f75ef0c26ba782cc769e6d478ae947e"
+      "sha256": "f1571a1e5c447466b038c08d3e7af2da79866b28491b48baea419944c040fd37"
     },
     {
       "path": ".mcp-codex.json",
@@ -106,7 +106,7 @@
     {
       "path": ".zcode-plugin/plugin.json",
       "bytes": 292,
-      "sha256": "9c04530b57e0f4dc592570e7cd2f3ea1f803931aa9faa2b181bf15e11dac1e7d"
+      "sha256": "db30b48861c3c6a802197cb059540bf20b7b690b16bb7104de0711eeb10efb27"
     },
     {
       "path": "assets/metis.svg",
@@ -141,12 +141,12 @@
     {
       "path": "package.json",
       "bytes": 223,
-      "sha256": "3f687f82293440adfa5e407f794c6c177f5679d54b5a08c398f51f1573b6615b"
+      "sha256": "8ef7423a3dcc685051936fad12bb626863ced052dfbb5486c06108db968133d5"
     },
     {
       "path": "plugin.json",
       "bytes": 249,
-      "sha256": "0910321ce8f57203ca51a016d2ad2f377e64ad561f57003cbb18b18d99c02a19"
+      "sha256": "7bc2c1d2e6f71f86e3fb735d28536166576c5088522255ae45cc73e091836ecd"
     },
     {
       "path": "README.md",
@@ -156,7 +156,7 @@
     {
       "path": "runtime/codex.mjs",
       "bytes": 17979,
-      "sha256": "596bc37db71d837fba24d7b4a725148ce48811ee17f29d84dde11b368bbe9df1"
+      "sha256": "2d0e3b94ffc9b1d841e7c25da82afa3966ccf10417f3f49e4f832265c27da95e"
     },
     {
       "path": "runtime/core.mjs",
@@ -171,7 +171,7 @@
     {
       "path": "runtime/server.mjs",
       "bytes": 2057314,
-      "sha256": "4c4f1c087c02c343eaf438c842e7741a1338df9734c801e4803f692f4f3e1918"
+      "sha256": "9c327cfdb4cf64fcf7bd7ef1034b2f7720760cf6ebe97ac7f25a3f93dfe99cba"
     },
     {
       "path": "runtime/tools.mjs",
@@ -11405,8 +11405,8 @@
     },
     {
       "path": "ui/index.html",
-      "bytes": 1144727,
-      "sha256": "e7f771e0af46f2e708da9e9913a1d08949feea2ea08b2d93b3f657ffcdaea2b3"
+      "bytes": 1208056,
+      "sha256": "f30f2c3dfe6c04273494706ee22a19e4e499c3d1647fa5abd604064e51e99154"
     }
   ]
 }

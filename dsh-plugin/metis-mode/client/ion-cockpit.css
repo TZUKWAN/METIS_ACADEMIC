@@ -1,0 +1,67 @@
+/* ION FLIGHT DECK — overview only. The research interior keeps its own layout. */
+.ic-workspace[data-circuit-kind=project] .ic-stage{container:metis-viewport / inline-size}
+.ic-workspace[data-circuit-kind=project] .ic-stage[data-research-level=overview]{--in-console-height:132px}
+.ic-workspace[data-circuit-kind=project] .ic-stage[data-research-level=overview] .in-projectConsole{background:linear-gradient(110deg,#0d1d2bf5,#07111cf2 70%);border-bottom-color:#7798ac3d;box-shadow:inset 0 1px #adcad611,0 10px 32px #02070c4d}
+.ic-workspace .ic-stage[data-research-level=overview] .in-projectConsole .ic-context{top:13px;left:28px;max-width:calc(100% - 290px)}
+.ic-workspace .ic-stage[data-research-level=overview] .in-projectConsole .ic-context h1{font-size:26px;font-weight:600;line-height:1.3;letter-spacing:-.025em;margin:6px 0 2px;max-width:640px}
+.ic-workspace .ic-stage[data-research-level=overview] .in-projectConsole .ic-metrics{display:none}
+.ic-workspace .ic-stage[data-research-level=overview] .in-projectConsole .ic-cameraTools{top:23px;right:24px}
+.ic-stage[data-research-level=overview] .in-consoleStrip{height:43px;left:28px;right:24px;border-top-color:#799eaf1c}
+.ic-stage[data-research-level=overview] .in-consoleSteps{gap:5px}
+.ic-workspace .ic-stage[data-research-level=overview] .in-consoleSteps .in-stageRoot{border-radius:2px;border-color:#8bafbd35;background:linear-gradient(135deg,#203a492a,#0815224d);min-height:25px;height:25px}
+.ic-workspace[data-circuit-kind=project] .ic-stage[data-research-level=overview] .ic-statusRail{background:linear-gradient(110deg,#112432f8,#081422fa);border-top-color:#83aeb540}
+.in-flightDeck{position:absolute;inset:var(--in-console-height) 0 var(--in-status-height);z-index:1;overflow:hidden;pointer-events:none;contain:layout style paint;color:#b3c8d2}
+.in-flightDeck::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#06121b66,transparent 19%,transparent 81%,#06121b66);pointer-events:none}
+.in-canopy{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.in-canopySolid{fill:#152b3ccc;stroke:#7e9ca935;stroke-width:.5}
+.in-canopyTrace{fill:none;stroke:#91b3bf6b;stroke-width:.8;vector-effect:non-scaling-stroke}
+.in-canopyCurrent{fill:none;stroke:#dfb784ba;stroke-width:1.2;stroke-dasharray:28 1380;animation:in-canopy-current 16s linear infinite;vector-effect:non-scaling-stroke}
+.in-canopyReticle{fill:none;stroke:#b1cdd783;stroke-width:.8;vector-effect:non-scaling-stroke}
+.in-flightHeading{position:absolute;top:29px;left:25%;right:25%;display:flex;align-items:center;justify-content:center;gap:15px;white-space:nowrap;font:8px/1.4 "Cascadia Code",Consolas,"Microsoft YaHei UI",monospace;letter-spacing:.12em;color:#b4cad1a6}
+.in-flightHeading>i{height:1px;flex:1;max-width:90px;background:linear-gradient(90deg,#9abcc319,#adc9cc77,#9abcc319)}
+.in-flightPort,.in-flightStarboard{position:absolute;top:clamp(104px,17%,150px);width:144px;box-sizing:border-box;max-height:calc(100% - 190px);pointer-events:none}
+.in-flightPort{left:32px;padding-right:13px;border-right:1px solid #8cb3c029}
+.in-flightStarboard{right:32px;padding-left:14px;border-left:1px solid #8cb3c029;width:150px}
+.in-flightEyebrow{display:block;color:#c1ac8f;font:8px/1.5 "Cascadia Code",Consolas,"Microsoft YaHei UI",monospace;letter-spacing:.07em;white-space:nowrap}
+.in-missionDial{position:relative;width:128px;height:128px;margin:18px 0 0}
+.in-missionDial>svg{width:100%;height:100%;overflow:visible}
+.in-dialTicks{stroke:#829ba85c;stroke-width:.55}.in-dialInner{fill:none;stroke:#87a8b81a;stroke-width:.65}
+.in-missionDial>svg>path{fill:none;stroke:#88b6c33d;stroke-width:2.3;stroke-linecap:butt}
+.in-missionDial>svg>path[data-status=submitted]{stroke:#a9cebcdd;stroke-width:2.6}
+.in-missionDial>svg>path[data-active=true]{stroke:#f1c185;stroke-width:3;stroke-dasharray:12 3;animation:in-dial-executing 3.5s linear infinite}
+.in-missionDial>div{position:absolute;inset:37px 0 auto;text-align:center;line-height:1;white-space:nowrap}
+.in-missionDial strong{font:300 32px/1 Consolas,monospace;color:#e0d5bf;letter-spacing:-.06em}.in-missionDial small{font:12px/1 Consolas,monospace;color:#789aab;margin-left:2px}
+.in-missionDial>div>span{display:block;font:8px/1.6 "Microsoft YaHei UI",sans-serif;color:#7996a7;letter-spacing:.06em;margin-top:9px}
+.in-flightPhase{font-size:9px;line-height:1.6;color:#adbec8;display:flex;align-items:center;justify-content:center;gap:6px;margin:0 0 20px}
+.in-flightPhase>i{height:3px;width:3px;background:#91b8c1;border-radius:50%}.in-flightPhase[data-active=true]>i{background:#e3b27a;box-shadow:0 0 7px #ebae6759}
+.in-flightReadouts{margin:0;padding:11px 0;border-top:1px solid #8ab2c22b;border-bottom:1px solid #8ab2c22b}
+.in-flightReadouts>div{display:flex;align-items:baseline;justify-content:space-between;gap:12px;min-height:34px}.in-flightReadouts dt{font-size:9px;color:#819caa}.in-flightReadouts dd{margin:0;font:18px/1.5 Consolas,monospace;color:#c4d5d8;letter-spacing:-.03em}
+.in-flightOwner,.in-flightProject{pointer-events:auto;display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #8eb5c12e;padding:13px 0;background:transparent;color:#bacbd2;cursor:pointer;transition:color 180ms,border-color 180ms}
+.in-flightOwner small{display:block;font-size:8px;font-weight:400;color:#b7a389;margin-bottom:6px}.in-flightOwner strong{font-size:10px;line-height:1.6;font-weight:500;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.in-flightOwner:hover,.in-flightProject:hover{color:#efd3ac;border-color:#d4b27b}.in-flightProject{font-size:9px;color:#8dabb9;padding:11px 0}.in-flightProject b{float:right;font:11px Consolas,monospace;color:#c8b695}
+.in-flightIdle{font-size:9px;line-height:1.9;letter-spacing:.02em;color:#6e8c9f;margin:14px 0 0}
+.in-flightEvents,.in-flightFiles{list-style:none;margin:13px 0 0;padding:0}
+.in-flightEvents>li{position:relative;border-bottom:1px solid #8cb3c02b;padding-left:10px}
+.in-flightEvents>li::before{content:"";position:absolute;left:0;top:18px;height:3px;width:3px;background:#7da7b8}
+.in-flightEvents>li[data-status=running]::before{background:#e8b67b;box-shadow:0 0 9px #f0b36a66}.in-flightEvents>li[data-status=failed]::before,.in-flightEvents>li[data-status=refused]::before{background:#d99b8b}
+.in-flightEvents button,.in-flightFiles button{pointer-events:auto;display:flex;flex-direction:column;align-items:flex-start;gap:6px;width:100%;min-width:0;text-align:left;border:0;background:transparent;padding:14px 0;cursor:pointer;transition:color 180ms,transform 180ms}
+.in-flightEvents button>span{font:8px/1.3 "Microsoft YaHei UI",sans-serif;color:#a69781}.in-flightEvents button>strong{font-size:10px;line-height:1.5;font-weight:500;color:#adc3cf;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}.in-flightEvents button>small{font-size:8px;color:#617f92}
+.in-flightEvents button:hover{transform:translateX(-2px)}.in-flightEvents button:hover>strong{color:#efcf9f}
+.in-flightOutputTitle{margin-top:25px}.in-flightFiles>li{border-bottom:1px solid #8cb3c02b}.in-flightFiles button{padding:12px 0;gap:5px}.in-flightFiles button>span{font:8px/1.4 Consolas,monospace;letter-spacing:.08em;color:#8eb5a7}.in-flightFiles button>strong{font-size:10px;line-height:1.6;color:#b3ccbf;font-weight:400;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.in-flightFiles button:hover>strong{color:#f0d4a8}
+.in-flightDeck button:focus-visible{outline:1px solid #e2c7a2;outline-offset:4px}
+.in-flightKeel{position:absolute;bottom:35px;left:20%;right:20%;display:flex;align-items:center;justify-content:center;gap:12px;font:8px/1.4 "Cascadia Code",Consolas,"Microsoft YaHei UI",monospace;letter-spacing:.10em;color:#6e929f;white-space:nowrap}
+.in-flightKeel>i{height:4px;width:4px;transform:rotate(45deg);border:1px solid #b29c72}
+[data-ion-craft="v2"] .ion-world[data-network-view=overview] .in-cardWrap>.in-entity[data-kind=step] .in-labelBody{background:radial-gradient(ellipse at 10% 0,#b7e8f11c,transparent 60%),linear-gradient(145deg,#152e40ed,#081622f7);border-color:#94bbc56b;box-shadow:inset 0 1px #d4edf129,inset 0 -1px #142c3da6,0 12px 28px #01060b55;padding:13px 16px;gap:5px}
+[data-ion-craft="v2"] .ion-world[data-network-view=overview] .in-cardWrap>.in-entity[data-kind=step] strong{font-size:28px;line-height:1.15;font-weight:550;max-width:97%;min-height:32px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;letter-spacing:-.015em}
+[data-ion-craft="v2"] .ion-world[data-network-view=overview] .in-cardWrap>.in-entity[data-kind=step] .in-nodeHead{font-size:10px;color:#bcaa8d}
+[data-ion-craft="v2"] .ion-world[data-network-view=overview] .in-cardWrap>.in-entity[data-kind=step] .in-nodeDetail{font-size:12px;color:#8fabbc;max-height:33px}
+[data-ion-craft="v2"] .ion-world[data-network-view=overview] .in-cardWrap>.in-entity[data-kind=step] .in-nodeMetrics{gap:13px}.ion-world[data-network-view=overview] .in-cardPorts{display:none!important}
+[data-ion-craft="v2"] .ion-world[data-network-view=overview] .in-entity[data-kind=step][data-status=submitted] .in-labelBody{border-color:#8db9aa80;background:linear-gradient(145deg,#1b3440ee,#0a1d2af7)}
+[data-ion-craft="v2"] .ion-world[data-network-view=overview] .in-entity[data-kind=step][data-active=true] .in-labelBody{border-color:#d7b185d9;background:radial-gradient(ellipse at 0 0,#c49c5b29,transparent 65%),linear-gradient(145deg,#343c40f5,#0b2331fa);box-shadow:inset 0 1px #f8d9a64d,0 0 26px #b89a4e17,0 9px 22px #01070c88}
+@keyframes in-canopy-current{to{stroke-dashoffset:-1408}}
+[data-ion-craft="v2"] .ion-world[data-network-view=overview] .in-entity[data-kind=step]::after{display:none!important}
+@keyframes in-dial-executing{to{stroke-dashoffset:-30}}
+@container metis-viewport (max-width:1050px){.in-flightPort{top:auto;left:30px;bottom:41px;max-height:90px;width:210px;display:grid;grid-template-columns:72px 1fr;gap:0 12px;border:0;padding:0}.in-flightPort>.in-flightEyebrow{grid-column:1/-1;font-size:7px}.in-missionDial{height:70px;width:70px;margin:3px 0 0;grid-column:1;grid-row:2/4}.in-missionDial>div{top:20px}.in-missionDial strong{font-size:22px}.in-missionDial small{font-size:9px}.in-missionDial>div>span{display:none}.in-flightPhase{grid-row:2;grid-column:2;justify-content:flex-start;margin:12px 0 0;font-size:9px}.in-flightReadouts,.in-flightIdle,.in-flightOwner{display:none}.in-flightProject{grid-row:3;grid-column:2;font-size:8px;padding:5px 0}.in-flightStarboard{top:auto;right:30px;bottom:46px;width:200px;max-height:90px;border:0;padding:0}.in-flightStarboard>.in-flightEyebrow:first-child,.in-flightEvents,.in-flightOutputTitle~.in-flightIdle{display:none}.in-flightOutputTitle{margin-top:0;font-size:7px}.in-flightFiles{margin-top:3px}.in-flightFiles>li:not(:first-child){display:none}.in-flightFiles button{padding:7px 0;gap:3px}.in-flightFiles button>span{font-size:7px}.in-flightFiles button>strong{max-width:200px;font-size:9px}.in-flightHeading{left:17%;right:17%;font-size:7px;gap:9px}.in-flightKeel{bottom:22px;font-size:7px}.ic-workspace .ic-stage[data-research-level=overview] .in-projectConsole .ic-context h1{font-size:22px}.ic-workspace .ic-stage[data-research-level=overview] .in-projectConsole .ic-context{left:22px}.ic-stage[data-research-level=overview] .in-consoleStrip{left:22px;right:18px}.ic-workspace .ic-stage[data-research-level=overview] .in-projectConsole .ic-cameraTools{right:18px}}
+@container metis-viewport (max-width:620px){.in-flightPort,.in-flightStarboard{display:none}.in-flightHeading{left:10%;right:10%;gap:8px;font-size:6px;top:25px}.in-flightHeading>i{max-width:30px}.in-flightKeel{left:12%;right:12%;gap:7px;font-size:6px;bottom:28px}.in-flightKeel>span:last-child{display:none}.ic-workspace .ic-stage[data-research-level=overview] .in-projectConsole .ic-context{left:15px;max-width:calc(100% - 180px)}.ic-workspace .ic-stage[data-research-level=overview] .in-projectConsole .ic-context h1{font-size:18px}.ic-stage[data-research-level=overview] .in-consoleStrip{left:15px;right:12px}.ic-workspace .ic-stage[data-research-level=overview] .in-projectConsole .ic-cameraTools{right:12px}}
+@media(prefers-reduced-motion:reduce){.in-canopyCurrent,.in-missionDial>svg>path[data-active=true]{animation:none!important}.in-flightEvents button:hover{transform:none}.in-flightDeck button{transition:none!important}}
+[data-motion-paused=true] .in-canopyCurrent,[data-motion-paused=true] .in-missionDial>svg>path[data-active=true]{animation-play-state:paused!important}

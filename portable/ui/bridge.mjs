@@ -11,7 +11,7 @@ export async function initialize(){
   if(window.__METIS_LOCAL__)return {transport:'loopback'};
   return initialization||= (async()=>{
     if(window.parent===window)throw new Error('请通过宿主 metis_open 返回的本机链接打开工作台');
-    const result=await rpc('ui/initialize',{protocolVersion:'2026-01-26',appInfo:{name:'METIS',version:'1.7.0'},appCapabilities:{availableDisplayModes:['inline','fullscreen']}},10000);
+    const result=await rpc('ui/initialize',{protocolVersion:'2026-01-26',appInfo:{name:'METIS',version:'1.7.1'},appCapabilities:{availableDisplayModes:['inline','fullscreen']}},10000);
     hostAvailable=true;window.parent.postMessage({jsonrpc:'2.0',method:'ui/notifications/initialized'},'*');return result;
   })();
 }

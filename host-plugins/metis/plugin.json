@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "metis",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "与 AI 共建研究流程，按步骤调用成熟技能，在离子回路现场追踪真实研究与交付。"
 }

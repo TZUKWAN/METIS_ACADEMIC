@@ -11,10 +11,10 @@
    {"action":"list_bundles"}
    ```
 
-3. 使用当前正式包 URL 安装/升级同一个组合包。例如 v1.7.0：
+3. 使用当前正式包 URL 安装/升级同一个组合包。例如 v1.7.1：
 
    ```json
-   {"action":"install_bundle","target":"https://github.com/TZUKWAN/METIS_ACADEMIC/releases/download/v1.7.0/metis-academic-preset.tgz","enabled":true}
+   {"action":"install_bundle","target":"https://github.com/TZUKWAN/METIS_ACADEMIC/releases/download/v1.7.1/metis-academic-preset.tgz","enabled":true}
    ```
 
    `target` 必须换成实际取得且核对过的最新正式版 URL。包名是 `metis-academic-preset`，显示名称为 METIS；不要另装旧的拆分三包，不要重复创建同名插件。

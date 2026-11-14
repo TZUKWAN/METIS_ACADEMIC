@@ -48983,7 +48983,7 @@ var CodexRpc = class extends EventEmitter {
     };
     this.process.once("error", (error2) => terminate(error2));
     this.process.once("exit", (code) => terminate(fail("Codex \u539F\u751F\u8FDE\u63A5\u5DF2\u7ED3\u675F\uFF08" + code + "\uFF09" + (stderr ? "\uFF1A" + stderr.replace(/Bearer\s+\S+/gi, "Bearer [redacted]") : ""), 503)));
-    const result = await this.call("initialize", { clientInfo: { name: "metis", title: "METIS", version: "1.7.0" }, capabilities: { experimentalApi: true } }, 15e3);
+    const result = await this.call("initialize", { clientInfo: { name: "metis", title: "METIS", version: "1.7.1" }, capabilities: { experimentalApi: true } }, 15e3);
     this.notify("initialized", {});
     return result;
   }
@@ -49461,7 +49461,7 @@ await new Promise((resolve3) => {
 });
 dispatch = createDispatcher(core, { open: () => ({ url: address + "/?token=" + token, host: core.session, configurationHome: process.env.DSH_HOME, independentReview: { backend: "codex-native", requires: "Installed and signed-in local Codex; readonly independent check, primary host model unchanged" }, message: "\u652F\u6301 MCP Apps \u65F6\u53EF\u76F4\u63A5\u4F7F\u7528\u5185\u5D4C\u754C\u9762\uFF1B\u5426\u5219\u6253\u5F00\u6B64\u672C\u673A\u94FE\u63A5\u3002\u539F\u751F\u5BBF\u4E3B\u5DE5\u5177\u6743\u9650\u4FDD\u6301\u4E0D\u53D8\u3002\u8FBE\u6807\u6838\u9A8C\u4F7F\u7528\u672C\u673A Codex \u72EC\u7ACB\u53EA\u8BFB\u4F1A\u8BDD\u3002" }), check: (args) => native.check(args) });
 native = new NativeSessions(core, { tools: definitions.filter((t) => t.name !== "metis_open"), invoke: dispatch });
-var mcp = new Server({ name: "metis", version: "1.7.0" }, { capabilities: { tools: {}, resources: {} } });
+var mcp = new Server({ name: "metis", version: "1.7.1" }, { capabilities: { tools: {}, resources: {} } });
 var appTool = { name: "metis_ui_request", description: "METIS \u5DE5\u4F5C\u53F0\u4E13\u7528\u6865\u63A5\u63A5\u53E3\u3002", inputSchema: { type: "object", properties: { method: { type: "string" }, args: { type: "object" } }, required: ["method"], additionalProperties: false }, _meta: { ui: { resourceUri: uiUri, visibility: ["app"] } } };
 mcp.setRequestHandler(ListToolsRequestSchema, () => ({ tools: [...definitions.map((t) => t.name === "metis_open" ? { ...t, _meta: { ui: { resourceUri: uiUri }, "openai/outputTemplate": uiUri } } : t), appTool] }));
 mcp.setRequestHandler(CallToolRequestSchema, async ({ params }) => {

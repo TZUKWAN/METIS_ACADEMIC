@@ -2,7 +2,7 @@
 import {RESEARCH_SPACE,layoutResearchSpace,spatialCircuitEdges,spatialNodeSize} from './research-space.js';
 import {finalResearchResult,researchArtState} from './research-art-direction.js';
 const brief=(value,max=360)=>typeof value==='string'?value.slice(0,max):'';
-const statusNames={running:'执行中',succeeded:'已完成',failed:'失败',refused:'未执行',cancelled:'已停止',interrupted:'已中断',waiting:'后台处理中',unverified:'待确认',needs_revision:'需改进',deferred:'待后台任务',recorded:'已登记'};
+const statusNames={running:'执行中',succeeded:'已完成',completed:'已完成',failed:'失败',refused:'未执行',cancelled:'已停止',interrupted:'已中断',waiting:'后台处理中',unverified:'待确认',needs_revision:'需改进',deferred:'待后台任务',recorded:'已登记'};
 export const RESEARCH_GRID=Object.freeze({columns:10,gapX:5.6,gapY:5.05,top:1.8});
 export const networkKinds={engine:'研究总览',step:'研究阶段',call:'执行动作',review:'目标核验',artifact:'交付文件',delivery:'文字交付'};
 export function networkEntitySize(node){return spatialNodeSize(node);}
@@ -23,7 +23,7 @@ export function researchCallOwners(activities,stepIds){
   }
   for(const id of calls.keys())resolve(id);return owners;
 }
-export function buildResearchNetwork(model,{scope='all',expandedStepId=null,recordPage=0,pinnedId=null,overview=false}={}){
+export function buildResearchNetwork(model,{scope='all',expandedStepId=null,recordPage=0,pinnedId=null,actionId=null,overview=false}={}){
   const nodes=[],edges=[],byId=new Map(),workflow=model?.nodes||[],steps=new Map(workflow.map(step=>[step.id,step])),artifacts=[];
   const owners=researchCallOwners(model?.activities||[],steps.keys()),localIndices=new Map();
   const add=(id,kind,title,detail,extra={},visible=true)=>{
@@ -36,7 +36,7 @@ export function buildResearchNetwork(model,{scope='all',expandedStepId=null,reco
   for(const step of workflow){
     const id='step:'+step.id,ports=[];
     if(scope==='all')for(const skill of step.skills||[])ports.push({kind:'skill',id:skill.id,title:skill.name||skill.id});
-    const stage=add(id,'step',step.title,step.purpose||step.expected,{stepId:step.id,index:step.index,origin:'workflow',status:step.status,statusLabel:step.label,active:step.active,viewed:step.viewed,skills:step.skills,loop:step.loop,ports,prohibitions:step.prohibitions,executionBrief:step.executionBrief});
+    const stage=add(id,'step',step.title,step.purpose||step.expected,{stepId:step.id,index:step.index,origin:'workflow',status:step.status,statusLabel:step.label,active:step.active,viewed:step.viewed,skills:step.skills,loop:step.loop,ports,prohibitions:step.prohibitions,executionBrief:step.executionBrief,expected:step.expected||''});
     if(step.index===0)link('engine',id,'sequence');else link('step:'+workflow[step.index-1].id,id,'sequence');
     for(const file of step.artifacts||[]){
       if(!Number.isSafeInteger(file.index)||file.index<0)continue;
@@ -73,17 +73,19 @@ export function buildResearchNetwork(model,{scope='all',expandedStepId=null,reco
   const activeId=running?'call:'+running.callId:waiting?'call:'+waiting.callId:processing?(live?.kind==='model'?(modelAnchor?'call:'+modelAnchor.callId:liveStage?'step:'+liveStage.id:'engine'):recent?'call:'+recent.callId:'step:'+current?.id):null;
   // History remains intact in byId/fullNodes. Only one small, explicitly
   // selected page is materialised around its stage; file ports stay on stages.
-  const fullNodes=nodes,activeNode=byId.get(activeId),explicitStage=steps.has(expandedStepId)?expandedStepId:null,projectScope=expandedStepId==='__project__';
-  const expanded=!overview&&!!(explicitStage||projectScope||activeId||pinnedId),stageId=projectScope?null:explicitStage||activeNode?.stepId||byId.get(pinnedId)?.stepId||null;
-  const records=fullNodes.filter(node=>node.origin==='activity'&&node.stepId===stageId),pages=Math.max(1,Math.ceil(records.length/RESEARCH_SPACE.visibleCalls)),page=Math.max(0,Math.min(pages-1,Math.trunc(Number(recordPage)||0)));
+  const fullNodes=nodes,activeNode=byId.get(activeId),requestedAction=byId.get(actionId)?.origin==='activity'?byId.get(actionId):null,explicitStage=steps.has(expandedStepId)?expandedStepId:null,projectScope=expandedStepId==='__project__';
+  const expanded=!overview&&!!(explicitStage||projectScope||requestedAction||activeId||pinnedId),stageId=projectScope?null:explicitStage||requestedAction?.stepId||activeNode?.stepId||byId.get(pinnedId)?.stepId||null;
+  const selectedAction=expanded&&requestedAction?.stepId===stageId?requestedAction:null;
+  const records=fullNodes.filter(node=>node.origin==='activity'&&node.stepId===stageId),pages=Math.max(1,Math.ceil(records.length/RESEARCH_SPACE.visibleCalls)),selectedIndex=selectedAction?records.findIndex(node=>node.id===selectedAction.id):-1,page=Math.max(0,Math.min(pages-1,selectedIndex>=0?Math.floor((records.length-1-selectedIndex)/RESEARCH_SPACE.visibleCalls):Math.trunc(Number(recordPage)||0)));
   const end=Math.max(0,records.length-page*RESEARCH_SPACE.visibleCalls),start=Math.max(0,end-RESEARCH_SPACE.visibleCalls),disclosed=expanded?records.slice(start,end):[];
-  const pinned=byId.get(pinnedId||activeId);
+  const pinned=selectedAction||byId.get(pinnedId||activeId);
   if(expanded&&page===0&&pinned?.origin==='activity'&&pinned.stepId===stageId&&!disclosed.includes(pinned)){if(disclosed.length>=RESEARCH_SPACE.visibleCalls)disclosed.shift();disclosed.push(pinned);}
   for(const node of fullNodes.filter(node=>node.kind==='step')){const children=fullNodes.filter(item=>item.origin==='activity'&&item.stepId===node.stepId);node.childIds=children.map(item=>item.id);node.recentStatuses=children.slice(-6).map(item=>({id:item.id,status:item.status}));node.callCount=children.length;node.artifactCount=artifacts.filter(item=>item.stepId===node.stepId).length;node.active=!!node.active||children.some(item=>item.active);}
   const result=finalResearchResult(model,fullNodes);if(result)result.hero=true;
   const visibleNodes=fullNodes.filter(node=>['engine','step'].includes(node.kind)||disclosed.includes(node)||!expanded&&node===result);visibleNodes.forEach((node,index)=>node.displaySlot=index);
   const layout=layoutResearchNetwork(visibleNodes),circuitEdges=spatialCircuitEdges(visibleNodes);
-  const presentation={expanded,stageId,page,pages,totalCalls:records.length,start:expanded&&records.length?start+1:0,end:expanded?end:0,key:[expanded?'stage':'overview',stageId||'',page,disclosed.map(node=>node.id).join(',')].join('|')};
+  const level=!expanded?'overview':selectedAction?'action':'stage',selectedId=selectedAction?.id||null;
+  const presentation={expanded,level,selectedId,stageId,page,pages,totalCalls:records.length,start:expanded&&records.length?start+1:0,end:expanded?end:0,key:[level,stageId||'',selectedId||'',page,disclosed.map(node=>node.id).join(',')].join('|')};
   return {nodes:visibleNodes,fullNodes,edges,circuitEdges,byId,positions:layout.positions,bounds:layout.bounds,mapBounds:layout.mapBounds,stations:layout.stations,presentation,artMode:researchArtState(model,{presentation,activeId}),heroId:!expanded?result?.id||null:null,layout:{columns:layout.columns,rows:layout.rows,kind:layout.kind,version:layout.version},scope,phase:model?.phase,activeId,
     latestId:running?'call:'+running.callId:(model?.activities||[]).length?'call:'+model.activities.at(-1).callId:current?'step:'+current.id:nodes[0]?.id||null,
     counts:{entities:fullNodes.length,visible:visibleNodes.length,stages:workflow.length,bindings:scope==='all'?workflow.reduce((sum,step)=>sum+(step.skills?.length||0),0):0,calls:fullNodes.filter(node=>node.origin==='activity').length,materials:(model?.activities||[]).filter(call=>call.kind==='read'&&call.target).length,artifacts:artifacts.length}};

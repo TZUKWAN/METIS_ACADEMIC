@@ -15,6 +15,7 @@ export function researchConnectionMotion({time=0,index=0,length=1,age=Infinity,s
 export function researchFollowKey(graph,id){
   const node=graph?.byId.get(id)||graph?.byId.get('step:'+id);if(!node)return '';
   const owner=node.stepId||'__project__',view=graph.presentation,matched=view?.expanded&&(view.stageId||'__project__')===owner,children=matched&&graph.nodes.some(row=>row.origin==='activity'&&(row.stepId||'__project__')===owner);
+  if(matched&&view.level==='action')return owner+'|action|'+view.selectedId;
   return owner+'|'+(children?'family':matched?'parent':'anchor');
 }
 export function finalResearchResult(model,nodes){
@@ -36,8 +37,8 @@ export function researchEventPose(elapsed,signal,reduced=false){
 /** Fit actual XYZ corners in screen space; a large bounding sphere wastes space. */
 export function researchCameraFrame(bounds,aspect,{mode='overview',height=1000}={}){
   const normalize=v=>{const n=Math.hypot(...v)||1;return v.map(x=>x/n);},dot=(a,b)=>a.reduce((sum,x,i)=>sum+x*b[i],0),cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
-  const direction=normalize(mode==='complete'?[-.20,.19,1]:mode==='execution'||mode==='inspection'?[-.10,.105,1]:[-.20,.17,1]),right=normalize(cross([0,1,0],direction)),up=cross(direction,right);
-  const target=[(bounds.minX+bounds.maxX)/2,(bounds.minY+bounds.maxY)/2,(bounds.minZ+bounds.maxZ)/2],tan=Math.tan(17.5*Math.PI/180),widthUse=mode==='execution'||mode==='inspection'?.76:.86,heightUse=Math.max(.48,Math.min(.80,(height-210)/height));let distance=16.5;
+  const action=mode==='action',cockpit=mode==='cockpit',width=aspect*height,direction=normalize(mode==='complete'?[-.20,.19,1]:cockpit?[-.085,.08,1]:action?[-.045,.07,1]:mode==='execution'||mode==='inspection'?[-.10,.105,1]:[-.20,.17,1]),right=normalize(cross([0,1,0],direction)),up=cross(direction,right);
+  const target=[(bounds.minX+bounds.maxX)/2,(bounds.minY+bounds.maxY)/2-(action?1.25:cockpit?.7:0),(bounds.minZ+bounds.maxZ)/2],tan=Math.tan(17.5*Math.PI/180),widthUse=cockpit?(width>=1050?.72:.88):action?.72:mode==='execution'||mode==='inspection'?.76:.86,heightUse=cockpit?.75:action?.72:Math.max(.48,Math.min(.80,(height-210)/height));let distance=action?10.5:16.5;
   for(const x of [bounds.minX,bounds.maxX])for(const y of [bounds.minY,bounds.maxY])for(const z of [bounds.minZ,bounds.maxZ]){const p=[x-target[0],y-target[1],z-target[2]],depth=dot(p,direction);distance=Math.max(distance,depth+Math.abs(dot(p,right))/(tan*Math.max(.25,aspect)*widthUse),depth+Math.abs(dot(p,up))/(tan*heightUse));}
   distance+=1.2;return {target,position:target.map((v,i)=>v+direction[i]*distance),distance,direction,right,up,widthUse,heightUse};
 }
